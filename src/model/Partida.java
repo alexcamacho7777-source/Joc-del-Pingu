@@ -73,4 +73,5 @@ public class Partida {
     public Jugador getJugadorActual() {
         return jugadores.get(jugadorActual);
     }
+    
 }
