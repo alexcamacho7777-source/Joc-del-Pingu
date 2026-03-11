@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Partida {
 
+	//atributos
     private Tablero tablero;
     private ArrayList<Jugador> jugadores;
     private int turnos;
@@ -34,6 +35,7 @@ public class Partida {
 
     public void setJugadores(ArrayList<Jugador> jugadores) {
         this.jugadores = jugadores;
+        
     }
 
     public int getTurnos() {
