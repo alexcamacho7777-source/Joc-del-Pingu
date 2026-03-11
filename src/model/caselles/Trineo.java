@@ -1,5 +1,5 @@
 package model.caselles;
 
-public class trineo {
+public class Trineo {
 
 }
