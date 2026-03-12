@@ -2,8 +2,8 @@ package model;
 
 public abstract class Item {
 
-    private String nombre;
-    private int cantidad;
+    protected String nombre;
+    protected int cantidad;
 
     public Item(String nombre, int cantidad) {
         this.nombre = nombre;
@@ -12,10 +12,6 @@ public abstract class Item {
 
     public String getNombre() {
         return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
     }
 
     public int getCantidad() {

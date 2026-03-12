@@ -19,7 +19,6 @@ public class Tablero {
     }
 
     public void actualizarTablero() {
-        // aquí se actualizaría el estado del tablero
         System.out.println("Tablero actualizado");
     }
 }
