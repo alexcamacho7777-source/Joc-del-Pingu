@@ -1,4 +1,4 @@
-package model.caselles;
+package model;
 
 public class casella {
 
