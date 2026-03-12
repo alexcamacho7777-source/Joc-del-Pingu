@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Partida {
 
-	//atributos
+	
     private Tablero tablero;
     private ArrayList<Jugador> jugadores;
     private int turnos;
