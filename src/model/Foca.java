@@ -4,9 +4,9 @@ public class Foca extends Jugador {
 
     private boolean soborno;
 
-    public Foca(String nombre, String color, boolean soborno) {
+    public Foca(String nombre, String color) {
         super(nombre, color);
-        this.soborno = soborno;
+        soborno = false;
     }
 
     public boolean isSoborno() {
@@ -27,6 +27,5 @@ public class Foca extends Jugador {
 
     public void esSobornado() {
         soborno = true;
-        System.out.println(getNombre() + " ha sido sobornado");
     }
 }

@@ -4,21 +4,17 @@ import java.util.ArrayList;
 
 public class Inventario {
 
-    private ArrayList<Item> items;
+    private ArrayList<Item> lista;
 
     public Inventario() {
-        items = new ArrayList<>();
+        lista = new ArrayList<>();
     }
 
-    public void anadirItem(Item i) {
-        items.add(i);
+    public ArrayList<Item> getLista() {
+        return lista;
     }
 
-    public void quitarItem(Item i) {
-        items.remove(i);
-    }
-
-    public ArrayList<Item> getItems() {
-        return items;
+    public void setLista(ArrayList<Item> lista) {
+        this.lista = lista;
     }
 }
