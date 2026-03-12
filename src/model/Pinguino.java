@@ -2,34 +2,22 @@ package model;
 
 public class Pinguino extends Jugador {
 
-    private Inventario inv;
+    private Inventario inventario;
 
     public Pinguino(String nombre, String color) {
         super(nombre, color);
-        this.inv = new Inventario();
+        inventario = new Inventario();
     }
 
-    public Inventario getInv() {
-        return inv;
+    public Inventario getInventario() {
+        return inventario;
     }
 
-    public void setInv(Inventario inv) {
-        this.inv = inv;
-    }
-
-    public void gestionarBatalla(Pinguino p) {
-        System.out.println(getNombre() + " lucha contra " + p.getNombre());
-    }
-
-    public void usarItem(Item i) {
-        System.out.println(getNombre() + " usa el item " + i.getNombre());
-    }
-
-    public void anadirItem(Item i) {
-        inv.anadirItem(i);
+    public void añadirItem(Item i) {
+        inventario.getLista().add(i);
     }
 
     public void quitarItem(Item i) {
-        inv.quitarItem(i);
+        inventario.getLista().remove(i);
     }
 }
