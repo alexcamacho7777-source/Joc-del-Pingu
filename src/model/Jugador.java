@@ -16,27 +16,19 @@ public abstract class Jugador {
         return posicion;
     }
 
+    public void setPosicion(int posicion) {
+        this.posicion = posicion;
+    }
+
     public String getNombre() {
-    	return nombre;
+        return nombre;
     }
 
     public String getColor() {
         return color;
     }
 
-    public void setPosicion(int posicion) {
-        this.posicion = posicion;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public void moverPosicion(int p) {
-        this.posicion += p;
+    public void moverPosicion(int pasos) {
+        posicion += pasos;
     }
 }
