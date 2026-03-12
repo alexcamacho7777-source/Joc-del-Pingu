@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 public class Partida {
 
-	
     private Tablero tablero;
     private ArrayList<Jugador> jugadores;
     private int turnos;
@@ -12,66 +11,32 @@ public class Partida {
     private boolean finalizada;
     private Jugador ganador;
 
-    public Partida(Tablero tablero, ArrayList<Jugador> jugadores) {
-        this.tablero = tablero;
-        this.jugadores = jugadores;
-        this.turnos = 0;
-        this.jugadorActual = 0;
-        this.finalizada = false;
-        this.ganador = null;
+    public Partida() {
+        tablero = new Tablero();
+        jugadores = new ArrayList<>();
+        turnos = 0;
+        jugadorActual = 0;
+        finalizada = false;
+    }
+
+    public Jugador getJugadorActual() {
+        return jugadores.get(jugadorActual);
     }
 
     public Tablero getTablero() {
         return tablero;
     }
 
-    public void setTablero(Tablero tablero) {
-        this.tablero = tablero;
-    }
-
     public ArrayList<Jugador> getJugadores() {
         return jugadores;
     }
 
-    public void setJugadores(ArrayList<Jugador> jugadores) {
-        this.jugadores = jugadores;
-        
-    }
+    public void siguienteTurno() {
+        jugadorActual++;
 
-    public int getTurnos() {
-        return turnos;
+        if (jugadorActual >= jugadores.size()) {
+            jugadorActual = 0;
+            turnos++;
+        }
     }
-
-    public void setTurnos(int turnos) {
-        this.turnos = turnos;
-    }
-
-    public int getJugadorActualIndex() {
-        return jugadorActual;
-    }
-
-    public void setJugadorActualIndex(int jugadorActual) {
-        this.jugadorActual = jugadorActual;
-    }
-
-    public boolean isFinalizada() {
-        return finalizada;
-    }
-
-    public void setFinalizada(boolean finalizada) {
-        this.finalizada = finalizada;
-    }
-
-    public Jugador getGanador() {
-        return ganador;
-    }
-
-    public void setGanador(Jugador ganador) {
-        this.ganador = ganador;
-    }
-
-    public Jugador getJugadorActual() {
-        return jugadores.get(jugadorActual);
-    }
-    
 }
