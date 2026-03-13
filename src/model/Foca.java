@@ -19,13 +19,18 @@ public class Foca extends Jugador {
 
     public void aplastarJugador(Pinguino p) {
         System.out.println(getNombre() + " aplasta a " + p.getNombre());
+        p.setPosicion(0);
+
     }
 
     public void golpearJugador(Pinguino p) {
-        System.out.println(getNombre() + " golpea a " + p.getNombre());
-    }
+    	 System.out.println("La foca golpea a " + p.getNombre());
+         int nuevaPos = p.getPosicion() - 2;
+         if (nuevaPos < 0) nuevaPos = 0;
+         p.setPosicion(nuevaPos);    }
 
     public void esSobornado() {
+        System.out.println("La foca ha sido sobornada con un pez");
         soborno = true;
     }
 }
