@@ -1,5 +1,6 @@
 package model;
 
+
 public class Trineo extends Casilla {
 
     public Trineo(int posicion) {
@@ -9,9 +10,21 @@ public class Trineo extends Casilla {
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
 
-        System.out.println("El jugador usa un trineo.");
+        int posActual = jugador.getPosicion();
+        Tablero tablero = partida.getTablero();
 
-        jugador.moverPosicion(3);
+        for (Casilla c : tablero.getCasillas()) {
 
+            if (c instanceof Trineo && c.getPosicion() > posActual) {
+
+                jugador.setPosicion(c.getPosicion());
+                System.out.println(jugador.getNombre() + " avanza hasta el siguiente trineo en la posición " + c.getPosicion());
+                return;
+
+            }
+        }
+
+        // si no hay más trineos
+        System.out.println("No hay más trineos, no pasa nada.");
     }
 }
