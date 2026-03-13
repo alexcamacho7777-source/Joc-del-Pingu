@@ -14,6 +14,10 @@ public abstract class Item {
         return nombre;
     }
 
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
     public int getCantidad() {
         return cantidad;
     }
