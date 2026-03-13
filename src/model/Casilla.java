@@ -17,4 +17,5 @@ public abstract class Casilla {
     }
 
     public abstract void realizarAccion(Partida partida, Jugador jugador);
+
 }

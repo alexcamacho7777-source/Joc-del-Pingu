@@ -17,8 +17,17 @@ public class Partida {
         turnos = 0;
         jugadorActual = 0;
         finalizada = false;
+        ganador = null;
     }
 
+    public Jugador getGanador() {
+        return ganador;
+    }
+
+    public void setGanador(Jugador ganador) {
+        this.ganador = ganador;
+    }
+    
     public Jugador getJugadorActual() {
         return jugadores.get(jugadorActual);
     }
