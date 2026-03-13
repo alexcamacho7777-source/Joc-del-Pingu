@@ -20,23 +20,73 @@ public class Evento extends Casilla {
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
 
-    	Random ran = new Random();
-		String evento = eventos[ran.nextInt(6)];
+        Random ran = new Random();
+        String evento = eventos[ran.nextInt(6)];
 
-		if (evento.equals("pez")) {
+        if (evento.equals("pez")) {
 
-		} else if (evento.equals("bolas")) {
+            if (jugador instanceof Pinguino) {
+                Pinguino p = (Pinguino) jugador;
+                p.añadirItem(new Pez("pez", 1));
+                System.out.println(p.getNombre() + " obtiene un pez");
+            }
 
-		} else if (evento.equals("rapido")) {
+        } else if (evento.equals("bolas")) {
 
-		} else if (evento.equals("lento")) {
+            if (jugador instanceof Pinguino) {
+                Pinguino p = (Pinguino) jugador;
 
-		} else if (evento.equals("pierdeTurno")) {
+                int cantidad = ran.nextInt(3) + 1;
 
-		} else if (evento.equals("pierdeItem")) {
+                p.añadirItem(new BolaDeNieve("bola", cantidad));
 
-		} else if (evento.equals("motos")) {
+                System.out.println(p.getNombre() + " obtiene " + cantidad + " bolas de nieve");
+            }
 
-		}
-	}
+        } else if (evento.equals("rapido")) {
+
+            if (jugador instanceof Pinguino) {
+                Pinguino p = (Pinguino) jugador;
+
+                p.añadirItem(new Dado("dadoRapido", 1, 5, 10));
+
+                System.out.println(p.getNombre() + " obtiene un dado rapido");
+            }
+
+        } else if (evento.equals("lento")) {
+
+            if (jugador instanceof Pinguino) {
+                Pinguino p = (Pinguino) jugador;
+
+                p.añadirItem(new Dado("dadoLento", 1, 1, 3));
+
+                System.out.println(p.getNombre() + " obtiene un dado lento");
+            }
+
+        } else if (evento.equals("pierdeTurno")) {
+
+            System.out.println(jugador.getNombre() + " pierde un turno");
+
+        } else if (evento.equals("pierdeItem")) {
+
+            if (jugador instanceof Pinguino) {
+
+                Pinguino p = (Pinguino) jugador;
+
+                if (!p.getInventario().getLista().isEmpty()) {
+
+                    Item item = p.getInventario().getLista().get(0);
+                    p.quitarItem(item);
+
+                    System.out.println(p.getNombre() + " pierde un item");
+                }
+            }
+
+        } else if (evento.equals("motos")) {
+
+            System.out.println("Evento motos de nieve");
+
+            jugador.moverPosicion(3);
+        }
+    }
 }
