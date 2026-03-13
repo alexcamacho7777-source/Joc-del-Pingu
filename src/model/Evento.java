@@ -20,11 +20,23 @@ public class Evento extends Casilla {
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
 
-        Random r = new Random();
+    	Random ran = new Random();
+		String evento = eventos[ran.nextInt(6)];
 
-        int e = r.nextInt(eventos.length);
+		if (evento.equals("pez")) {
 
-        System.out.println("Evento: " + eventos[e]);
+		} else if (evento.equals("bolas")) {
 
-    }
+		} else if (evento.equals("rapido")) {
+
+		} else if (evento.equals("lento")) {
+
+		} else if (evento.equals("pierdeTurno")) {
+
+		} else if (evento.equals("pierdeItem")) {
+
+		} else if (evento.equals("motos")) {
+
+		}
+	}
 }
