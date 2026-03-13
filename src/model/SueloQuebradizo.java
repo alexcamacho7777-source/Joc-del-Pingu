@@ -1,7 +1,5 @@
 package model;
 
-package model;
-
 public class SueloQuebradizo extends Casilla {
 
     public SueloQuebradizo(int posicion) {
