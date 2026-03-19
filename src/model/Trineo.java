@@ -1,5 +1,4 @@
 package model;
-
 /**
  * Casilla Trineo: avanza al jugador al siguiente trineo del tablero.
  * Si ya está en el último trineo, no pasa nada.
