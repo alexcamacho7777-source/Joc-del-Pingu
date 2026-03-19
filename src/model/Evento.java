@@ -2,91 +2,69 @@ package model;
 
 import java.util.Random;
 
+/**
+ * Casilla de Interrogante (Evento): activa un evento aleatorio.
+ * Posibles eventos:
+ *   1 - Obtener un pez
+ *   2 - Obtener 1-3 bolas de nieve
+ *   3 - Obtener un dado rápido (avanza 5-10, probabilidad baja)
+ *   4 - Obtener un dado lento (valores 1-3, probabilidad alta)
+ *   5 - Perder un turno (nivel intermedio)
+ *   6 - Perder un objeto aleatorio del inventario (nivel intermedio)
+ */
 public class Evento extends Casilla {
 
-    private String[] eventos;
+    /** Descripción del último evento activado. */
+    private String eventos;
 
+    /**
+     * Constructor de Evento.
+     * @param posicion índice de la casilla
+     */
     public Evento(int posicion) {
         super(posicion);
-
-        eventos = new String[]{
-            "Obtienes un pez",
-            "Obtienes bolas de nieve",
-            "Obtienes dado rapido",
-            "Obtienes dado lento"
-        };
+        this.eventos = "";
     }
+
+    public String getEventos() { return eventos; }
+    public void setEventos(String eventos) { this.eventos = eventos; }
 
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
+        if (!(jugador instanceof Pinguino p)) return;
 
-        Random ran = new Random();
-        String evento = eventos[ran.nextInt(6)];
+        Random r = partida.getRandom();
+        // Pesos: dado rápido tiene probabilidad baja (1/10), dado lento alta (3/10)
+        int evento = r.nextInt(10);
 
-        if (evento.equals("pez")) {
-
-            if (jugador instanceof Pinguino) {
-                Pinguino p = (Pinguino) jugador;
-                p.añadirItem(new Pez("pez", 1));
-                System.out.println(p.getNombre() + " obtiene un pez");
-            }
-
-        } else if (evento.equals("bolas")) {
-
-            if (jugador instanceof Pinguino) {
-                Pinguino p = (Pinguino) jugador;
-
-                int cantidad = ran.nextInt(3) + 1;
-
-                p.añadirItem(new BolaDeNieve("bola", cantidad));
-
-                System.out.println(p.getNombre() + " obtiene " + cantidad + " bolas de nieve");
-            }
-
-        } else if (evento.equals("rapido")) {
-
-            if (jugador instanceof Pinguino) {
-                Pinguino p = (Pinguino) jugador;
-
-                p.añadirItem(new Dado("dadoRapido", 1, 5, 10));
-
-                System.out.println(p.getNombre() + " obtiene un dado rapido");
-            }
-
-        } else if (evento.equals("lento")) {
-
-            if (jugador instanceof Pinguino) {
-                Pinguino p = (Pinguino) jugador;
-
-                p.añadirItem(new Dado("dadoLento", 1, 1, 3));
-
-                System.out.println(p.getNombre() + " obtiene un dado lento");
-            }
-
-        } else if (evento.equals("pierdeTurno")) {
-
-            System.out.println(jugador.getNombre() + " pierde un turno");
-
-        } else if (evento.equals("pierdeItem")) {
-
-            if (jugador instanceof Pinguino) {
-
-                Pinguino p = (Pinguino) jugador;
-
-                if (!p.getInventario().getLista().isEmpty()) {
-
-                    Item item = p.getInventario().getLista().get(0);
-                    p.quitarItem(item);
-
-                    System.out.println(p.getNombre() + " pierde un item");
-                }
-            }
-
-        } else if (evento.equals("motos")) {
-
-            System.out.println("Evento motos de nieve");
-
-            jugador.moverPosicion(3);
+        if (evento == 0) {
+            // Dado rápido - probabilidad baja (1/10)
+            p.getInv().anadirItem(new Dado("Dado Rápido", 1, 5, 10));
+            eventos = p.getNombre() + " obtiene un Dado Rápido (5-10).";
+        } else if (evento <= 3) {
+            // Dado lento - probabilidad alta (3/10)
+            p.getInv().anadirItem(new Dado("Dado Lento", 1, 1, 3));
+            eventos = p.getNombre() + " obtiene un Dado Lento (1-3).";
+        } else if (evento <= 5) {
+            // Bolas de nieve (2/10)
+            int cantidad = 1 + r.nextInt(3);
+            p.getInv().anadirItem(new BolaDeNieve(cantidad));
+            eventos = p.getNombre() + " obtiene " + cantidad + " bola(s) de nieve.";
+        } else if (evento <= 7) {
+            // Pez (2/10)
+            p.getInv().anadirItem(new Pez(1));
+            eventos = p.getNombre() + " obtiene un pez.";
+        } else if (evento == 8) {
+            // Perder un turno (1/10)
+            p.setPosicion(p.getPosicion()); // la penalización la gestiona GestorPartida
+            eventos = p.getNombre() + " pierde un turno.";
+            partida.setJugadorPierdeTurno(p);
+        } else {
+            // Perder un objeto aleatorio (1/10)
+            p.getInv().quitarItemAleatorio(r);
+            eventos = p.getNombre() + " pierde un objeto aleatorio del inventario.";
         }
+
+        partida.anadirEvento(eventos);
     }
 }

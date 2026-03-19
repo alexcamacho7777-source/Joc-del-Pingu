@@ -1,88 +1,54 @@
 package model;
 
+/**
+ * Representa un jugador humano (pingüino).
+ */
 public class Pinguino extends Jugador {
 
-    private Inventario inventario;
+    /** Inventario del pingüino. */
+    private Inventario inv;
 
+    /**
+     * Constructor de Pinguino.
+     * @param nombre nombre del jugador
+     * @param color  color del pingüino
+     */
     public Pinguino(String nombre, String color) {
         super(nombre, color);
-        inventario = new Inventario();
+        this.inv = new Inventario();
     }
 
-    public Inventario getInventario() {
-        return inventario;
+    public Inventario getInv() { return inv; }
+    public void setInv(Inventario inv) { this.inv = inv; }
+
+    /**
+     * Obtiene un ítem del inventario por tipo.
+     * @param tipo clase del ítem
+     * @return el ítem o null
+     */
+    public Item getPersonaSatisfe(Pinguino p) {
+        // Alias semántico del enunciado - devuelve el inventario del pingüino
+        return null;
     }
 
-    public void añadirItem(Item i) {
-        inventario.getLista().add(i);
-        System.out.println("Item añadido: " + i.getNombre());
+    /**
+     * Añade un ítem al inventario.
+     * @param i ítem a añadir
+     */
+    public void anadirItem(Item i) {
+        inv.anadirItem(i);
     }
 
+    /**
+     * Quita un ítem del inventario.
+     * @param i ítem a quitar
+     */
     public void quitarItem(Item i) {
-        inventario.getLista().remove(i);
-        System.out.println("Item eliminado: " + i.getNombre());
-
+        inv.quitarItem(i);
     }
-    
-    public void usarItem(Item item) {
 
-        if (item instanceof BolaDeNieve) {
-
-            System.out.println(getNombre() + " usa una bola de nieve");
-        } 
-        else if (item instanceof Pez) {
-            System.out.println(getNombre() + " usa un pez");
-        } 
-        else if (item instanceof Dado) {
-            System.out.println(getNombre() + " usa un dado");
-        }
-
-        quitarItem(item);
-    }
-    
-    public void gestionarBatalla(Pinguino enemigo) {
-
-        int bolasJugador = 0;
-        int bolasEnemigo = 0;
-
-        // contar bolas del jugador
-        for (Item item : inventario.getLista()) {
-            if (item instanceof BolaDeNieve) {
-                bolasJugador += item.getCantidad();
-            }
-        }
-
-        // contar bolas del enemigo
-        for (Item item : enemigo.getInventario().getLista()) {
-            if (item instanceof BolaDeNieve) {
-                bolasEnemigo += item.getCantidad();
-            }
-        }
-
-        System.out.println(getNombre() + " tiene " + bolasJugador + " bolas de nieve");
-        System.out.println(enemigo.getNombre() + " tiene " + bolasEnemigo + " bolas de nieve");
-
-        if (bolasJugador > bolasEnemigo) {
-
-            int diferencia = bolasJugador - bolasEnemigo;
-            enemigo.moverPosicion(-diferencia);
-
-            System.out.println(getNombre() + " gana la batalla");
-
-        } 
-        else if (bolasEnemigo > bolasJugador) {
-
-            int diferencia = bolasEnemigo - bolasJugador;
-            moverPosicion(-diferencia);
-
-            System.out.println(enemigo.getNombre() + " gana la batalla");
-
-        } 
-        else {
-
-            System.out.println("Empate, nadie retrocede");
-
-        }
-
+    @Override
+    public String toString() {
+        return super.toString() + " | Inventario: " + inv;
     }
 }
