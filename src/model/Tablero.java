@@ -1,72 +1,114 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
+/**
+ * Representa el tablero del juego con sus casillas.
+ * El tablero tiene al menos 50 casillas generadas aleatoriamente.
+ */
 public class Tablero {
 
+    /** Lista de casillas del tablero. */
     private ArrayList<Casilla> casillas;
 
+    /** Número de casillas del tablero. */
+    public static final int TOTAL_CASILLAS = 50;
+
+    /**
+     * Constructor de Tablero. Genera las casillas aleatoriamente.
+     */
     public Tablero() {
-        casillas = new ArrayList<>();
-        generarTablero();
+        this.casillas = new ArrayList<>();
+        generarTablero(new Random());
     }
 
-    public ArrayList<Casilla> getCasillas() {
-        return casillas;
+    /**
+     * Constructor con semilla para pruebas reproducibles.
+     * @param r instancia de Random
+     */
+    public Tablero(Random r) {
+        this.casillas = new ArrayList<>();
+        generarTablero(r);
     }
 
-    public void setCasillas(ArrayList<Casilla> casillas) {
-        this.casillas = casillas;
-    }
+    public ArrayList<Casilla> getCasillas() { return casillas; }
+    public void setCasillas(ArrayList<Casilla> casillas) { this.casillas = casillas; }
 
-    public void generarTablero() {
-
-        Random r = new Random();
-
-        for (int i = 0; i < 50; i++) {
-
-            int tipo = r.nextInt(6);
-
-            if (tipo == 0) {
-                casillas.add(new Normal(i));
-            } 
-            else if (tipo == 1) {
-                casillas.add(new Oso(i));
-            } 
-            else if (tipo == 2) {
-                casillas.add(new Agujero(i));
-            } 
-            else if (tipo == 3) {
-                casillas.add(new Trineo(i));
-            } 
-            else if (tipo == 4) {
-                casillas.add(new Evento(i));
-            } 
-            else {
-                casillas.add(new SueloQuebradizo(i));
-            }
+    /**
+     * Genera las casillas del tablero aleatoriamente.
+     * La primera y la última son siempre normales.
+     */
+    private void generarTablero(Random r) {
+        casillas.add(new Normal(0)); // inicio
+        for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
+            casillas.add(crearCasillaAleatoria(i, r));
         }
+        casillas.add(new Normal(TOTAL_CASILLAS - 1)); // meta
     }
 
-    public Casilla obtenerCasilla(int posicion) {
-
-        if (posicion >= 0 && posicion < casillas.size()) {
-            return casillas.get(posicion);
-        }
-
-        return null;
+    /**
+     * Crea una casilla aleatoria según probabilidades.
+     */
+    private Casilla crearCasillaAleatoria(int pos, Random r) {
+        int tipo = r.nextInt(10);
+        return switch (tipo) {
+            case 0 -> new Oso(pos);
+            case 1 -> new Agujero(pos);
+            case 2 -> new Trineo(pos);
+            case 3 -> new Evento(pos);
+            case 4 -> new SueloQuebradizo(pos);
+            default -> new Normal(pos);
+        };
     }
 
-    public void actualizarTablero(Partida partida) {
+    /**
+     * Devuelve la casilla en la posición indicada.
+     * @param pos índice
+     * @return la casilla correspondiente
+     */
+    public Casilla getCasilla(int pos) {
+        if (pos < 0) return casillas.get(0);
+        if (pos >= casillas.size()) return casillas.get(casillas.size() - 1);
+        return casillas.get(pos);
+    }
 
-        for (Jugador j : partida.getJugadores()) {
-
-            Casilla c = obtenerCasilla(j.getPosicion());
-
-            if (c != null) {
-                c.realizarAccion(partida, j);
-            }
+    /**
+     * Busca el agujero anterior a la posición dada.
+     * @param posActual posición actual
+     * @return índice del agujero anterior, o 0 si no hay ninguno
+     */
+    public int buscarAgujeroAnterior(int posActual) {
+        for (int i = posActual - 1; i >= 0; i--) {
+            if (casillas.get(i) instanceof Agujero) return i;
         }
+        return 0;
+    }
+
+    /**
+     * Busca el trineo siguiente a la posición dada.
+     * @param posActual posición actual
+     * @return índice del siguiente trineo, o -1 si no hay ninguno
+     */
+    public int buscarSiguienteTrineo(int posActual) {
+        for (int i = posActual + 1; i < casillas.size(); i++) {
+            if (casillas.get(i) instanceof Trineo) return i;
+        }
+        return -1;
+    }
+
+    /**
+     * Actualiza el estado visual del tablero (reservado para JavaFX).
+     */
+    public void actualizarTablero() {
+        // Implementación en la vista
+    }
+
+    /**
+     * Devuelve el número total de casillas.
+     */
+    public int getTotalCasillas() {
+        return casillas.size();
     }
 }
