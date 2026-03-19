@@ -11,7 +11,7 @@ public class Agujero extends Casilla {
 
         System.out.println("El jugador cae en un agujero.");
 
-        int nuevaPos = jugador.getPosicion() - 3;
+        int nuevaPos = jugador.getPosicion() - 5;
 
         if(nuevaPos < 0)
             nuevaPos = 0;
