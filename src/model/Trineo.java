@@ -24,7 +24,8 @@ public class Trineo extends Casilla {
             }
         }
 
-        // si no hay más trineos
+        // si no hay más trineosadadwdaw              74
+        
         System.out.println("No hay más trineos, no pasa nada.");
     }
 }
