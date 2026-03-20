@@ -4,42 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Representa una partida del juego del Pingüino.
- * Contiene el tablero, los jugadores, el turno actual y el estado de la partida.
- */
 public class Partida {
 
-    /** Tablero de la partida. */
     private Tablero tablero;
-
-    /** Lista de jugadores (Pinguino o Foca). */
     private ArrayList<Jugador> jugadores;
-
-    /** Número de turnos transcurridos. */
     private int turnos;
-
-    /** Índice del jugador que tiene el turno actual. */
     private int jugadorActual;
-
-    /** Indica si la partida ha finalizado. */
     private boolean finalizada;
-
-    /** Jugador ganador (null si no ha terminado). */
     private Jugador ganador;
-
-    /** Log de eventos ocurridos durante la partida. */
     private List<String> logEventos;
-
-    /** Jugador que pierde el próximo turno (null si ninguno). */
     private Pinguino jugadorPierdeTurno;
-
-    /** Generador de números aleatorios compartido. */
     private Random random;
 
-    /**
-     * Constructor de Partida.
-     */
+
     public Partida() {
         this.tablero = new Tablero();
         this.jugadores = new ArrayList<>();
@@ -51,7 +28,7 @@ public class Partida {
         this.random = new Random();
     }
 
-    // --- Getters y Setters ---
+    // Getters y Setters 
 
     public Tablero getTablero() { return tablero; }
     public void setTablero(Tablero tablero) { this.tablero = tablero; }
@@ -81,35 +58,20 @@ public class Partida {
     public void setRandom(Random random) { this.random = random; }
 
     // --- Métodos ---
-
-    /**
-     * Añade un jugador a la partida.
-     * @param j jugador a añadir
-     */
     public void anadirJugador(Jugador j) {
         jugadores.add(j);
     }
 
-    /**
-     * Añade un mensaje al log de eventos.
-     * @param evento mensaje del evento
-     */
     public void anadirEvento(String evento) {
         logEventos.add(evento);
     }
 
-    /**
-     * Devuelve el jugador que tiene el turno actual.
-     * @return jugador actual
-     */
     public Jugador getJugadorActualObj() {
         if (jugadores.isEmpty()) return null;
         return jugadores.get(jugadorActual);
     }
 
-    /**
-     * Avanza al siguiente turno.
-     */
+
     public void siguienteTurno() {
         jugadorActual = (jugadorActual + 1) % jugadores.size();
         turnos++;
