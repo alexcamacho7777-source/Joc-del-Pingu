@@ -2,23 +2,17 @@ package controlador;
 
 import model.*;
 
+
 public class GestorTablero {
 
-    public void ejecutarCasilla(Partida partida, Pinguino p, Casilla c){
-
-        c.realizarAccion(partida, p);
-
+   
+    public void ejecutarCasilla(Partida partida, Jugador j, Casilla c) {
+        if (j != null) c.realizarAccion(partida, j);
     }
 
-    public void comprobarFinTurno(Partida partida){
-
-        if(partida.getJugadorActual().getPosicion() >= 
-           partida.getTablero().getCasillas().size() - 1){
-
-            System.out.println("Un jugador ha llegado al final");
-
-        }
-
+  
+     
+    public boolean comprobarTurno(Partida partida) {
+        return !partida.isFinalizada() && !partida.getJugadores().isEmpty();
     }
-
 }
