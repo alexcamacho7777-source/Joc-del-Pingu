@@ -58,6 +58,20 @@ public class GestorPartida {
         partida.anadirEvento("Partida iniciada.");
     }
 
+    /** Sobrecàrrega sense arguments que usa la vista del professor */
+    public void nuevaPartida() {
+        nuevaPartida(null);
+    }
+
+    /** Tira el dau donat i mou el jugador. Retorna el resultat. */
+    public int tirarDado(Jugador j, Dado dado) {
+        int resultado = dado.tirar(random);
+        j.moverPosicion(resultado);
+        int maxPos = partida.getTablero().getTotalCasillas() - 1;
+        if (j.getPosicion() > maxPos) j.setPosicion(maxPos);
+        return resultado;
+    }
+
     /**
      * Inicia los dados de turno para el jugador indicado.
      * @param jugador jugador que inicia dados

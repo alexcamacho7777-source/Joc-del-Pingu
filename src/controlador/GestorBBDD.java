@@ -6,11 +6,7 @@ import java.sql.*;
 
 import java.sql.*;
 
-/**
- * Controlador que gestiona la persistencia de datos en base de datos.
- * Guarda y carga partidas, incluyendo posiciones, inventarios y turno actual.
- * La información sensible debe estar encriptada en BBDD.
- */
+
 public class GestorBBDD {
 
     private static final String URL_DEFAULT =
