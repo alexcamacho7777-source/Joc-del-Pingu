@@ -1,17 +1,9 @@
 package model;
 
-/**
- * Casilla de Suelo Cuarteado (Tierra Trencadís):
- * - Más de 5 objetos → cae y vuelve al inicio.
- * - Hasta 5 objetos → pierde un turno.
- * - Sin objetos → pasa sin penalización.
- */
+
 public class SueloQuebradizo extends Casilla {
 
-    /**
-     * Constructor de SueloQuebradizo.
-     * @param posicion índice de la casilla
-     */
+
     public SueloQuebradizo(int posicion) {
         super(posicion);
     }
