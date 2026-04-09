@@ -1,15 +1,8 @@
 package model;
 
-/**
- * Casilla Agujero (Forat al gel): envía al jugador al agujero anterior.
- * Si es el primer agujero, retrocede al principio del tablero.
- */
+
 public class Agujero extends Casilla {
 
-    /**
-     * Constructor de Agujero.
-     * @param posicion índice de la casilla
-     */
     public Agujero(int posicion) {
         super(posicion);
     }

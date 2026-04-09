@@ -1,15 +1,8 @@
 package model;
 
-/**
- * Casilla Trineo: avanza al jugador al siguiente trineo del tablero.
- * Si ya está en el último trineo, no pasa nada.
- */
 public class Trineo extends Casilla {
 
-    /**
-     * Constructor de Trineo.
-     * @param posicion índice de la casilla
-     */
+ 
     public Trineo(int posicion) {
         super(posicion);
     }

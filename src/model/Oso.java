@@ -1,15 +1,9 @@
 package model;
 
-/**
- * Casilla Oso: envía al jugador al inicio del tablero.
- * Si el jugador tiene un pez puede sobornar al oso y evitar la penalización.
- */
+
 public class Oso extends Casilla {
 
-    /**
-     * Constructor de Oso.
-     * @param posicion índice de la casilla
-     */
+
     public Oso(int posicion) {
         super(posicion);
     }
@@ -19,7 +13,7 @@ public class Oso extends Casilla {
         if (jugador instanceof Pinguino p) {
             Item pez = p.getInv().getItem(Pez.class);
             if (pez != null) {
-                // Soborno: pierde el pez pero no retrocede
+                // Soborno
                 pez.setCantidad(pez.getCantidad() - 1);
                 if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
                 partida.anadirEvento(p.getNombre() + " ha sobornado al oso con un pez.");
