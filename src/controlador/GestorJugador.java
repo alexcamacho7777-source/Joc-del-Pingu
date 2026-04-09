@@ -54,8 +54,8 @@ public class GestorJugador {
      * @param p2 segundo pingüino
      */
     public void pinguinoGuerraQuema(Pinguino p1, Pinguino p2) {
-        Item b1item = p1.getInv().getItem(BolaDenieve.class);
-        Item b2item = p2.getInv().getItem(BolaDenieve.class);
+        Item b1item = p1.getInv().getItem(BolaDeNieve.class);
+        Item b2item = p2.getInv().getItem(BolaDeNieve.class);
 
         int b1 = (b1item != null) ? b1item.getCantidad() : 0;
         int b2 = (b2item != null) ? b2item.getCantidad() : 0;

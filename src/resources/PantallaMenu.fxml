@@ -1,38 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.SeparatorMenuItem?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<BorderPane
-    xmlns="http://javafx.com/javafx/21.0.10"
-    xmlns:fx="http://javafx.com/fxml/1"
-    fx:controller="vista.PantallaMenu"
-    stylesheets="@PantallaMenu.css"
-    styleClass="root">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="vista.PantallaMenu"
+            prefWidth="700" prefHeight="520"
+            style="-fx-background-color: linear-gradient(to bottom, #04091a 0%, #0b1e3d 50%, #04091a 100%);">
 
     <top>
-        <MenuBar>
+        <MenuBar style="-fx-background-color: #08102a;">
             <menus>
-                <Menu mnemonicParsing="false" text="File">
+                <Menu text="Joc">
                     <items>
-                        <MenuItem fx:id="newGame" mnemonicParsing="false" text="New" />
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Save" />
-                        <MenuItem fx:id="loadGame" mnemonicParsing="false" text="Load" />
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Quit" />
+                        <MenuItem fx:id="newGame"  text="Nova Partida"     onAction="#handleNewGame"/>
+                        <MenuItem fx:id="saveGame" text="Guardar Partida"  onAction="#handleSaveGame"/>
+                        <MenuItem fx:id="loadGame" text="Carregar Partida" onAction="#handleLoadGame"/>
+                        <SeparatorMenuItem/>
+                        <MenuItem fx:id="quitGame" text="Sortir"           onAction="#handleQuitGame"/>
                     </items>
                 </Menu>
             </menus>
@@ -41,43 +26,49 @@
 
     <center>
         <StackPane>
-            <padding>
-                <Insets top="28" right="28" bottom="28" left="28"/>
-            </padding>
+            <VBox alignment="CENTER" spacing="28" maxWidth="340">
+                <padding><Insets top="20" bottom="30" left="30" right="30"/></padding>
 
-            <VBox spacing="16" styleClass="card" maxWidth="420">
-                <padding>
-                    <Insets top="18" right="18" bottom="18" left="18"/>
-                </padding>
-
-                <!-- Cabecera -->
-                <VBox spacing="6" alignment="CENTER">
-                    <Label text="EL JUEGO DEL PINGÜINO" styleClass="title" wrapText="true"/>
+                <VBox alignment="CENTER" spacing="8">
+                    <Label text="🐧"
+                           style="-fx-font-size: 72px;"/>
+                    <Label text="Joc del Pingüí"
+                           style="-fx-font-size: 34px; -fx-font-weight: bold; -fx-text-fill: #dff0ff;
+                                  -fx-effect: dropshadow(gaussian, #4fc3f7, 22, 0.6, 0, 0);"/>
+                    <Label text="Inicia sessió per jugar"
+                           style="-fx-font-size: 13px; -fx-text-fill: #6a9abf; -fx-font-style: italic;"/>
                 </VBox>
 
-                <Region prefHeight="8"/>
-
-                <!-- Formulario -->
-                <VBox spacing="10">
-                    <Label text="Usuario" styleClass="field-label"/>
-                    <TextField fx:id="userField" promptText="Usuario..." styleClass="field"/>
-
-                    <Label text="Contraseña" styleClass="field-label"/>
-                    <PasswordField fx:id="passField" promptText="Contraseña..." styleClass="field"/>
+                <VBox spacing="12" style="-fx-background-color: rgba(13,32,64,0.85);
+                                          -fx-background-radius: 14; -fx-border-color: #1a3a5c;
+                                          -fx-border-radius: 14; -fx-padding: 24 28 24 28;">
+                    <Label text="Usuari" style="-fx-text-fill: #90caf9; -fx-font-size: 12px;"/>
+                    <TextField fx:id="userField" promptText="Nom d'usuari"
+                               style="-fx-background-color: #08152e; -fx-text-fill: #e0f4ff;
+                                      -fx-border-color: #1e4a7f; -fx-border-radius: 8;
+                                      -fx-background-radius: 8; -fx-padding: 9 12; -fx-font-size: 14;"/>
+                    <Label text="Contrasenya" style="-fx-text-fill: #90caf9; -fx-font-size: 12px;"/>
+                    <PasswordField fx:id="passField" promptText="Contrasenya"
+                                   style="-fx-background-color: #08152e; -fx-text-fill: #e0f4ff;
+                                          -fx-border-color: #1e4a7f; -fx-border-radius: 8;
+                                          -fx-background-radius: 8; -fx-padding: 9 12; -fx-font-size: 14;"/>
+                    <VBox spacing="8" style="-fx-padding: 8 0 0 0;">
+                        <Button fx:id="loginButton" text="🎮  Entrar al Joc" onAction="#handleLogin"
+                                maxWidth="Infinity" prefHeight="42"
+                                style="-fx-background-color: linear-gradient(to right, #1565c0, #1e88e5);
+                                       -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;
+                                       -fx-background-radius: 21; -fx-cursor: hand;"/>
+                        <Button fx:id="registerButton" text="📝  Registrar" onAction="#handleRegister"
+                                maxWidth="Infinity" prefHeight="38"
+                                style="-fx-background-color: transparent; -fx-text-fill: #78a9cc;
+                                       -fx-border-color: #1a3a5c; -fx-border-radius: 19;
+                                       -fx-background-radius: 19; -fx-cursor: hand; -fx-padding: 6 0;"/>
+                    </VBox>
                 </VBox>
 
-                <Region prefHeight="6"/>
-
-                <!-- Botonera -->
-                <HBox spacing="10">
-                    <Button fx:id="loginButton" text="Login" onAction="#handleLogin" maxWidth="Infinity" styleClass="primary"/>
-                    <Button fx:id="registerButton" text="Registro" onAction="#handleRegister" maxWidth="Infinity"/>
-                </HBox>
-
-                <Label text="Tip: para la demo, puedes entrar con cualquier usuario si aún no hay validación."
-                       styleClass="hint" wrapText="true"/>
+                <Label text="DW2526 · Grup 03"
+                       style="-fx-text-fill: #1e3a5a; -fx-font-size: 11px;"/>
             </VBox>
         </StackPane>
     </center>
-
 </BorderPane>

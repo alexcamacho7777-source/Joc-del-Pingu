@@ -52,7 +52,7 @@ public class GestorPartida {
      * Si datosOpcional es null se usa configuración por defecto.
      * @param datosOpcional datos de inicialización opcionales (puede ser null)
      */
-    public void nuevaPartida(Object datosOpcional) {
+    public void nuevaPartida() {
         partida = new Partida();
         partida.setRandom(random);
         partida.anadirEvento("Partida iniciada.");
@@ -64,6 +64,22 @@ public class GestorPartida {
      */
     public void initTirarDado(Jugador jugador) {
         // Reservado para integración con la vista
+    }
+
+    /**
+     * Tira el dau donat, mou el jugador i retorna el resultat.
+     * Usat per PantallaJuego per moure la fitxa P1.
+     *
+     * @param j    Jugador que tira
+     * @param dado Dau que s'utilitza
+     * @return Resultat del dau
+     */
+    public int tirarDado(Jugador j, Dado dado) {
+        int resultado = dado.tirar(random);
+        j.moverPosicion(resultado);
+        int maxPos = partida.getTablero().getTotalCasillas() - 1;
+        if (j.getPosicion() > maxPos) j.setPosicion(maxPos);
+        return resultado;
     }
 
     /**
@@ -248,4 +264,3 @@ public class GestorPartida {
         }
     }
 }
-s
