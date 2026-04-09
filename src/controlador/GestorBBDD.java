@@ -1,132 +1,226 @@
-package controlador;
-
-import model.*;
-
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 /**
- * Controlador que gestiona la persistencia de datos en base de datos.
- * Guarda y carga partidas, incluyendo posiciones, inventarios y turno actual.
- * La información sensible debe estar encriptada en BBDD.
+ * Clase que proporciona métodos para interactuar con una base de datos Oracle.
  */
-public class GestorBBDD {
+public class BBDD {
 
-    /** URL de conexión a la base de datos. */
-    private String urlBBDD;
+	/**
+	 * Intenta establecer una conexión a la base de datos Oracle. NO HACE FALTA QUE
+	 * ENTENDÁIS CÓMO FUNCIONA, SE HACE TODO DE MANERA AUTOMÁTICA.
+	 *
+	 * @param scan Scanner de main con el que vais a leer por consola
+	 * @return Objeto Connection si la conexión es exitosa, null en caso contrario.
+	 *         LA VARIABLE QUE DEVUELVE LA TENÉIS QUE GUARDAR PARA LAS DEMÁS
+	 *         FUNCIONES
+	 */
+	public static Connection conectarBaseDatos(Scanner scan) {
+		System.out.println("Intentando conectarse a la base de datos...");
 
-    /** Usuario de la base de datos. */
-    private String username;
+		// 1) Elegir entorno con validación
+		String entorno = "";
+		boolean valido = false;
+		while (!valido) {
+			// PODEIS HARDCODEAR ESTAS VARIABLES SI VAIS A USAR SIEMPRE LAS MISMAS
+			//VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+			System.out.println("Selecciona centro o fuera de centro (CENTRO/FUERA):");
+			entorno = scan.nextLine().trim().toLowerCase();
 
-    /** Contraseña de la base de datos. */
-    private String password;
+			if (entorno.equalsIgnoreCase("centro") || entorno.equalsIgnoreCase("fuera")) {
+				valido = true;
+			} else {
+				System.out.println("Entrada no válida. Escribe CENTRO o FUERA.");
+			}
+		}
 
-    /**
-     * Constructor de GestorBBDD.
-     * @param urlBBDD  URL JDBC de la base de datos
-     * @param username usuario
-     * @param password contraseña
-     */
-    public GestorBBDD(String urlBBDD, String username, String password) {
-        this.urlBBDD = urlBBDD;
-        this.username = username;
-        this.password = password;
-    }
+		String url = entorno.equals("centro") ? "jdbc:oracle:thin:@//192.168.3.26:1521/XEPDB2"
+				: "jdbc:oracle:thin:@//oracle.ilerna.com:1521/XEPDB2";
 
-    public String getUrlBBDD() { return urlBBDD; }
-    public void setUrlBBDD(String urlBBDD) { this.urlBBDD = urlBBDD; }
+		// 2) Pedir credenciales (con trim para evitar espacios raros)
+		// PODEIS HARDCODEAR ESTAS CREDENCIALES SI VAIS A USAR SIEMPRE LAS MISMAS
+		//VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+		System.out.println("¿Usuario?");
+		String user = scan.nextLine().trim();
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+		System.out.println("¿Contraseña?");
+		String pwd = scan.nextLine(); // aquí NO hago trim por si la contraseña tuviera espacios
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+		// 3) Conectar
+		try {
+			// En muchos casos con JDBC moderno no hace falta, pero lo dejamos por si acaso
+			Class.forName("oracle.jdbc.driver.OracleDriver");
 
-    /**
-     * Obtiene una conexión a la base de datos.
-     * @return conexión JDBC
-     * @throws SQLException si hay error de conexión
-     */
-    private Connection getConexion() throws SQLException {
-        return DriverManager.getConnection(urlBBDD, username, password);
-    }
+			Connection con = DriverManager.getConnection(url, user, pwd);
 
-    /**
-     * Guarda el estado completo de una partida en la base de datos.
-     * @param p partida a guardar
-     */
-    public void guardarBBDD(Partida p) {
-        String sql = "INSERT INTO partidas (turnos, jugador_actual, finalizada) VALUES (?, ?, ?) " +
-                     "ON DUPLICATE KEY UPDATE turnos=?, jugador_actual=?, finalizada=?";
-        try (Connection con = getConexion();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, p.getTurnos());
-            ps.setInt(2, p.getJugadorActual());
-            ps.setBoolean(3, p.isFinalizada());
-            ps.setInt(4, p.getTurnos());
-            ps.setInt(5, p.getJugadorActual());
-            ps.setBoolean(6, p.isFinalizada());
-            ps.executeUpdate();
+			// 4) Comprobar que la conexión es válida (timeout 5 s)
+			if (con.isValid(5)) {
+				System.out.println("Conectados a la base de datos (" + entorno.toUpperCase() + ").");
+			} else {
+				System.out.println("Conexión creada, pero no parece válida. Revisa red/URL.");
+			}
 
-            guardarJugadores(con, p);
-        } catch (SQLException e) {
-            System.err.println("Error al guardar partida: " + e.getMessage());
-        }
-    }
+			return con;
 
-    /**
-     * Guarda los jugadores y sus inventarios.
-     */
-    private void guardarJugadores(Connection con, Partida p) throws SQLException {
-        String sql = "INSERT INTO jugadores (nombre, color, posicion, partida_id) VALUES (?, ?, ?, 1) " +
-                     "ON DUPLICATE KEY UPDATE posicion=?";
-        for (Jugador j : p.getJugadores()) {
-            try (PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, j.getNombre());
-                ps.setString(2, j.getColor());
-                ps.setInt(3, j.getPosicion());
-                ps.setInt(4, j.getPosicion());
-                ps.executeUpdate();
-            }
-        }
-    }
+		} catch (ClassNotFoundException e) {
+			System.out.println("No se ha encontrado el driver de Oracle. ¿Está el ojdbc en el proyecto?");
+		} catch (SQLException e) {
+			System.out.println("No se pudo conectar. Revisa URL/usuario/contraseña.");
+			System.out.println("Detalle: " + e.getMessage());
+		}
 
-    /**
-     * Carga una partida guardada desde la base de datos.
-     * @param id identificador de la partida
-     * @return la partida cargada
-     */
-    public Partida cargarBBDD(int id) {
-        Partida partida = new Partida();
-        String sql = "SELECT * FROM partidas WHERE id = ?";
-        try (Connection con = getConexion();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                partida.setTurnos(rs.getInt("turnos"));
-                partida.setJugadorActual(rs.getInt("jugador_actual"));
-                partida.setFinalizada(rs.getBoolean("finalizada"));
-                cargarJugadores(con, partida, id);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al cargar partida: " + e.getMessage());
-        }
-        return partida;
-    }
+		return null;
+	}
 
-    /**
-     * Carga los jugadores de una partida desde la base de datos.
-     */
-    private void cargarJugadores(Connection con, Partida partida, int idPartida) throws SQLException {
-        String sql = "SELECT * FROM jugadores WHERE partida_id = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idPartida);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Pinguino p = new Pinguino(rs.getString("nombre"), rs.getString("color"));
-                p.setPosicion(rs.getInt("posicion"));
-                partida.anadirJugador(p);
-            }
-        }
-    }
+	/**
+	 * Cierra la conexión con la BBDD.
+	 *
+	 * @param con Objeto Connection que representa la conexión a la base de datos.
+	 */
+	public static void cerrar(Connection con) {
+		if (con != null) {
+			try {
+				con.close();
+			} catch (SQLException ignored) {
+			}
+		}
+	}
+
+	/**
+	 * Realiza una inserción en la base de datos.
+	 *
+	 * @param con Objeto Connection que representa la conexión a la base de datos.
+	 * @param sql Sentencia SQL de inserción que hayáis creado.
+	 */
+	public static int insert(Connection con, String sql) {
+		return executeInsUpDel(con, sql, "Insert");
+	}
+
+	/**
+	 * Realiza una actualización en la base de datos.
+	 *
+	 * @param con Objeto Connection que representa la conexión a la base de datos.
+	 * @param sql Sentencia SQL de actualización que hayáis creado.
+	 */
+	public static int update(Connection con, String sql) {
+		return executeInsUpDel(con, sql, "Update");
+	}
+
+	/**
+	 * Realiza una eliminación en la base de datos.
+	 *
+	 * @param con Objeto Connection que representa la conexión a la base de datos.
+	 * @param sql Sentencia SQL de eliminación que hayáis creado.
+	 */
+	public static int delete(Connection con, String sql) {
+		return executeInsUpDel(con, sql, "Delete");
+	}
+
+	/**
+	 * Realiza una consulta en la base de datos y devuelve los resultados.
+	 *
+	 * @param con Objeto Connection que representa la conexión a la base de datos.
+	 * @param sql Sentencia SQL de consulta.
+	 * @return Devuelve un ArrayList con todas las filas del SELECT. Cada fila es un
+	 *         Map con sus columnas (columna -> valor).
+	 */
+	public static ArrayList<LinkedHashMap<String, String>> select(Connection con, String sql) {
+
+		ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+
+		if (con == null) {
+			System.out.println("No hay conexión. Llama antes a conectarBaseDatos().");
+			return resultados;
+		}
+
+		try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+
+			ResultSetMetaData meta = rs.getMetaData();
+			int numColumnas = meta.getColumnCount();
+
+			while (rs.next()) {
+				LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+
+				for (int i = 1; i <= numColumnas; i++) {
+					String columna = meta.getColumnLabel(i);
+					String valor = rs.getString(i);
+					fila.put(columna, valor);
+				}
+
+				resultados.add(fila);
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Error en SELECT: " + e.getMessage());
+		}
+
+		return resultados;
+	}
+
+	/**
+	 * Imprime los resultados de una consulta SELECT en la base de datos. EN ESTE
+	 * CASO SÍ PODÉIS IMPRIMIR MÁS DE UNA FILA.
+	 *
+	 * @param con                         Objeto Connection que representa la
+	 *                                    conexión a la base de datos.
+	 * @param sql                         Sentencia SQL de consulta.
+	 * @param listaElementosSeleccionados Array de Strings con los nombres de las
+	 *                                    columnas seleccionadas.
+	 */
+	public static void print(Connection con, String sql, String[] listaElementosSeleccionados) {
+		if (con == null) {
+			System.out.println("No hay conexión. Llama antes a conectarBaseDatos().");
+			return;
+		}
+
+		try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+
+			int fila = 0;
+			boolean hayResultados = false;
+
+			while (rs.next()) {
+				hayResultados = true;
+				fila++;
+				System.out.println("---- Fila " + fila + " ----");
+				for (String col : listaElementosSeleccionados) {
+					System.out.println(col + ": " + rs.getString(col));
+				}
+			}
+
+			if (!hayResultados) {
+				System.out.println("No se ha encontrado nada");
+			}
+
+		} catch (SQLException e) {
+			System.out.println("Error en SELECT: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Ejecuta las consultas Insert, Update o Delete.
+	 *
+	 * @param con      Objeto Connection que representa la conexión a la base de
+	 *                 datos.
+	 * @param sql      Sentencia SQL que se va a ejecutar.
+	 * @param etiqueta Consulta a ejecutar -> Insert / Update / Delete
+	 * @return Número de filas afectadas
+	 */
+	public static int executeInsUpDel(Connection con, String sql, String etiqueta) {
+		if (con == null) {
+			System.out.println("No hay conexión. Llama antes a conectarBaseDatos().");
+			return 0;
+		}
+
+		try (Statement st = con.createStatement()) {
+			int filas = st.executeUpdate(sql);
+			System.out.println(etiqueta + " hecho correctamente. Filas afectadas: " + filas);
+			return filas;
+		} catch (SQLException e) {
+			System.out.println("Ha habido un error en " + etiqueta + ": " + e.getMessage());
+			return 0;
+		}
+	}
 }
