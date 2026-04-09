@@ -10,6 +10,12 @@ public class Pinguino extends Jugador {
         this.inv = new Inventario();
     }
 
+    public Pinguino(String nombre, String color, int posicion, Inventario inv) {
+        super(nombre, color);
+        this.setPosicion(posicion);
+        this.inv = inv;
+    }
+
     public Inventario getInv() { return inv; }
     public void setInv(Inventario inv) { this.inv = inv; }
 
