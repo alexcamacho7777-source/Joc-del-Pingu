@@ -5,6 +5,6 @@ module Joc_del_Pingu {
     requires java.sql;
 
     opens vista       to javafx.fxml, javafx.graphics;
-    opens controlador to javafx.fxml;
+    opens controlador to javafx.fxml, javafx.graphics;
     opens model       to javafx.base;
 }
