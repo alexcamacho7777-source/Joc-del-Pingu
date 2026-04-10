@@ -56,32 +56,54 @@ public class PantallaMenu {
 
     @FXML
     private void handleLogin(ActionEvent event) {
-        String username = userField.getText();
-        String password = passField.getText();
+        String username = userField.getText().trim();
+        String password = passField.getText().trim();
 
-        System.out.println("Login: " + username + " / " + password);
+        System.out.println("Intentant Login: " + username);
 
-        if (!username.isEmpty() && !password.isEmpty()) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
-                Parent pantallaJuegoRoot = loader.load();
-                Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);
+        if (!username.isEmpty()) {
+            controlador.GestorBBDD bd = new controlador.GestorBBDD();
+            
+            if (bd.loginUsuario(username)) {
+                System.out.println("Login Correcte a Oracle DB!");
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
+                    Parent pantallaJuegoRoot = loader.load();
+                    
+                    // Pasar el nom a la pantalla de joc abans de mostrar-la
+                    PantallaJuego controladorJoc = loader.getController();
+                    controladorJoc.setUsuarioLogueado(username);
 
-                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(pantallaJuegoScene);
-                stage.setTitle("El Joc del Pingüí - Partida");
-                stage.setMaximized(true);
-            } catch (Exception e) {
-                e.printStackTrace();
+                    Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);
+                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                    stage.setScene(pantallaJuegoScene);
+                    stage.setTitle("El Joc del Pingüí - Partida");
+                    stage.setMaximized(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("L'usuari '" + username + "' no existeix a la BBDD. Registra't primer.");
             }
         } else {
-            System.out.println("Introdueix usuari i contrasenya.");
+            System.out.println("Introdueix nom d'usuari.");
         }
     }
 
     @FXML
     private void handleRegister() {
-        System.out.println("Register pressed");
-        // TODO
+        String username = userField.getText().trim();
+        System.out.println("Register pressed: " + username);
+        
+        if (!username.isEmpty()) {
+            controlador.GestorBBDD bd = new controlador.GestorBBDD();
+            if (bd.registrarUsuario(username)) {
+                System.out.println("Usuari creat correctament a la BBDD Oracle!");
+            } else {
+                System.out.println("Error creant l'usuari (potser ja existeix o no hi ha connexió).");
+            }
+        } else {
+            System.out.println("Falta el nom d'usuari per registrar-se.");
+        }
     }
 }

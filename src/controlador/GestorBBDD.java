@@ -221,28 +221,30 @@ public class GestorBBDD {
      * @param valor Valor (sempre arriba com a String)
      */
     public static void procesarValor(String col, String valor) {
-        // Conversió de valors de les taules PARTIDAS i JUGADORES
         switch (col.toUpperCase()) {
-            case "ID":
-                System.out.println("ID partida:     " + valor);
+            case "ID_PARTIDA":
+                System.out.println("ID Partida:     " + valor);
                 break;
-            case "TURNOS":
-                System.out.println("Torns jugats:   " + Integer.parseInt(valor));
+            case "TORN_ACTUAL":
+                System.out.println("Torn Actual:    " + valor);
                 break;
-            case "JUGADOR_ACTUAL":
-                System.out.println("Jugador actual: " + Integer.parseInt(valor));
-                break;
-            case "FINALIZADA":
-                System.out.println("Finalitzada:    " + ("1".equals(valor)));
-                break;
-            case "NOMBRE":
+            case "NOM_JUGADOR":
                 System.out.println("Jugador:        " + valor);
                 break;
-            case "COLOR":
-                System.out.println("Color:          " + valor);
+            case "POSICIO_ACTUAL":
+                System.out.println("Posició:        " + valor);
                 break;
-            case "POSICION":
-                System.out.println("Posició:        " + Integer.parseInt(valor));
+            case "DAUS":
+                System.out.println("Daus restants:  " + valor);
+                break;
+            case "PEIXOS":
+                System.out.println("Peixos:         " + valor);
+                break;
+            case "BOLES_NEU":
+                System.out.println("Boles de neu:   " + valor);
+                break;
+            case "VICTORIES":
+                System.out.println("Victòries:      " + valor);
                 break;
             default:
                 System.out.println(col + ": " + valor);
@@ -253,11 +255,35 @@ public class GestorBBDD {
     // ═════════════════════════════════════════════════════════════════════════
     //  MÈTODES ESPECÍFICS DEL JOC
     // ═════════════════════════════════════════════════════════════════════════
+    
+    /** Registra un nou jugador a la BBDD (Menú Registre) */
+    public boolean registrarUsuario(String username) {
+        if (conexion == null) return false;
+        // Obtenim seguent ID
+        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
+        int nextId = 1;
+        if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) {
+            nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+        }
+        
+        // Comprovar si ja existeix
+        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) {
+            System.out.println("L'usuari ja existeix!");
+            return false;
+        }
+        
+        String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories) VALUES (" + nextId + ", '" + username + "', 'Blau', 0)";
+        return insert(conexion, sql) > 0;
+    }
+
+    /** Comprova si un jugador existeix (Menú Login) */
+    public boolean loginUsuario(String username) {
+        if (conexion == null) return false;
+        return !select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty();
+    }
 
     /**
      * Guarda (o actualitza) una partida i els seus jugadors a la BBDD.
-     *
-     * @param p Partida a guardar
      */
     public void guardarBBDD(Partida p) {
         if (conexion == null) {
@@ -265,95 +291,151 @@ public class GestorBBDD {
             return;
         }
 
-        // Guardar partida (MERGE)
-        String sqlPartida =
-            "MERGE INTO partidas dst " +
-            "USING (SELECT 1 FROM dual) src ON (dst.id = 1) " +
-            "WHEN MATCHED THEN " +
-            "  UPDATE SET turnos = " + p.getTurnos() +
-            ", jugador_actual = " + p.getJugadorActual() +
-            ", finalizada = " + (p.isFinalizada() ? 1 : 0) + " " +
-            "WHEN NOT MATCHED THEN " +
-            "  INSERT (turnos, jugador_actual, finalizada) VALUES (" +
-            p.getTurnos() + ", " + p.getJugadorActual() + ", " +
-            (p.isFinalizada() ? 1 : 0) + ")";
+        int idPartida = 1;
+        int idTaulell = 1;
 
+        // MERGE PARTIDA
+        String sqlPartida =
+            "MERGE INTO partida dst " +
+            "USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
+            "WHEN MATCHED THEN " +
+            "  UPDATE SET torn_actual = " + p.getJugadorActual() + " " +
+            "WHEN NOT MATCHED THEN " +
+            "  INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
+            "  VALUES (" + idPartida + ", " + idTaulell + ", 'Partida Principal', SYSDATE, " + p.getJugadorActual() + ")";
         insert(conexion, sqlPartida);
 
-        // Guardar jugadors
-        for (Jugador j : p.getJugadores()) {
+        java.util.List<Jugador> jugadores = p.getJugadores();
+        for (int i = 0; i < jugadores.size(); i++) {
+            Jugador j = jugadores.get(i);
+            int idJugador = i + 1; // 1,2,3,4,5...
+            
+            // Si el jugador ha ganado, le sumamos 1 a victories
+            int addVictoria = (p.isFinalizada() && j.equals(p.getGanador())) ? 1 : 0;
+
+            // MERGE JUGADOR
             String sqlJugador =
-                "MERGE INTO jugadores dst " +
-                "USING (SELECT '" + j.getNombre() + "' AS nombre FROM dual) src " +
-                "  ON (dst.nombre = src.nombre AND dst.partida_id = 1) " +
+                "MERGE INTO jugador dst " +
+                "USING (SELECT " + idJugador + " AS id_j FROM dual) src ON (dst.id_jugador = src.id_j) " +
                 "WHEN MATCHED THEN " +
-                "  UPDATE SET posicion = " + j.getPosicion() + " " +
+                "  UPDATE SET nom_jugador = '" + j.getNombre() + "', color_jugador = '" + j.getColor() + "', victories = victories + " + addVictoria + " " +
                 "WHEN NOT MATCHED THEN " +
-                "  INSERT (nombre, color, posicion, partida_id) VALUES ('" +
-                j.getNombre() + "', '" + j.getColor() + "', " +
-                j.getPosicion() + ", 1)";
+                "  INSERT (id_jugador, nom_jugador, color_jugador, victories) " +
+                "  VALUES (" + idJugador + ", '" + j.getNombre() + "', '" + j.getColor() + "', " + addVictoria + ")";
             insert(conexion, sqlJugador);
+
+            // Obtener inventario si aplica
+            int daus = 0, peixos = 0, boles = 0;
+            if (j instanceof Pinguino pingu && pingu.getInv() != null) {
+                Item itDau = pingu.getInv().getItem(Dado.class);
+                if (itDau != null) daus = itDau.getCantidad();
+                
+                Item itPez = pingu.getInv().getItem(Pez.class);
+                if (itPez != null) peixos = itPez.getCantidad();
+                
+                Item itBola = pingu.getInv().getItem(BolaDeNieve.class);
+                if (itBola != null) boles = itBola.getCantidad();
+            }
+
+            // MERGE JUGADOR_PARTIDA (posició + inventari combinats segons disseny corregit)
+            String sqlJP =
+                "MERGE INTO jugador_partida dst " +
+                "USING (SELECT " + idJugador + " AS id_j, " + idPartida + " AS id_p FROM dual) src " +
+                "ON (dst.id_jugador = src.id_j AND dst.id_partida = src.id_p) " +
+                "WHEN MATCHED THEN " +
+                "  UPDATE SET posicio_actual = " + j.getPosicion() + ", daus = " + daus + ", peixos = " + peixos + ", boles_neu = " + boles + " " +
+                "WHEN NOT MATCHED THEN " +
+                "  INSERT (id_jugador, id_partida, posicio_actual, daus, peixos, boles_neu) " +
+                "  VALUES (" + idJugador + ", " + idPartida + ", " + j.getPosicion() + ", " + daus + ", " + peixos + ", " + boles + ")";
+            insert(conexion, sqlJP);
+            
+            // MERGE TORN
+            String sqlTorn =
+                "MERGE INTO torn dst " +
+                "USING (SELECT " + idJugador + " AS id_j, " + idPartida + " AS id_p FROM dual) src " +
+                "ON (dst.id_jugador = src.id_j AND dst.id_partida = src.id_p) " +
+                "WHEN MATCHED THEN " +
+                "  UPDATE SET ordre = " + i + " " +
+                "WHEN NOT MATCHED THEN " +
+                "  INSERT (id_jugador, id_partida, ordre) VALUES (" + idJugador + ", " + idPartida + ", " + i + ")";
+            insert(conexion, sqlTorn);
         }
+        System.out.println("Partida guardada a la BBDD Correctament format Nou!");
     }
 
     /**
      * Carrega una partida des de la BBDD a partir del seu ID.
-     *
-     * @param id ID de la partida
-     * @return Partida carregada, o Partida buida si no es troba
      */
-    public Partida cargarBBDD(int id) {
+    public Partida cargarBBDD(int id_partida) {
         Partida partida = new Partida();
         if (conexion == null) {
             System.out.println("Sense connexió. No es pot carregar la partida.");
             return partida;
         }
 
-        // Carregar partida
         ArrayList<String> colsPartida = new ArrayList<>();
-        colsPartida.add("TURNOS");
-        colsPartida.add("JUGADOR_ACTUAL");
-        colsPartida.add("FINALIZADA");
+        colsPartida.add("ID_PARTIDA");
+        colsPartida.add("TORN_ACTUAL");
 
         ArrayList<LinkedHashMap<String, String>> filesPartida =
-            select(conexion, "SELECT * FROM partidas WHERE id = " + id);
+            select(conexion, "SELECT * FROM partida WHERE id_partida = " + id_partida);
 
         if (filesPartida.isEmpty()) {
-            System.out.println("No s'ha trobat la partida amb id=" + id);
+            System.out.println("No s'ha trobat la partida amb ID=" + id_partida);
             return partida;
         }
 
         LinkedHashMap<String, String> fp = filesPartida.get(0);
-        partida.setTurnos       (Integer.parseInt(fp.get("TURNOS")));
-        partida.setJugadorActual(Integer.parseInt(fp.get("JUGADOR_ACTUAL")));
-        partida.setFinalizada   ("1".equals(fp.get("FINALIZADA")));
+        partida.setJugadorActual(Integer.parseInt(fp.get("TORN_ACTUAL")));
 
         // Mostrar per consola
         System.out.println("── Partida carregada ──");
-        procesamientoSelect(conexion, "SELECT * FROM partidas WHERE id = " + id, colsPartida);
+        procesamientoSelect(conexion, "SELECT * FROM partida WHERE id_partida = " + id_partida, colsPartida);
 
-        // Carregar jugadors
+        // Carregar jugadors_partida JOIN jugador
         ArrayList<String> colsJugador = new ArrayList<>();
-        colsJugador.add("NOMBRE");
-        colsJugador.add("COLOR");
-        colsJugador.add("POSICION");
+        colsJugador.add("NOM_JUGADOR");
+        colsJugador.add("POSICIO_ACTUAL");
+        colsJugador.add("DAUS");
+        colsJugador.add("PEIXOS");
+        colsJugador.add("BOLES_NEU");
 
-        ArrayList<LinkedHashMap<String, String>> filesJugadors =
-            select(conexion, "SELECT * FROM jugadores WHERE partida_id = " + id);
+        String sqlJugadors = 
+            "SELECT j.nom_jugador, j.color_jugador, jp.posicio_actual, jp.daus, jp.peixos, jp.boles_neu " +
+            "FROM jugador j " +
+            "JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador " +
+            "JOIN torn t ON j.id_jugador = t.id_jugador " +
+            "WHERE jp.id_partida = " + id_partida + " AND t.id_partida = " + id_partida + " " +
+            "ORDER BY t.ordre ASC";
+
+        ArrayList<LinkedHashMap<String, String>> filesJugadors = select(conexion, sqlJugadors);
 
         System.out.println("── Jugadors ──");
         for (LinkedHashMap<String, String> fila : filesJugadors) {
-            String nom    = fila.get("NOMBRE");
-            String color  = fila.get("COLOR");
-            int    posicio = Integer.parseInt(fila.get("POSICION"));
+            String nom = fila.get("NOM_JUGADOR");
+            String color = fila.get("COLOR_JUGADOR") != null ? fila.get("COLOR_JUGADOR") : "Gris";
+            int posicio = Integer.parseInt(fila.get("POSICIO_ACTUAL"));
+            int daus = Integer.parseInt(fila.get("DAUS") != null ? fila.get("DAUS") : "0");
+            int peixos = Integer.parseInt(fila.get("PEIXOS") != null ? fila.get("PEIXOS") : "0");
+            int boles = Integer.parseInt(fila.get("BOLES_NEU") != null ? fila.get("BOLES_NEU") : "0");
 
-            Pinguino pg = new Pinguino(nom, color);
-            pg.setPosicion(posicio);
-            partida.anadirJugador(pg);
-
-            for (String col : colsJugador) {
-                procesarValor(col, fila.get(col));
+            Jugador j;
+            if (nom.contains("Foca") || nom.contains("CPU")) {
+                Foca foca = new Foca();
+                foca.setNombre(nom);
+                foca.setColor(color);
+                j = foca;
+            } else {
+                Inventario inv = new Inventario();
+                if (daus > 0) inv.anadirItem(new Dado("normal", daus, 1, 6)); // Asumimos dados normales limitados a cantidad
+                if (peixos > 0) inv.anadirItem(new Pez(peixos));
+                if (boles > 0) inv.anadirItem(new BolaDeNieve(boles));
+                j = new Pinguino(nom, color, posicio, inv);
             }
+            j.setPosicion(posicio);
+            partida.anadirJugador(j);
+
+            for (String col : colsJugador) procesarValor(col, fila.get(col));
         }
 
         return partida;

@@ -63,6 +63,7 @@ public class PantallaJuego {
         eventos.setText("¡El juego ha comenzado!");
 
         gestorPartida = new GestorPartida();
+        gestorPartida.setGestorBBDD(new controlador.GestorBBDD()); // Activar BBDD Automática
 
         // Crear 4 jugadores + CPU Foca
         ArrayList<Jugador> jugadores = new ArrayList<>();
@@ -131,9 +132,16 @@ public class PantallaJuego {
         eventos.setText("Nueva partida iniciada.");
         dadoResultText.setText("-");
     }
-    @FXML private void handleSaveGame() { System.out.println("Saved game."); }
-    @FXML private void handleLoadGame() { System.out.println("Loaded game.");}
-    @FXML private void handleQuitGame() { System.out.println("Exit...");     }
+    @FXML private void handleSaveGame() { 
+        gestorPartida.guardarPartida();
+        eventos.setText("Partida guardada en BBDD manual.");
+    }
+    @FXML private void handleLoadGame() { 
+        gestorPartida.cargarPartida(1);
+        syncVisualPositions(false);
+        eventos.setText("Partida cargada desde BBDD.");
+    }
+    @FXML private void handleQuitGame() { System.exit(0); }
 
     // Button actions
     @FXML
@@ -171,6 +179,9 @@ public class PantallaJuego {
                 dado.setDisable(false); // Es el turno de un pingüino humano
             }
         }
+        
+        // AUTO-SAVE MÀGICO: desprès de cada tira o acció CPU es guarda asíncronament / sincrònicament a BBDD
+        gestorPartida.guardarPartida();
     }
 
     /**
@@ -219,5 +230,15 @@ public class PantallaJuego {
 
     public void setGestorPartida(GestorPartida gestorPartida) {
         this.gestorPartida = gestorPartida;
+    }
+
+    /** Permite a la PantallaMenu inyectar el usuario logueado como Jugador 1 */
+    public void setUsuarioLogueado(String username) {
+        if (gestorPartida != null && gestorPartida.getPartida() != null) {
+            Jugador j1 = gestorPartida.getPartida().getJugadores().get(0);
+            if (j1 != null) {
+                j1.setNombre(username);
+            }
+        }
     }
 }
