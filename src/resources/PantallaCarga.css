@@ -1,0 +1,40 @@
+.root {
+    -fx-font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
+    -fx-background-color: linear-gradient(to top, #04091a, #0d2757);
+}
+
+.icon-spinner {
+    -fx-font-size: 100px;
+}
+
+.loading-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-text-fill: linear-gradient(to right, #4facfe, #00f2fe);
+    -fx-effect: dropshadow(gaussian, rgba(79, 172, 254, 0.4), 10, 0.5, 0, 0);
+}
+
+.loading-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: #a0c4e4;
+    -fx-font-style: italic;
+}
+
+/* PROGRESS BAR STYLING */
+.custom-progress-bar {
+    -fx-accent: #00f2fe; /* Color de llenado */
+    -fx-control-inner-background: rgba(255, 255, 255, 0.1);
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: rgba(79, 195, 247, 0.3);
+    -fx-border-width: 1;
+    -fx-padding: 2;
+}
+
+.custom-progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.8), 10, 0.3, 0, 0);
+}
