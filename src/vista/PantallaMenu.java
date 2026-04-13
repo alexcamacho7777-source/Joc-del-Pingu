@@ -63,13 +63,14 @@ public class PantallaMenu {
 
         if (!username.isEmpty() && !password.isEmpty()) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
-                Parent pantallaJuegoRoot = loader.load();
-                Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaCarga.fxml"));
+                Parent pantallaCargaRoot = loader.load();
+                Scene pantallaCargaScene = new Scene(pantallaCargaRoot);
 
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(pantallaJuegoScene);
-                stage.setTitle("El Joc del Pingüí - Partida");
+                stage.setScene(pantallaCargaScene);
+                stage.setTitle("El Joc del Pingüí - Cargando...");
+                // No lo maximizamos aquí directamente, dejamos que lo haga la carga si quieres, o podemos maximizar
                 stage.setMaximized(true);
             } catch (Exception e) {
                 e.printStackTrace();

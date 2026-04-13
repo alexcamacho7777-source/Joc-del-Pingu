@@ -1,37 +1,41 @@
 package vista;
 
-import javafx.animation.Animation;
-import javafx.animation.Interpolator;
-import javafx.animation.RotateTransition;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.ProgressIndicator;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class PantallaCarga {
 
-    @FXML private Label spinnerIcon;
-    @FXML private Label statusText;
-    @FXML private ProgressBar progressBar;
+    @FXML
+    private ProgressIndicator spinner;
 
     @FXML
     public void initialize() {
-        // Animacion del icono dando vueltas
-        RotateTransition rt = new RotateTransition(Duration.seconds(2), spinnerIcon);
-        rt.setByAngle(360);
-        rt.setCycleCount(Animation.INDEFINITE);
-        rt.setInterpolator(Interpolator.LINEAR);
-        rt.play();
+        System.out.println("Pantalla de Carga activada... simulando carga");
+        
+        // Simular un tiempo de carga de 3 segundos antes de iniciar el juego
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(event -> enterGame());
+        delay.play();
+    }
 
-        // Puedes simular carga en un hilo aparte aquí:
-        /*
-        new Thread(() -> {
-            for(int i = 0; i <= 100; i++) {
-                try { Thread.sleep(30); } catch(Exception e) {}
-                double p = i / 100.0;
-                javafx.application.Platform.runLater(() -> progressBar.setProgress(p));
-            }
-        }).start();
-        */
+    private void enterGame() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
+            Parent partidaRoot = loader.load();
+            Scene partidaScene = new Scene(partidaRoot);
+            
+            Stage stage = (Stage) spinner.getScene().getWindow();
+            stage.setScene(partidaScene);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            System.err.println("Error al cargar la pantalla del juego desde la pantalla de carga:");
+            e.printStackTrace();
+        }
     }
 }
