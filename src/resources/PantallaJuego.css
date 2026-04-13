@@ -127,16 +127,10 @@
 
 /* JUGADORES */
 .player {
-    -fx-stroke: rgba(255, 255, 255, 0.8);
-    -fx-stroke-width: 3.5;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 10, 0.5, 0, 3);
 }
 
-/* Colores Neón por Jugador */
-#P1 { -fx-fill: linear-gradient(to bottom right, #00c6ff, #0072ff); }
-#P2 { -fx-fill: linear-gradient(to bottom right, #ff416c, #ff4b2b); }
-#P3 { -fx-fill: linear-gradient(to bottom right, #11998e, #38ef7d); }
-#P4 { -fx-fill: linear-gradient(to bottom right, #f2c94c, #f2994a); }
+/* Colores Neón por Jugador (ya no aplican a la forma base, pero conservamos por si acaso para otros elementos) */
 
 /* Jugador activo (glow) */
 .current-player {

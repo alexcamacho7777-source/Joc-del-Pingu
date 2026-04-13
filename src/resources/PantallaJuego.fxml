@@ -17,7 +17,11 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Ellipse?>
+<?import javafx.scene.shape.Polygon?>
+<?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.Group?>
 
 <BorderPane
     xmlns="http://javafx.com/javafx/21.0.10"
@@ -78,16 +82,96 @@
                           GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
 
                     <!-- Jugadores: fx:id para Controller + id para CSS -->
-                    <Circle fx:id="P1" id="P1" radius="14.0" styleClass="player" />
-                    <Circle fx:id="P2" id="P2" radius="14.0" styleClass="player">
+                    <Group fx:id="P1" id="P1" styleClass="player">
+                        <children>
+                            <!-- Alas -->
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                            <!-- Pies -->
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                            <!-- Cuerpo -->
+                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                            <!-- Barriga -->
+                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                            <!-- Cabeza -->
+                            <Circle radius="10" fill="BLACK" translateY="-8"/>
+                            <!-- Cara -->
+                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                            <!-- Ojos -->
+                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                            <!-- Pico -->
+                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                            <!-- Sombrero P1 (Azul) -->
+                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#0072ff"/>
+                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#0072ff"/>
+                        </children>
+                    </Group>
+                    
+                    <Group fx:id="P2" id="P2" styleClass="player">
                         <GridPane.margin><Insets left="34.0" /></GridPane.margin>
-                    </Circle>
-                    <Circle fx:id="P3" id="P3" radius="14.0" styleClass="player">
+                        <children>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                            <Circle radius="10" fill="BLACK" translateY="-8"/>
+                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                            <!-- Sombrero P2 (Rojo) -->
+                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#ff4b2b"/>
+                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#ff4b2b"/>
+                        </children>
+                    </Group>
+                    
+                    <Group fx:id="P3" id="P3" styleClass="player">
                         <GridPane.margin><Insets left="68.0" /></GridPane.margin>
-                    </Circle>
-                    <Circle fx:id="P4" id="P4" radius="14.0" styleClass="player">
+                        <children>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                            <Circle radius="10" fill="BLACK" translateY="-8"/>
+                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                            <!-- Sombrero P3 (Verde) -->
+                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#11998e"/>
+                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#11998e"/>
+                        </children>
+                    </Group>
+                    
+                    <Group fx:id="P4" id="P4" styleClass="player">
                         <GridPane.margin><Insets left="102.0" /></GridPane.margin>
-                    </Circle>
+                        <children>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                            <Circle radius="10" fill="BLACK" translateY="-8"/>
+                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                            <!-- Sombrero P4 (Amarillo) -->
+                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#f2c94c"/>
+                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#f2c94c"/>
+                        </children>
+                    </Group>
                 </children>
             </GridPane>
         </StackPane>

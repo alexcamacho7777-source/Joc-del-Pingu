@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.effect.Glow?>
+<?import javafx.scene.control.ProgressIndicator?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="vista.PantallaCarga"
-           prefWidth="800" prefHeight="600"
            stylesheets="@PantallaCarga.css"
-           styleClass="root">
-    
-    <!-- Animación Central -->
-    <VBox alignment="CENTER" spacing="30">
-        <Label text="❄️" styleClass="icon-spinner" fx:id="spinnerIcon">
-            <effect><Glow level="0.8"/></effect>
-        </Label>
-        
-        <Label text="CARREGANT EL JOC..." styleClass="loading-title"/>
-        <Label text="Preparant l'aventura gelada..." styleClass="loading-subtitle" fx:id="statusText"/>
-        
-        <ProgressBar fx:id="progressBar" progress="0.0" prefWidth="400" styleClass="custom-progress-bar"/>
-    </VBox>
+           styleClass="loading-root"
+           prefWidth="800" prefHeight="600">
+
+    <!-- La ruedita de carga (ProgressIndicator) -->
+    <ProgressIndicator fx:id="spinner" styleClass="loading-spinner"/>
+
 </StackPane>

@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
+import javafx.scene.Group;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
@@ -47,10 +48,10 @@ public class PantallaJuego {
 
     // Game board and player pieces
     @FXML private GridPane tablero;
-    @FXML private Circle P1;
-    @FXML private Circle P2;
-    @FXML private Circle P3;
-    @FXML private Circle P4;
+    @FXML private Group P1;
+    @FXML private Group P2;
+    @FXML private Group P3;
+    @FXML private Group P4;
 
     private GestorPartida gestorPartida;
     private int p1Position = 0;
