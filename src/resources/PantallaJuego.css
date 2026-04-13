@@ -1,6 +1,6 @@
 .root {
     -fx-font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
-    -fx-background-color: linear-gradient(to bottom right, #0a1128, #1c3c6a, #0a1128);
+    -fx-background-color: radial-gradient(center 50% 50%, radius 80%, #1c3c6a, #0a1128);
 }
 
 /* MENU BAR */
@@ -16,28 +16,34 @@
 
 /* TABLERO (BOARD) */
 .board {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-background-radius: 20;
-    -fx-padding: 10;
-    -fx-border-color: rgba(79, 195, 247, 0.3);
-    -fx-border-radius: 20;
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 20, 0.3, 0, 8);
+    -fx-background-color: rgba(176, 224, 230, 0.2); /* Ice blue tint */
+    -fx-background-radius: 25;
+    -fx-padding: 20;
+    -fx-border-color: rgba(173, 216, 230, 0.4); /* Lighter ice border */
+    -fx-border-radius: 25;
+    -fx-border-width: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 40, 0, 0, 20);
+}
+
+.board .cell {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1;
 }
 
 /* TEXTOS DEL TABLERO */
 .cell-title {
-    -fx-font-size: 26px;
+    -fx-font-size: 24px;
     -fx-font-weight: 900;
-    -fx-fill: #ffffff;
-    -fx-effect: dropshadow(gaussian, rgba(79, 172, 254, 0.8), 10, 0.6, 0, 0);
+    -fx-fill: linear-gradient(to bottom, #ffffff, #80d8ff);
+    -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 12, 0.6, 0, 0);
 }
 
 .cell-type {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-fill: #a0c4e4;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0, 0.8), 3, 1.0, 0, 0);
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-fill: #e0f2f1;
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.5), 2, 0, 0, 1);
 }
 
 /* BARRA INFERIOR */
@@ -134,7 +140,19 @@
 
 /* Jugador activo (glow) */
 .current-player {
-    -fx-effect: dropshadow(gaussian, #ffffff, 20, 0.8, 0, 0);
-    -fx-scale-x: 1.15;
-    -fx-scale-y: 1.15;
+    -fx-effect: dropshadow(gaussian, #00ffff, 25, 0.8, 0, 0);
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+/* Efectos de Casillas específicas */
+.cell-type {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-fill: #e0faff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 2, 0, 0, 1);
+}
+
+.board .text {
+    -fx-effect: dropshadow(gaussian, rgba(0, 195, 255, 0.3), 5, 0.2, 0, 0);
 }

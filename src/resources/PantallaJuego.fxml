@@ -21,6 +21,8 @@
 <?import javafx.scene.shape.Polygon?>
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Text?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.Group?>
 
 <BorderPane
@@ -49,11 +51,18 @@
 
     <center>
         <StackPane>
+            <!-- AMBIENT BACKGROUND -->
+            <ImageView fx:id="bgImage" opacity="0.15" preserveRatio="false">
+                <image>
+                    <Image url="@fondo_carga.png"/>
+                </image>
+            </ImageView>
+
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
-            <GridPane fx:id="tablero" gridLinesVisible="true" styleClass="board" prefHeight="520.0">
+            <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" prefHeight="520.0">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="20.0" />
                     <ColumnConstraints percentWidth="20.0" />
@@ -77,8 +86,8 @@
 
                 <children>
                     <!-- Esquinas -->
-                    <Text text="Start" styleClass="cell-title" />
-                    <Text text="Finish" styleClass="cell-title"
+                    <Text text="🏁 INICIO" styleClass="cell-title" />
+                    <Text text="META 🏆" styleClass="cell-title"
                           GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
 
                     <!-- Jugadores: fx:id para Controller + id para CSS -->

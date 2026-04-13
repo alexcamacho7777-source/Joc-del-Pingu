@@ -9,21 +9,7 @@
             prefWidth="800" prefHeight="600"
             stylesheets="@PantallaMenu.css">
 
-    <top>
-        <MenuBar styleClass="menu-bar">
-            <menus>
-                <Menu text="Joc del Pingüí">
-                    <items>
-                        <MenuItem fx:id="newGame"  text="❄️ Nova Partida"     onAction="#handleNewGame"/>
-                        <MenuItem fx:id="saveGame" text="💾 Guardar Partida"  onAction="#handleSaveGame"/>
-                        <MenuItem fx:id="loadGame" text="📂 Carregar Partida" onAction="#handleLoadGame"/>
-                        <SeparatorMenuItem/>
-                        <MenuItem fx:id="quitGame" text="🚪 Sortir"           onAction="#handleQuitGame"/>
-                    </items>
-                </Menu>
-            </menus>
-        </MenuBar>
-    </top>
+
 
     <center>
         <StackPane>

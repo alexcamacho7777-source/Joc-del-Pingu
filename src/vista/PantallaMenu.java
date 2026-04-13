@@ -67,17 +67,16 @@ public class PantallaMenu {
             if (bd.loginUsuario(username)) {
                 System.out.println("Login Correcte a Oracle DB!");
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
-                    Parent pantallaJuegoRoot = loader.load();
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaLobby.fxml"));
+                    Parent pantallaLobbyRoot = loader.load();
                     
-                    // Pasar el nom a la pantalla de joc abans de mostrar-la
-                    PantallaJuego controladorJoc = loader.getController();
-                    controladorJoc.setUsuarioLogueado(username);
+                    PantallaLobby controladorLobby = loader.getController();
+                    controladorLobby.setUsuarioLogueado(username);
 
-                    Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);
+                    Scene pantallaLobbyScene = new Scene(pantallaLobbyRoot);
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                    stage.setScene(pantallaJuegoScene);
-                    stage.setTitle("El Joc del Pingüí - Partida");
+                    stage.setScene(pantallaLobbyScene);
+                    stage.setTitle("El Joc del Pingüí - Menú Principal");
                     stage.setMaximized(true);
                 } catch (Exception e) {
                     e.printStackTrace();

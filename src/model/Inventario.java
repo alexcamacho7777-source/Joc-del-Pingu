@@ -61,6 +61,18 @@ public class Inventario {
         return total;
     }
 
+    public int contarItems(String tipo) {
+        int total = 0;
+        for (Item i : lista) {
+            if (tipo.equals("Peces") && i instanceof Pez) total += i.getCantidad();
+            else if (tipo.equals("BolaNieve") && i instanceof BolaDeNieve) total += i.getCantidad();
+            else if (i instanceof Dado && ((Dado)i).getNombre().toLowerCase().contains(tipo.toLowerCase().replace("dado", ""))) {
+                total += i.getCantidad();
+            }
+        }
+        return total;
+    }
+
     public void quitarItemAleatorio(java.util.Random r) {
         if (!lista.isEmpty()) {
             lista.remove(r.nextInt(lista.size()));

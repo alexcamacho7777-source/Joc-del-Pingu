@@ -52,12 +52,13 @@ public class PantallaJuego {
     @FXML private Group P2;
     @FXML private Group P3;
     @FXML private Group P4;
+    @FXML private javafx.scene.image.ImageView bgImage;
 
     private GestorPartida gestorPartida;
     private int p1Position = 0;
     private static final int COLUMNS = 5;
     private static final String TAG_CASILLA_TEXT = "CASILLA_TEXT";
-    private Circle[] tokens;
+    private javafx.scene.Node[] tokens;
 
     @FXML
     private void initialize() {
@@ -99,7 +100,13 @@ public class PantallaJuego {
         GridPane.setMargin(focaCircle, new Insets(0, 0, 0, 136));
         tablero.getChildren().add(focaCircle);
 
-        tokens = new Circle[]{P1, P2, P3, P4, focaCircle};
+        tokens = new javafx.scene.Node[]{P1, P2, P3, P4, focaCircle};
+
+        // BIND BACKGROUND SIZE
+        if (bgImage != null) {
+            bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
+            bgImage.fitHeightProperty().bind(((StackPane)bgImage.getParent()).heightProperty());
+        }
 
         mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero());
         syncVisualPositions(false);
@@ -113,14 +120,24 @@ public class PantallaJuego {
 
             if (i > 0 && i < 49) {
                 String tipo = casilla.getClass().getSimpleName();
-                Text texto = new Text(tipo);
+                String icon = switch (tipo) {
+                    case "Agujero" -> "🕳️";
+                    case "Oso" -> "🐻";
+                    case "Trineo" -> "🛷";
+                    case "SueloQuebradizo" -> "⛸️";
+                    default -> "❄️";
+                };
+                
+                Text texto = new Text(icon + "\n" + tipo);
                 texto.setUserData(TAG_CASILLA_TEXT);
                 texto.getStyleClass().add("cell-type");
+                texto.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
                 int row = i / COLUMNS;
                 int col = i % COLUMNS;
                 GridPane.setRowIndex(texto, row);
                 GridPane.setColumnIndex(texto, col);
+                GridPane.setHalignment(texto, javafx.geometry.HPos.CENTER);
                 tablero.getChildren().add(texto);
             }
         }
@@ -140,9 +157,18 @@ public class PantallaJuego {
     @FXML private void handleLoadGame() { 
         gestorPartida.cargarPartida(1);
         syncVisualPositions(false);
+        actualizarInventarioUI();
         eventos.setText("Partida cargada desde BBDD.");
     }
     @FXML private void handleQuitGame() { System.exit(0); }
+
+    public void iniciarCargandoPartida() {
+        // En lugar de inicializar todo a cero, cargamos la partida desde la BD
+        gestorPartida.cargarPartida(1);
+        syncVisualPositions(false);
+        actualizarInventarioUI();
+        eventos.setText("Partida cargada exitosamente. ¡Sigue jugando!");
+    }
 
     // Button actions
     @FXML
@@ -224,10 +250,45 @@ public class PantallaJuego {
         }
     }
 
-    @FXML private void handleRapido() { System.out.println("Fast.");  /* TODO */ }
-    @FXML private void handleLento()  { System.out.println("Slow.");  /* TODO */ }
-    @FXML private void handlePeces()  { System.out.println("Fish.");  /* TODO */ }
-    @FXML private void handleNieve()  { System.out.println("Snow.");  /* TODO */ }
+    @FXML private void handleRapido() { 
+        eventos.setText("Has usado Dado rápido."); 
+        usarObjetoYActualizar("DadoRapido");
+    }
+    @FXML private void handleLento()  { 
+        eventos.setText("Has usado Dado lento."); 
+        usarObjetoYActualizar("DadoLento");
+    }
+    @FXML private void handlePeces()  { 
+        eventos.setText("Has comido Peces (+ vida o energía)."); 
+        usarObjetoYActualizar("Peces");
+    }
+    @FXML private void handleNieve()  { 
+        eventos.setText("Has lanzado una Bola de nieve."); 
+        usarObjetoYActualizar("BolaNieve");
+    }
+
+    private void usarObjetoYActualizar(String tipo) {
+        // Lógica simplificada: en un futuro interactuará con gestorPartida.usarItem(...)
+        actualizarInventarioUI();
+    }
+
+    private void actualizarInventarioUI() {
+        // Actualiza los textos de la UI leyendo el inventario del jugador humano
+        if(gestorPartida.getPartida().getJugadores().size() > 0) {
+           Jugador j0 = gestorPartida.getPartida().getJugadores().get(0);
+           if (j0 instanceof Pinguino) {
+               Inventario inv = ((Pinguino) j0).getInv();
+               if(inv != null) {
+                   // Aquí deberíamos contar cuántos items de cada tipo tiene
+                   // Por simplicidad en la UI:
+                   rapido_t.setText("Dado rápido: " + inv.contarItems("DadoRapido"));
+                   lento_t.setText("Dado lento: " + inv.contarItems("DadoLento"));
+                   peces_t.setText("Peces: " + inv.contarItems("Peces"));
+                   nieve_t.setText("Bolas nieve: " + inv.contarItems("BolaNieve"));
+               }
+           }
+        }
+    }
 
     public void setGestorPartida(GestorPartida gestorPartida) {
         this.gestorPartida = gestorPartida;
