@@ -10,7 +10,9 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.Group;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -52,7 +54,7 @@ public class PantallaJuego {
     @FXML private Group P2;
     @FXML private Group P3;
     @FXML private Group P4;
-    @FXML private javafx.scene.image.ImageView bgImage;
+    @FXML private ImageView bgImage;
 
     private GestorPartida gestorPartida;
     private int p1Position = 0;
