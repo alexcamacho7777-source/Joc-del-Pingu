@@ -1,6 +1,6 @@
 .loading-root {
     /* Aquí definimos que use la foto que enviaste como fondo */
-    -fx-background-image: url('fondo_carga.png');
+    -fx-background-image: url('/resources/fondo_carga.png');
     -fx-background-size: cover;
     -fx-background-position: center;
 }
