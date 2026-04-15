@@ -294,7 +294,15 @@ public class GestorBBDD {
         int idPartida = 1;
         int idTaulell = 1;
 
-        // MERGE PARTIDA
+        // MERGE TAULELL (Asegurar que existe el tablero padre para evitar ORA-02291 en Partida)
+        String sqlTaulell = 
+            "MERGE INTO taulell dst " +
+            "USING (SELECT " + idTaulell + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
+            "WHEN NOT MATCHED THEN " +
+            "  INSERT (id_taulell, nom_taulell) VALUES (" + idTaulell + ", 'Tablero Estándar')";
+        insert(conexion, sqlTaulell);
+
+        // MERGE PARTIDA (Depende de Taulell)
         String sqlPartida =
             "MERGE INTO partida dst " +
             "USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
