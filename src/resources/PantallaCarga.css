@@ -1,6 +1,5 @@
 .loading-root {
-    /* Aquí definimos que use la foto que enviaste como fondo */
-    -fx-background-image: url('fondo_carga.png');
+    /* El fondo se asigna ahora directamente desde Java (PantallaCarga.java) */
     -fx-background-size: cover;
     -fx-background-position: center;
 }
