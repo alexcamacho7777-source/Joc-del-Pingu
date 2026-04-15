@@ -104,8 +104,9 @@ public class PantallaJuego {
 
         tokens = new javafx.scene.Node[]{P1, P2, P3, P4, focaCircle};
 
-        // BIND BACKGROUND SIZE
+        // BIND BACKGROUND SIZE (set managed false to prevent infinite loop/zoom)
         if (bgImage != null) {
+            bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
             bgImage.fitHeightProperty().bind(((StackPane)bgImage.getParent()).heightProperty());
         }
