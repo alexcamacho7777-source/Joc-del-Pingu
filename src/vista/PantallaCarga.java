@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -15,9 +16,24 @@ public class PantallaCarga {
     private ProgressIndicator spinner;
 
     @FXML
+    private StackPane rootPane;
+
+    @FXML
     public void initialize() {
         System.out.println("Pantalla de Carga activada... simulando carga");
         
+        try {
+            java.net.URL imageUrl = getClass().getResource("/resources/fondo_carga.png");
+            if (imageUrl != null) {
+                String imagePath = imageUrl.toExternalForm();
+                rootPane.setStyle("-fx-background-image: url('" + imagePath + "'); -fx-background-size: cover; -fx-background-position: center;");
+            } else {
+                System.err.println("No se pudo encontrar /resources/fondo_carga.png en el classpath.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar la imagen de fondo: " + e.getMessage());
+        }
+
         // Simular un tiempo de carga de 3 segundos antes de iniciar el juego
         PauseTransition delay = new PauseTransition(Duration.seconds(3));
         delay.setOnFinished(event -> enterGame());

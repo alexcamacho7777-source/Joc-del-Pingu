@@ -2,7 +2,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.control.ProgressIndicator?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml/1"
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="vista.PantallaCarga"
            stylesheets="@PantallaCarga.css"
            styleClass="loading-root"
