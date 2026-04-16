@@ -259,6 +259,13 @@ public class GestorBBDD {
     /** Registra un nou jugador a la BBDD (Menú Registre) */
     public boolean registrarUsuario(String username) {
         if (conexion == null) return false;
+        
+        // Comprovar si ja existeix
+        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) {
+            System.out.println("L'usuari ja existeix!");
+            return true; // Retornem true perque ja està registrat
+        }
+
         // Obtenim seguent ID
         ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
         int nextId = 1;
@@ -266,14 +273,15 @@ public class GestorBBDD {
             nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
         }
         
-        // Comprovar si ja existeix
-        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) {
-            System.out.println("L'usuari ja existeix!");
-            return false;
-        }
-        
         String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories) VALUES (" + nextId + ", '" + username + "', 'Blau', 0)";
         return insert(conexion, sql) > 0;
+    }
+
+    public int getIDJugador(String username) {
+        if (conexion == null) return -1;
+        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT id_jugador FROM jugador WHERE nom_jugador = '" + username + "'");
+        if (res.isEmpty() || res.get(0).get("ID_JUGADOR") == null) return -1;
+        return Integer.parseInt(res.get(0).get("ID_JUGADOR"));
     }
 
     /** Comprova si un jugador existeix (Menú Login) */
@@ -291,10 +299,19 @@ public class GestorBBDD {
             return;
         }
 
-        int idPartida = 1;
-        int idTaulell = 1;
+        int idPartida = p.getId();
+        if (idPartida <= 0) {
+            ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_partida) as MAX_ID FROM partida");
+            idPartida = 1;
+            if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) {
+                idPartida = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+            }
+            p.setId(idPartida);
+        }
 
-        // MERGE TAULELL (Asegurar que existe el tablero padre para evitar ORA-02291 en Partida)
+        int idTaulell = 1; // De moment usem un tablero base
+
+        // MERGE TAULELL
         String sqlTaulell = 
             "MERGE INTO taulell dst " +
             "USING (SELECT " + idTaulell + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
@@ -302,7 +319,7 @@ public class GestorBBDD {
             "  INSERT (id_taulell, nom_taulell) VALUES (" + idTaulell + ", 'Tablero Estándar')";
         insert(conexion, sqlTaulell);
 
-        // MERGE PARTIDA (Depende de Taulell)
+        // MERGE PARTIDA
         String sqlPartida =
             "MERGE INTO partida dst " +
             "USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
@@ -310,23 +327,32 @@ public class GestorBBDD {
             "  UPDATE SET torn_actual = " + p.getJugadorActual() + " " +
             "WHEN NOT MATCHED THEN " +
             "  INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-            "  VALUES (" + idPartida + ", " + idTaulell + ", 'Partida Principal', SYSDATE, " + p.getJugadorActual() + ")";
+            "  VALUES (" + idPartida + ", " + idTaulell + ", 'Partida #" + idPartida + "', SYSDATE, " + p.getJugadorActual() + ")";
         insert(conexion, sqlPartida);
 
         java.util.List<Jugador> jugadores = p.getJugadores();
         for (int i = 0; i < jugadores.size(); i++) {
             Jugador j = jugadores.get(i);
-            int idJugador = i + 1; // 1,2,3,4,5...
             
+            // Buscar ID real del jugador por su nombre
+            int idJugador = getIDJugador(j.getNombre());
+            if (idJugador == -1) {
+                // Si no existe, lo registramos automáticamente (ej: CPU o Foca temporal)
+                registrarUsuario(j.getNombre());
+                idJugador = getIDJugador(j.getNombre());
+            }
+
+            if (idJugador == -1) continue; // Skip if still not found
+
             // Si el jugador ha ganado, le sumamos 1 a victories
             int addVictoria = (p.isFinalizada() && j.equals(p.getGanador())) ? 1 : 0;
 
-            // MERGE JUGADOR
+            // MERGE JUGADOR (Actualitzar només victories si ja existeix)
             String sqlJugador =
                 "MERGE INTO jugador dst " +
                 "USING (SELECT " + idJugador + " AS id_j FROM dual) src ON (dst.id_jugador = src.id_j) " +
                 "WHEN MATCHED THEN " +
-                "  UPDATE SET nom_jugador = '" + j.getNombre() + "', color_jugador = '" + j.getColor() + "', victories = victories + " + addVictoria + " " +
+                "  UPDATE SET victories = victories + " + addVictoria + " " +
                 "WHEN NOT MATCHED THEN " +
                 "  INSERT (id_jugador, nom_jugador, color_jugador, victories) " +
                 "  VALUES (" + idJugador + ", '" + j.getNombre() + "', '" + j.getColor() + "', " + addVictoria + ")";
@@ -345,7 +371,7 @@ public class GestorBBDD {
                 if (itBola != null) boles = itBola.getCantidad();
             }
 
-            // MERGE JUGADOR_PARTIDA (posició + inventari combinats segons disseny corregit)
+            // MERGE JUGADOR_PARTIDA
             String sqlJP =
                 "MERGE INTO jugador_partida dst " +
                 "USING (SELECT " + idJugador + " AS id_j, " + idPartida + " AS id_p FROM dual) src " +
@@ -368,7 +394,7 @@ public class GestorBBDD {
                 "  INSERT (id_jugador, id_partida, ordre) VALUES (" + idJugador + ", " + idPartida + ", " + i + ")";
             insert(conexion, sqlTorn);
         }
-        System.out.println("Partida guardada a la BBDD Correctament format Nou!");
+        System.out.println("Partida #" + idPartida + " guardada corregida!");
     }
 
     /**
@@ -376,6 +402,7 @@ public class GestorBBDD {
      */
     public Partida cargarBBDD(int id_partida) {
         Partida partida = new Partida();
+        partida.setId(id_partida);
         if (conexion == null) {
             System.out.println("Sense connexió. No es pot carregar la partida.");
             return partida;
@@ -447,5 +474,16 @@ public class GestorBBDD {
         }
 
         return partida;
+    }
+
+    public ArrayList<Integer> getListaPartidas() {
+        ArrayList<Integer> ids = new ArrayList<>();
+        if (conexion == null) return ids;
+        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT id_partida FROM partida ORDER BY id_partida DESC");
+        for (LinkedHashMap<String, String> fila : res) {
+            String idStr = fila.get("ID_PARTIDA");
+            if (idStr != null) ids.add(Integer.parseInt(idStr));
+        }
+        return ids;
     }
 }
