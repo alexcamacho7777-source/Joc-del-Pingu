@@ -250,29 +250,35 @@ public class PantallaJuego {
     }
 
     // Menu actions
-    @FXML private void handleNewGame()  { 
-        gestorPartida.nuevaPartida(); 
-        syncVisualPositions(false);
-        eventos.setText("Nueva partida iniciada.");
-        dadoResultText.setText("-");
-    }
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        eventos.setText("Partida guardada en BBDD manual.");
+        eventos.setText("Partida guardada en BBDD.");
     }
-    @FXML private void handleLoadGame() { 
-        gestorPartida.cargarPartida(1);
-        syncVisualPositions(false);
-        actualizarInventarioUI();
-        eventos.setText("Partida cargada desde BBDD.");
+
+    @FXML private void handleQuitGame() { 
+        try {
+            // Regresar al menú principal (Login)
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaMenu.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage stage = (javafx.stage.Stage) tablero.getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setTitle("El Juego del Pingüino - Menú");
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            System.out.println("Error al salir: " + e.getMessage());
+            System.exit(0);
+        }
     }
-    @FXML private void handleQuitGame() { System.exit(0); }
 
     public void iniciarCargandoPartida(int id) {
         // Cargamos la partida desde la BD con el ID seleccionado
         gestorPartida.cargarPartida(id);
+        syncLoadedJugadores(); // ¡Esencial para que los pingüinos se muevan!
         syncVisualPositions(false);
         actualizarInventarioUI();
+        
+        Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
+        dadoResultText.setText("Turno de: " + (prox != null ? prox.getNombre() : "..."));
         eventos.setText("Partida #" + id + " carregada exitosament.");
     }
 
@@ -313,7 +319,9 @@ public class PantallaJuego {
 
         // 3. Animación paso a paso
         animarMovimiento(actual, posAnterior, posNueva, () -> {
-            dadoResultText.setText("Turno de: " + actual.getNombre());
+            Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
+            dadoResultText.setText("Turno de: " + (siguiente != null ? siguiente.getNombre() : "..."));
+            
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
             
@@ -321,8 +329,8 @@ public class PantallaJuego {
             gestorPartida.guardarPartida();
 
             // 4. Siguiente turno (IA o Humano)
-            Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
-            if (siguiente != null && siguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
+            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
+            if (proxSiguiente != null && proxSiguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
                 javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
                 pause.setOnFinished(e -> procesarSiguienteTurno());
                 pause.play();
@@ -424,14 +432,19 @@ public class PantallaJuego {
     }
 
     private void actualizarInventarioUI() {
-        // Actualiza los textos de la UI leyendo el inventario del jugador humano
         if(gestorPartida.getPartida().getJugadores().size() > 0) {
-           Jugador j0 = gestorPartida.getPartida().getJugadores().get(0);
-           if (j0 instanceof Pinguino) {
-               Inventario inv = ((Pinguino) j0).getInv();
+           // Buscamos al primer jugador humano para mostrar su inventario
+           Jugador jHumano = null;
+           for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+               if(j instanceof Pinguino p && !p.isEsIA()) {
+                   jHumano = j;
+                   break;
+               }
+           }
+           
+           if (jHumano instanceof Pinguino p) {
+               Inventario inv = p.getInv();
                if(inv != null) {
-                   // Aquí deberíamos contar cuántos items de cada tipo tiene
-                   // Por simplicidad en la UI:
                    rapido_t.setText("Dado rápido: " + inv.contarItems("DadoRapido"));
                    lento_t.setText("Dado lento: " + inv.contarItems("DadoLento"));
                    peces_t.setText("Peces: " + inv.contarItems("Peces"));
@@ -443,15 +456,46 @@ public class PantallaJuego {
 
     public void setGestorPartida(GestorPartida gestorPartida) {
         this.gestorPartida = gestorPartida;
+        if (gestorPartida != null && gestorPartida.getPartida() != null) {
+            syncLoadedJugadores();
+            syncVisualPositions(false);
+            actualizarInventarioUI();
+        }
     }
 
-    /** Permite a la PantallaMenu inyectar el usuario logueado como Jugador 1 */
+    /**
+     * Re-vincula els objectes Jugador carregats de la BBDD amb els nodes visuals (P1, P2...).
+     */
+    private void syncLoadedJugadores() {
+        if (gestorPartida == null || gestorPartida.getPartida() == null) return;
+        
+        java.util.List<Jugador> jugadores = gestorPartida.getPartida().getJugadores();
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+        
+        tokenMap.clear();
+        for (int i = 0; i < jugadores.size(); i++) {
+            Jugador j = jugadores.get(i);
+            if (j instanceof model.Foca) {
+                javafx.scene.Node focaAvatar = tablero.lookup("#FOCA");
+                if (focaAvatar != null) tokenMap.put(j, focaAvatar);
+            } else if (i < pTokens.length && pTokens[i] != null) {
+                pTokens[i].setVisible(true);
+                tokenMap.put(j, pTokens[i]);
+            }
+        }
+    }
+
+    /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
-            Jugador j1 = gestorPartida.getPartida().getJugadores().get(0);
-            if (j1 != null) {
-                j1.setNombre(username);
+            for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+                if (j instanceof Pinguino p && !p.isEsIA()) {
+                    p.setNombre(username);
+                    break;
+                }
             }
+            syncVisualPositions(false);
+            actualizarInventarioUI();
         }
     }
 }

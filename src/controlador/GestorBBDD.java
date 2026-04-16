@@ -9,12 +9,11 @@ import java.util.Scanner;
 
 /**
  * Gestiona la connexió i les operacions BBDD del joc.
- * Implementació final alineada amb l'Informe Tècnic Corregit.
+ * Implementació final alineada amb l'Informe Tècnic Oficial.
  */
 public class GestorBBDD {
 
     private static final String URL_CENTRO = "jdbc:oracle:thin:@//192.168.3.26:1521/XEPDB2";
-    private static final String URL_FUERA  = "jdbc:oracle:thin:@//oracle.ilerna.com:1521/XEPDB2";
     private static final String USER_PROJ  = "DW2526_GR03_PINGU";
     private static final String PASS_PROJ  = "AACGFAM";
 
@@ -22,6 +21,8 @@ public class GestorBBDD {
 
     public GestorBBDD() {
         this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
+        // Inicialitzem dades estàtiques si les taules estan buides
+        inicializarTablasMaestras();
     }
 
     public Connection getConexion() { return conexion; }
@@ -35,13 +36,12 @@ public class GestorBBDD {
             }
             return con;
         } catch (Exception e) {
-            System.out.println("No s'ha pogut connectar directament: " + e.getMessage());
+            System.out.println("Error connexió: " + e.getMessage());
         }
         return null;
     }
 
     public static Connection conectarBaseDatos(Scanner scan) {
-        System.out.println("Iniciant connexió manual...");
         return conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
     }
 
@@ -51,9 +51,15 @@ public class GestorBBDD {
         }
     }
 
-    public static int insert(Connection con, String sql) { return executeInsUpDel(con, sql, "Insert"); }
-    public static int update(Connection con, String sql) { return executeInsUpDel(con, sql, "Update"); }
-    public static int delete(Connection con, String sql) { return executeInsUpDel(con, sql, "Delete"); }
+    public static int executeInsUpDel(Connection con, String sql, String etiqueta) {
+        if (con == null) return 0;
+        try (Statement st = con.createStatement()) {
+            return st.executeUpdate(sql);
+        } catch (SQLException e) {
+            System.out.println("Error " + etiqueta + ": " + e.getMessage());
+            return 0;
+        }
+    }
 
     public static ArrayList<LinkedHashMap<String, String>> select(Connection con, String sql) {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
@@ -69,36 +75,68 @@ public class GestorBBDD {
                 resultados.add(fila);
             }
         } catch (SQLException e) {
-            System.out.println("Error en SELECT: " + e.getMessage());
+            System.out.println("Error SELECT: " + e.getMessage());
         }
         return resultados;
     }
 
-    public static int executeInsUpDel(Connection con, String sql, String etiqueta) {
-        if (con == null) return 0;
+    private boolean ejecutar(Connection con, String sql) {
+        if (con == null) return false;
         try (Statement st = con.createStatement()) {
-            return st.executeUpdate(sql);
+            st.executeUpdate(sql);
+            return true;
         } catch (SQLException e) {
-            System.out.println("Error en " + etiqueta + " [" + (sql.length()>60?sql.substring(0,60):sql) + "]: " + e.getMessage());
-            return 0;
+            // Silenciem errors d'insercions duplicades en càrrega inicial
+            if (!e.getMessage().contains("ORA-00001")) {
+                System.out.println("Error SQL: " + e.getMessage());
+            }
+            return false;
         }
     }
 
-    public static void procesamientoSelect(Connection con, String sql, ArrayList<String> columnas) {
-        ArrayList<LinkedHashMap<String, String>> filas = select(con, sql);
-        for (LinkedHashMap<String, String> fila : filas) {
-            for (String col : columnas) {
-                String valor = fila.get(col.toUpperCase());
-                if (valor != null) procesarValor(col, valor);
+    private void commit(Connection con) {
+        try { if (con != null) con.commit(); } catch (SQLException ignored) {}
+    }
+
+    /**
+     * Omple les taules mestres si estan buides (Annex 02).
+     */
+    private void inicializarTablasMaestras() {
+        if (conexion == null) return;
+        
+        // 1. Tipus de casella
+        ArrayList<LinkedHashMap<String, String>> resTipus = select(conexion, "SELECT COUNT(*) as TOTAL FROM tipus_casella");
+        if (resTipus.isEmpty() || Integer.parseInt(resTipus.get(0).get("TOTAL")) == 0) {
+            System.out.println("Poblant taules mestres...");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (1, 'Normal', 'Sense efecte')");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (2, 'Os', 'Retorna a l''inici')");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (3, 'Forat', 'Retrocedeix')");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (4, 'Trineu', 'Avanca')");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (5, 'Interrogant', 'Event aleatori')");
+        }
+
+        // 2. Taulell 1
+        ArrayList<LinkedHashMap<String, String>> resTau = select(conexion, "SELECT COUNT(*) as TOTAL FROM taulell WHERE id_taulell = 1");
+        if (resTau.isEmpty() || Integer.parseInt(resTau.get(0).get("TOTAL")) == 0) {
+            ejecutar(conexion, "INSERT INTO taulell VALUES (1, 50)");
+        }
+
+        // 3. Caselles per defecte
+        ArrayList<LinkedHashMap<String, String>> resCas = select(conexion, "SELECT COUNT(*) as TOTAL FROM casella WHERE id_taulell = 1");
+        if (resCas.isEmpty() || Integer.parseInt(resCas.get(0).get("TOTAL")) == 0) {
+            for (int i = 1; i <= 50; i++) {
+                int tipus = 1; // Majoritariament normals
+                if (i == 4 || i == 15 || i == 30) tipus = 2; // Ous
+                if (i == 10 || i == 25 || i == 40) tipus = 3; // Forats
+                if (i == 5 || i == 20 || i == 35) tipus = 4; // Trineus
+                if (i % 7 == 0) tipus = 5; // Interrogants
+                ejecutar(conexion, "INSERT INTO casella (id_casella, id_taulell, id_tipus, numero_casella) VALUES (" + i + ", 1, " + tipus + ", " + i + ")");
             }
         }
+        commit(conexion);
     }
 
-    public static void procesarValor(String col, String valor) {
-        System.out.println(col.toUpperCase() + ": " + valor);
-    }
-
-    // ── MÈTODES ESPECÍFICS ───────────────────────────────────────────────────
+    // ── MÈTODES ESPECÍFICS JOC ──────────────────────────────────────────────
 
     public boolean registrarUsuario(String username) {
         if (conexion == null) return false;
@@ -106,11 +144,10 @@ public class GestorBBDD {
 
         ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
         int nextId = 1;
-        if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) {
-            nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
-        }
+        if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+        
         String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories) VALUES (" + nextId + ", '" + username + "', 'Blau', 0)";
-        return insert(conexion, sql) > 0;
+        return executeInsUpDel(conexion, sql, "Registro") > 0;
     }
 
     public int getIDJugador(String username) {
@@ -123,39 +160,14 @@ public class GestorBBDD {
         return !select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty();
     }
 
-    private boolean ejecutar(Connection con, String sql) {
-        if (con == null) return false;
-        try (Statement st = con.createStatement()) {
-            st.executeUpdate(sql);
-            return true;
-        } catch (SQLException e) {
-            System.out.println("Error SQL: " + e.getMessage());
-            return false;
-        }
-    }
-
-    private void commit(Connection con) {
-        try { if (con != null) con.commit(); } catch (SQLException ignored) {}
-    }
-
-    /**
-     * Guarda la partida segons l'informe tècnic oficial.
-     */
     public void guardarBBDD(Partida p) {
         if (conexion == null) return;
-
         try {
-            // 1. Jugadors
             java.util.List<Jugador> jugadores = p.getJugadores();
             for (Jugador j : jugadores) {
                 if (getIDJugador(j.getNombre()) == -1) registrarUsuario(j.getNombre());
             }
 
-            // 2. Taulell
-            ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT 1 AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
-                    "WHEN NOT MATCHED THEN INSERT (id_taulell, mida_taulell) VALUES (1, 50)");
-
-            // 3. ID Partida
             int idPartida = p.getId();
             if (idPartida <= 0) {
                 ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_partida) as MAX_ID FROM partida");
@@ -164,7 +176,6 @@ public class GestorBBDD {
                 p.setId(idPartida);
             }
 
-            // 4. Partida (torn_actual és l'ordre del jugador 1, 2, 3...)
             int numTorn = p.getJugadorActual() + 1;
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
                     "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + " " +
@@ -172,18 +183,15 @@ public class GestorBBDD {
                     "VALUES (" + idPartida + ", 1, 'Partida #" + idPartida + "', SYSDATE, " + numTorn + ")";
             ejecutar(conexion, sqlP);
 
-            // 5. Jugador_Partida i Torn
             for (int i = 0; i < jugadores.size(); i++) {
                 Jugador j = jugadores.get(i);
                 int idJ = getIDJugador(j.getNombre());
                 if (idJ == -1) continue;
 
-                // Victories
                 if (p.isFinalizada() && j.equals(p.getGanador())) {
                     ejecutar(conexion, "UPDATE jugador SET victories = victories + 1 WHERE id_jugador = " + idJ);
                 }
 
-                // Inventari
                 int d=0, pe=0, b=0;
                 if (j instanceof Pinguino pin && pin.getInv() != null) {
                     d = pin.getInv().contarItems("DadoRapido") + pin.getInv().contarItems("DadoLento");
@@ -203,18 +211,15 @@ public class GestorBBDD {
                         "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, ordre) VALUES (" + idJ + ", " + idPartida + ", " + (i + 1) + ")");
             }
             commit(conexion);
-            System.out.println("Partida #" + idPartida + " guardada OK.");
+            System.out.println("Guardat correcte.");
         } catch (Exception ex) {
             System.out.println("Error guardar: " + ex.getMessage());
         }
     }
 
-    /**
-     * Carrega la partida segons l'informe tècnic oficial.
-     */
     public Partida cargarBBDD(int id_partida) {
         Partida p = new Partida();
-        p.setId(id_part_id_partida); if(true) p.setId(id_partida); // Fix simple
+        p.setId(id_partida);
         if (conexion == null) return p;
 
         ArrayList<LinkedHashMap<String, String>> resP = select(conexion, "SELECT * FROM partida WHERE id_partida = " + id_partida);
@@ -258,8 +263,8 @@ public class GestorBBDD {
 
     public ArrayList<Integer> getListaPartidas() {
         ArrayList<Integer> ids = new ArrayList<>();
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT id_partida FROM partida ORDER BY id_partida DESC");
-        for (LinkedHashMap<String, String> f : res) ids.add(Integer.parseInt(f.get("ID_PARTIDA")));
+        ArrayList<LinkedHashMap<String, String>> resList = select(conexion, "SELECT id_partida FROM partida ORDER BY id_partida DESC");
+        for (LinkedHashMap<String, String> f : resList) ids.add(Integer.parseInt(f.get("ID_PARTIDA")));
         return ids;
     }
 }
