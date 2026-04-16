@@ -2,57 +2,80 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.effect.Reflection?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.effect.DropShadow?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="vista.PantallaMenu"
-            prefWidth="800" prefHeight="600"
-            stylesheets="@PantallaMenu.css">
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="vista.PantallaMenu"
+           prefWidth="1280" prefHeight="720"
+           stylesheets="@PantallaMenu.css">
 
-    <top>
-        <MenuBar styleClass="menu-bar">
-            <menus>
-                <Menu text="Joc del Pingüí">
-                    <items>
-                        <MenuItem fx:id="newGame"  text="❄️ Nova Partida"     onAction="#handleNewGame"/>
-                        <MenuItem fx:id="saveGame" text="💾 Guardar Partida"  onAction="#handleSaveGame"/>
-                        <MenuItem fx:id="loadGame" text="📂 Carregar Partida" onAction="#handleLoadGame"/>
-                        <SeparatorMenuItem/>
-                        <MenuItem fx:id="quitGame" text="🚪 Sortir"           onAction="#handleQuitGame"/>
-                    </items>
-                </Menu>
-            </menus>
-        </MenuBar>
-    </top>
+    <!-- FONDO CINEMÁTICO -->
+    <ImageView fitWidth="1280.0" fitHeight="720.0" pickOnBounds="true" preserveRatio="false">
+        <image>
+            <Image url="@fondo_menu.png" />
+        </image>
+    </ImageView>
 
-    <center>
-        <StackPane>
-            <VBox alignment="CENTER" spacing="35" maxWidth="400">
+    <!-- CAPA DE CONTENIDO -->
+    <BorderPane>
+        <top>
+            <MenuBar styleClass="menu-bar">
+                <menus>
+                    <Menu text="Joc del Pingüí">
+                        <items>
+                            <MenuItem fx:id="newGame"  text="❄️ Nova Partida"     onAction="#handleNewGame"/>
+                            <MenuItem fx:id="saveGame" text="💾 Guardar Partida"  onAction="#handleSaveGame"/>
+                            <MenuItem fx:id="loadGame" text="📂 Carregar Partida" onAction="#handleLoadGame"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem fx:id="quitGame" text="🚪 Sortir"           onAction="#handleQuitGame"/>
+                        </items>
+                    </Menu>
+                </menus>
+            </MenuBar>
+        </top>
+
+        <center>
+            <VBox alignment="CENTER" spacing="20">
                 
-                <!-- TÍTULO ANIMADO -->
+                <!-- TÍTULOS -->
                 <VBox alignment="CENTER" spacing="0">
-                    <Label text="🐧" style="-fx-font-size: 90px;">
-                        <effect><Reflection fraction="0.5" topOffset="-5.0" /></effect>
+                    <Label text="🐧" style="-fx-font-size: 80px;">
+                        <effect>
+                            <DropShadow color="#ffcc00" radius="15" spread="0.2" />
+                        </effect>
                     </Label>
                     <Label text="JOC DEL PINGÜÍ" styleClass="title"/>
                     <Label text="L'aventura gelada t'espera" styleClass="subtitle"/>
                 </VBox>
 
                 <!-- CARD DE LOGIN -->
-                <VBox spacing="20" styleClass="glass-card">
-                    <VBox spacing="5">
+                <VBox spacing="20" styleClass="glass-card" alignment="CENTER" maxWidth="420">
+                    <padding>
+                        <Insets top="40" right="40" bottom="40" left="40"/>
+                    </padding>
+
+                    <Label text="PERFIL DEL JUGADOR" styleClass="card-title"/>
+
+                    <VBox spacing="8" alignment="CENTER_LEFT">
                         <Label text="USUARI" styleClass="field-label"/>
-                        <TextField fx:id="userField" promptText="Introdueix el teu nom" styleClass="text-field"/>
+                        <HBox styleClass="input-container" alignment="CENTER_LEFT">
+                            <TextField fx:id="userField" promptText="Introdueix el teu nom" HBox.hgrow="ALWAYS" styleClass="styled-input"/>
+                            <Label text="🐧" styleClass="input-icon"/>
+                        </HBox>
                     </VBox>
                     
-                    <VBox spacing="5">
+                    <VBox spacing="8" alignment="CENTER_LEFT">
                         <Label text="CONTRASENYA" styleClass="field-label"/>
-                        <PasswordField fx:id="passField" promptText="••••••••" styleClass="password-field"/>
+                        <HBox styleClass="input-container" alignment="CENTER_LEFT">
+                            <PasswordField fx:id="passField" promptText="••••••••" HBox.hgrow="ALWAYS" styleClass="styled-input"/>
+                            <Label text="🔒" styleClass="input-icon"/>
+                        </HBox>
                     </VBox>
 
-                    <VBox spacing="15">
+                    <VBox spacing="15" alignment="CENTER">
                         <VBox.margin>
-                            <Insets top="15"/>
+                            <Insets top="10"/>
                         </VBox.margin>
                         <Button fx:id="loginButton" text="🎮 ENTRAR AL JOC" onAction="#handleLogin"
                                 maxWidth="Infinity" styleClass="button-primary"/>
@@ -63,6 +86,6 @@
 
                 <Label text="© 2026 Joc del Pingüí - DW2526 · Grup 03" styleClass="footer-text"/>
             </VBox>
-        </StackPane>
-    </center>
-</BorderPane>
+        </center>
+    </BorderPane>
+</StackPane>
