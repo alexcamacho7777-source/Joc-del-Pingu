@@ -8,7 +8,7 @@ public class Inventario {
     private List<Item> lista;
 
     public static final int MAX_DADOS = 3;
-    public static final int MAX_PECES = 2;
+    public static final int MAX_PECES = 5;
     public static final int MAX_BOLAS = 6;
 
     public Inventario() {

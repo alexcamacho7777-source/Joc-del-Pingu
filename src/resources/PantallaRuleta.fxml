@@ -8,6 +8,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Arc?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.Polygon?>
 <?import javafx.scene.text.Text?>
@@ -34,9 +35,23 @@
                             </image>
                         </ImageView>
 
-                        <!-- SOBREESCRITURA DE TEXTOS (Exactamente como en la captura) -->
-                        <!-- Norte (0°) -->
+                        <!-- CAPA DE MÁSCARA Y TEXTO (Reconstrucción limpia) -->
                         
+                        <!-- Norte (0°): Boles de neu -->
+                        <Arc centerX="250" centerY="250" radiusX="210" radiusY="210" startAngle="45" length="90" type="ROUND" fill="#cef5ffaa" />
+                        <Text text="OBTENIR 1-3&#10;BOLES DE NEU" textAlignment="CENTER" translateY="-130" rotate="0" style="-fx-font-size: 15; -fx-font-weight: 900; -fx-fill: #1a3c40;" />
+                        
+                        <!-- Este (90°): Dau Ràpid -->
+                        <Arc centerX="250" centerY="250" radiusX="210" radiusY="210" startAngle="-45" length="90" type="ROUND" fill="#d4ffd4aa" />
+                        <Text text="OBTENIR UN&#10;DAU RÀPID&#10;(BAIXA PROBABILITY)" textAlignment="CENTER" translateX="130" rotate="90" style="-fx-font-size: 10; -fx-font-weight: 900; -fx-fill: #1a401a;" />
+                        
+                        <!-- Sur (180°): Dau Lent -->
+                        <Arc centerX="250" centerY="250" radiusX="210" radiusY="210" startAngle="-135" length="90" type="ROUND" fill="#ffd4d4aa" />
+                        <Text text="OBTENIR UN&#10;DAU LENT&#10;(ALTA PROBABILITY)" textAlignment="CENTER" translateY="130" rotate="180" style="-fx-font-size: 10; -fx-font-weight: 900; -fx-fill: #401a1a;" />
+                        
+                        <!-- Oeste (270°): Peix -->
+                        <Arc centerX="250" centerY="250" radiusX="210" radiusY="210" startAngle="135" length="90" type="ROUND" fill="#ffffd4aa" />
+                        <Text text="OBTENIR&#10;UN PEIX" textAlignment="CENTER" translateX="-130" rotate="270" style="-fx-font-size: 15; -fx-font-weight: 900; -fx-fill: #40401a;" />
                     </StackPane>
                 </children>
                 <clip>
