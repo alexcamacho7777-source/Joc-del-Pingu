@@ -104,6 +104,8 @@ public class PantallaJuego {
             if(i < pTokens.length) {
                 pTokens[i].setVisible(true);
                 tokenMap.put(p, pTokens[i]);
+                GridPane.setHalignment(pTokens[i], javafx.geometry.HPos.CENTER);
+                GridPane.setValignment(pTokens[i], javafx.geometry.VPos.CENTER);
             }
         }
         
@@ -115,6 +117,8 @@ public class PantallaJuego {
             if(idx < pTokens.length) {
                 pTokens[idx].setVisible(true);
                 tokenMap.put(p, pTokens[idx]);
+                GridPane.setHalignment(pTokens[idx], javafx.geometry.HPos.CENTER);
+                GridPane.setValignment(pTokens[idx], javafx.geometry.VPos.CENTER);
             }
         }
 
@@ -136,7 +140,9 @@ public class PantallaJuego {
             emoji.setStyle("-fx-font-size: 20px;");
             
             sp.getChildren().addAll(bg, emoji);
-            GridPane.setMargin(sp, new Insets(0, 0, 0, 136));
+            // El margen anterior de 136px posiblemente desplazaba la foca fuera de la casilla
+            GridPane.setHalignment(sp, javafx.geometry.HPos.CENTER);
+            GridPane.setValignment(sp, javafx.geometry.VPos.CENTER);
             tablero.getChildren().add(sp);
             focaAvatar = sp;
         }
@@ -170,43 +176,27 @@ public class PantallaJuego {
                 VBox box = new VBox(2);
                 box.setUserData(TAG_CASILLA_TEXT);
                 box.setAlignment(Pos.CENTER);
-                box.setMaxSize(60, 60);
+                // Hacemos que la casilla ocupe todo el espacio disponible en la celda
+                box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                box.setPadding(new Insets(2));
+                
+                // Fondo totalmente transparente sin color sólido, solo un borde sutil opcional
+                box.setStyle("-fx-background-color: transparent; " +
+                             "-fx-border-color: rgba(255, 255, 255, 0.15); " +
+                             "-fx-border-width: 0.5;");
 
                 try {
-                    // Intentamos localizar el recurso de múltiples maneras posibles
-                    java.net.URL url = null;
-                    String[] attempts = {
-                        "/resources/images/casillas/" + tipo.toLowerCase() + ".png",
-                        "/images/casillas/" + tipo.toLowerCase() + ".png",
-                        "resources/images/casillas/" + tipo.toLowerCase() + ".png",
-                        "images/casillas/" + tipo.toLowerCase() + ".png",
-                        "/resources/images/casillas/normal.png"
-                    };
-
-                    for (String path : attempts) {
-                        url = getClass().getResource(path);
-                        if (url == null) url = getClass().getClassLoader().getResource(path);
-                        if (url == null && path.startsWith("/")) url = getClass().getResource(path.substring(1));
-                        if (url != null) break;
-                    }
-
-                    // Intento desesperado: Ruta de archivo absoluta (solo funciona en desarrollo local)
-                    if (url == null) {
-                        try {
-                            java.io.File file = new java.io.File("src/resources/images/casillas/" + tipo.toLowerCase() + ".png");
-                            if (file.exists()) url = file.toURI().toURL();
-                        } catch (Exception ignored) {}
-                    }
+                    // Intento de carga de imagen (si se encontraran)
+                    java.net.URL url = getClass().getResource("/resources/images/casillas/" + tipo.toLowerCase() + ".png");
+                    if (url == null) url = getClass().getResource("/images/casillas/" + tipo.toLowerCase() + ".png");
 
                     if (url != null) {
-                        Image img = new Image(url.toExternalForm(), true); // 'true' activa carga en background
+                        Image img = new Image(url.toExternalForm(), true);
                         ImageView iv = new ImageView(img);
-                        iv.setFitWidth(38);
-                        iv.setFitHeight(38);
+                        iv.setFitWidth(45); // Un poco más grandes
+                        iv.setFitHeight(45);
                         iv.setPreserveRatio(true);
-                        iv.setSmooth(true);
                         
-                        // Si es evento, usamos un StackPane para poner un icono encima de la base de hielo
                         if ("Evento".equals(tipo)) {
                             StackPane stack = new StackPane();
                             stack.getChildren().add(iv);
@@ -216,10 +206,10 @@ public class PantallaJuego {
                             box.getChildren().add(stack);
                         } else if ("Oso".equals(tipo)) {
                             StackPane stack = new StackPane();
-                            iv.setStyle("-fx-effect: inner-shadow(gaussian, red, 10, 0.5, 0, 0);");
+                            iv.setStyle("-fx-effect: innershadow(gaussian, red, 10, 0.5, 0, 0);");
                             stack.getChildren().add(iv);
                             Text angry = new Text("💢");
-                            angry.setStyle("-fx-font-size: 14px;");
+                            angry.setStyle("-fx-font-size: 16px;");
                             StackPane.setAlignment(angry, Pos.TOP_RIGHT);
                             stack.getChildren().add(angry);
                             box.getChildren().add(stack);
@@ -227,27 +217,26 @@ public class PantallaJuego {
                             box.getChildren().add(iv);
                         }
                     } else {
-                        // Fallback a emoji temático si todo falla
+                        // Emoji grande y claro si no hay imagen
                         String emojiText = switch (tipo) {
                             case "Agujero" -> "🕳️";
                             case "Oso" -> "🐻";
                             case "Trineo" -> "🛷";
                             case "SueloQuebradizo" -> "⛸️";
-                            case "Evento" -> "✨";
-                            default -> "❄️";
+                            case "Evento" -> "🎁";
+                            default -> "🧊";
                         };
                         Text fallback = new Text(emojiText);
-                        fallback.setStyle("-fx-font-size: 24px; -fx-fill: white;");
+                        fallback.setStyle("-fx-font-size: 32px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 5, 0, 0, 1);");
                         box.getChildren().add(fallback);
                     }
                 } catch (Exception e) {
-                    Text fallback = new Text("?");
-                    box.getChildren().add(fallback);
+                    box.getChildren().add(new Text("?"));
                 }
 
-                Label label = new Label(tipo);
+                Label label = new Label(tipo.toUpperCase());
                 label.getStyleClass().add("cell-type");
-                label.setStyle("-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;");
+                label.setStyle("-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-effect: dropshadow(one-pass-box, black, 2, 0, 0, 1);");
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
@@ -261,29 +250,35 @@ public class PantallaJuego {
     }
 
     // Menu actions
-    @FXML private void handleNewGame()  { 
-        gestorPartida.nuevaPartida(); 
-        syncVisualPositions(false);
-        eventos.setText("Nueva partida iniciada.");
-        dadoResultText.setText("-");
-    }
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        eventos.setText("Partida guardada en BBDD manual.");
+        eventos.setText("Partida guardada en BBDD.");
     }
-    @FXML private void handleLoadGame() { 
-        gestorPartida.cargarPartida(1);
-        syncVisualPositions(false);
-        actualizarInventarioUI();
-        eventos.setText("Partida cargada desde BBDD.");
+
+    @FXML private void handleQuitGame() { 
+        try {
+            // Regresar al menú principal (Login)
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaMenu.fxml"));
+            javafx.scene.Parent root = loader.load();
+            javafx.stage.Stage stage = (javafx.stage.Stage) tablero.getScene().getWindow();
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setTitle("El Juego del Pingüino - Menú");
+            stage.setMaximized(false);
+        } catch (Exception e) {
+            System.out.println("Error al salir: " + e.getMessage());
+            System.exit(0);
+        }
     }
-    @FXML private void handleQuitGame() { System.exit(0); }
 
     public void iniciarCargandoPartida(int id) {
         // Cargamos la partida desde la BD con el ID seleccionado
         gestorPartida.cargarPartida(id);
+        syncLoadedJugadores(); // ¡Esencial para que los pingüinos se muevan!
         syncVisualPositions(false);
         actualizarInventarioUI();
+        
+        Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
+        dadoResultText.setText("Turno de: " + (prox != null ? prox.getNombre() : "..."));
         eventos.setText("Partida #" + id + " carregada exitosament.");
     }
 
@@ -306,6 +301,11 @@ public class PantallaJuego {
         }
 
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+        if (actual == null) {
+            System.out.println("Error: No hay jugador actual definido.");
+            dado.setDisable(false);
+            return;
+        }
         int posAnterior = actual.getPosicion();
 
         // 1. Acciones IA
@@ -319,7 +319,9 @@ public class PantallaJuego {
 
         // 3. Animación paso a paso
         animarMovimiento(actual, posAnterior, posNueva, () -> {
-            dadoResultText.setText("Turno de: " + actual.getNombre());
+            Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
+            dadoResultText.setText("Turno de: " + (siguiente != null ? siguiente.getNombre() : "..."));
+            
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
             
@@ -327,8 +329,8 @@ public class PantallaJuego {
             gestorPartida.guardarPartida();
 
             // 4. Siguiente turno (IA o Humano)
-            Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
-            if (siguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
+            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
+            if (proxSiguiente != null && proxSiguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
                 javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
                 pause.setOnFinished(e -> procesarSiguienteTurno());
                 pause.play();
@@ -395,10 +397,14 @@ public class PantallaJuego {
                 token.setTranslateY(0);
                 GridPane.setRowIndex(token, newRow);
                 GridPane.setColumnIndex(token, newCol);
+                GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
+                GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
                 slide.play();
             } else {
                 GridPane.setRowIndex(token, newRow);
                 GridPane.setColumnIndex(token, newCol);
+                GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
+                GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
             }
         }
     }
@@ -426,14 +432,19 @@ public class PantallaJuego {
     }
 
     private void actualizarInventarioUI() {
-        // Actualiza los textos de la UI leyendo el inventario del jugador humano
         if(gestorPartida.getPartida().getJugadores().size() > 0) {
-           Jugador j0 = gestorPartida.getPartida().getJugadores().get(0);
-           if (j0 instanceof Pinguino) {
-               Inventario inv = ((Pinguino) j0).getInv();
+           // Buscamos al primer jugador humano para mostrar su inventario
+           Jugador jHumano = null;
+           for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+               if(j instanceof Pinguino p && !p.isEsIA()) {
+                   jHumano = j;
+                   break;
+               }
+           }
+           
+           if (jHumano instanceof Pinguino p) {
+               Inventario inv = p.getInv();
                if(inv != null) {
-                   // Aquí deberíamos contar cuántos items de cada tipo tiene
-                   // Por simplicidad en la UI:
                    rapido_t.setText("Dado rápido: " + inv.contarItems("DadoRapido"));
                    lento_t.setText("Dado lento: " + inv.contarItems("DadoLento"));
                    peces_t.setText("Peces: " + inv.contarItems("Peces"));
@@ -445,15 +456,46 @@ public class PantallaJuego {
 
     public void setGestorPartida(GestorPartida gestorPartida) {
         this.gestorPartida = gestorPartida;
+        if (gestorPartida != null && gestorPartida.getPartida() != null) {
+            syncLoadedJugadores();
+            syncVisualPositions(false);
+            actualizarInventarioUI();
+        }
     }
 
-    /** Permite a la PantallaMenu inyectar el usuario logueado como Jugador 1 */
+    /**
+     * Re-vincula els objectes Jugador carregats de la BBDD amb els nodes visuals (P1, P2...).
+     */
+    private void syncLoadedJugadores() {
+        if (gestorPartida == null || gestorPartida.getPartida() == null) return;
+        
+        java.util.List<Jugador> jugadores = gestorPartida.getPartida().getJugadores();
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+        
+        tokenMap.clear();
+        for (int i = 0; i < jugadores.size(); i++) {
+            Jugador j = jugadores.get(i);
+            if (j instanceof model.Foca) {
+                javafx.scene.Node focaAvatar = tablero.lookup("#FOCA");
+                if (focaAvatar != null) tokenMap.put(j, focaAvatar);
+            } else if (i < pTokens.length && pTokens[i] != null) {
+                pTokens[i].setVisible(true);
+                tokenMap.put(j, pTokens[i]);
+            }
+        }
+    }
+
+    /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
-            Jugador j1 = gestorPartida.getPartida().getJugadores().get(0);
-            if (j1 != null) {
-                j1.setNombre(username);
+            for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+                if (j instanceof Pinguino p && !p.isEsIA()) {
+                    p.setNombre(username);
+                    break;
+                }
             }
+            syncVisualPositions(false);
+            actualizarInventarioUI();
         }
     }
 }

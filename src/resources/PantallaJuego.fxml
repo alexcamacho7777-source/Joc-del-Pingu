@@ -35,14 +35,11 @@
     <top>
         <MenuBar>
             <menus>
-                <Menu mnemonicParsing="false" text="File">
+                <Menu mnemonicParsing="false" text="Menú">
                     <items>
-                        <MenuItem fx:id="newGame" mnemonicParsing="false" text="New" onAction="#handleNewGame"/>
+                        <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Guardar partida" onAction="#handleSaveGame"/>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Save" onAction="#handleSaveGame"/>
-                        <MenuItem fx:id="loadGame" mnemonicParsing="false" text="Load" onAction="#handleLoadGame"/>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Quit" onAction="#handleQuitGame"/>
+                        <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Sortir al menú principal" onAction="#handleQuitGame"/>
                     </items>
                 </Menu>
             </menus>
