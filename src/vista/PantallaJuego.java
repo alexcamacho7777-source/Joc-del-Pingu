@@ -6,18 +6,23 @@ import java.util.Random;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.Group;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import java.io.IOException;
 
 import controlador.GestorPartida;
 import model.Casilla;
 import model.Dado;
+import model.Evento;
 import model.Inventario;
+import model.Item;
 import model.Jugador;
 import model.Pinguino;
 import model.Tablero;
@@ -51,6 +56,9 @@ public class PantallaJuego {
     @FXML private Group P2;
     @FXML private Group P3;
     @FXML private Group P4;
+
+    // Containers
+    @FXML private StackPane boardStack;
 
     private GestorPartida gestorPartida;
     private int p1Position = 0;
@@ -151,8 +159,87 @@ public class PantallaJuego {
             GridPane.setRowIndex(P1, newRow);
             GridPane.setColumnIndex(P1, newCol);
             dado.setDisable(false);
+
+            // COMPROBAR CASILLA
+            Casilla c = gestorPartida.getPartida().getTablero().getCasilla(p1Position);
+            if (c instanceof Evento) {
+                mostrarRuleta();
+            } else {
+                c.realizarAccion(gestorPartida.getPartida(), (Pinguino) gestorPartida.getPartida().getJugadores().get(0));
+            }
+            refreshUI();
         });
         slide.play();
+    }
+
+    private void mostrarRuleta() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaRuleta.fxml"));
+            StackPane ruletaOverlay = loader.load();
+            PantallaRuleta controller = loader.getController();
+
+            // Configurar el callback cuando termine el giro
+            controller.setOnFinishedCallback(premio -> {
+                aplicarPremio(premio);
+            });
+
+            boardStack.getChildren().add(ruletaOverlay);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void aplicarPremio(String premio) {
+        Pinguino p = (Pinguino) gestorPartida.getPartida().getJugadores().get(0);
+        String mensaje = "";
+
+        switch (premio) {
+            case "Peix":
+                p.getInv().anadirItem(new model.Pez(1));
+                mensaje = "¡Has guanyat un peix!";
+                break;
+            case "Dau ràpid":
+                p.getInv().anadirItem(new model.Dado("Dado Ràpid", 1, 5, 10));
+                mensaje = "¡Has guanyat un dau ràpid (5-10)!";
+                break;
+            case "Dau lent":
+                p.getInv().anadirItem(new model.Dado("Dado Lent", 1, 1, 3));
+                mensaje = "¡Has guanyat un dau lent (1-3)!";
+                break;
+            case "Boles de neu":
+                int numBolas = new Random().nextInt(3) + 1;
+                p.getInv().anadirItem(new model.BolaDeNieve(numBolas));
+                mensaje = "¡Has guanyat " + numBolas + " boles de neu!";
+                break;
+        }
+
+        eventos.setText(mensaje);
+        refreshUI();
+    }
+
+    private void refreshUI() {
+        Pinguino p = (Pinguino) gestorPartida.getPartida().getJugadores().get(0);
+        Inventario inv = p.getInv();
+
+        // Contar ítems
+        int numPeces = 0;
+        int numNieve = 0;
+        int numRapido = 0;
+        int numLento = 0;
+
+        for (Item item : inv.getLista()) {
+            if (item instanceof model.Pez) numPeces += item.getCantidad();
+            else if (item instanceof model.BolaDeNieve) numNieve += item.getCantidad();
+            else if (item instanceof model.Dado d) {
+                if (d.getNombre().toLowerCase().contains("ràpid")) numRapido++;
+                else if (d.getNombre().toLowerCase().contains("lent")) numLento++;
+            }
+        }
+
+        peces_t.setText("Peces: " + numPeces);
+        nieve_t.setText("Bolas de nieve: " + numNieve);
+        rapido_t.setText("Dado rápido: " + numRapido);
+        lento_t.setText("Dado lento: " + numLento);
     }
 
     @FXML private void handleRapido() { System.out.println("Fast.");  /* TODO */ }
