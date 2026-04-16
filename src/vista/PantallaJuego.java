@@ -60,58 +60,82 @@ public class PantallaJuego {
     private int p1Position = 0;
     private static final int COLUMNS = 5;
     private static final String TAG_CASILLA_TEXT = "CASILLA_TEXT";
-    private javafx.scene.Node[] tokens;
+    private int numHumanos = 1;
+    private int numIA = 1;
+    private java.util.Map<Jugador, javafx.scene.Node> tokenMap = new java.util.HashMap<>();
+
+    public void configurarJugadores(int humanos, int ias) {
+        this.numHumanos = humanos;
+        this.numIA = ias;
+        prepararNuevaPartida();
+    }
 
     @FXML
     private void initialize() {
-        eventos.setText("¡El juego ha comenzado!");
+        eventos.setText("¡El juego ha comenzado!");        // BIND BACKGROUND SIZE (set managed false to prevent infinite loop/zoom)
+        if (bgImage != null) {
+            bgImage.setManaged(false);
+            bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
+            bgImage.fitHeightProperty().bind(((StackPane)bgImage.getParent()).heightProperty());
+        }
+    }
 
+    private void prepararNuevaPartida() {
         gestorPartida = new GestorPartida();
-        gestorPartida.setGestorBBDD(new controlador.GestorBBDD()); // Activar BBDD Automática
-
-        // Crear 4 jugadores + CPU Foca
+        gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
+        
         ArrayList<Jugador> jugadores = new ArrayList<>();
+        String[] colores = {"Azul", "Rojo", "Verde", "Amarillo"};
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
         
-        Inventario inv1 = new Inventario();
-        inv1.getLista().add(new Dado("normal", 1, 1, 6));
-        jugadores.add(new Pinguino("Jugador 1 (Azul)", "Azul", 0, inv1));
+        // Ocultar todos los tokens primero
+        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
         
-        Inventario inv2 = new Inventario();
-        inv2.getLista().add(new Dado("normal", 1, 1, 6));
-        jugadores.add(new Pinguino("Jugador 2 (Rojo)", "Rojo", 0, inv2));
+        tokenMap.clear();
 
-        Inventario inv3 = new Inventario();
-        inv3.getLista().add(new Dado("normal", 1, 1, 6));
-        jugadores.add(new Pinguino("Jugador 3 (Verde)", "Verde", 0, inv3));
+        for (int i = 0; i < numHumanos; i++) {
+            Pinguino p = new Pinguino("Jugador " + (i + 1), colores[i % 4]);
+            p.setEsIA(false);
+            jugadores.add(p);
+            if(i < pTokens.length) {
+                pTokens[i].setVisible(true);
+                tokenMap.put(p, pTokens[i]);
+            }
+        }
+        
+        for (int i = 0; i < numIA; i++) {
+            Pinguino p = new Pinguino("CPU " + (i + 1), colores[(numHumanos + i) % 4]);
+            p.setEsIA(true);
+            jugadores.add(p);
+            int idx = numHumanos + i;
+            if(idx < pTokens.length) {
+                pTokens[idx].setVisible(true);
+                tokenMap.put(p, pTokens[idx]);
+            }
+        }
 
-        Inventario inv4 = new Inventario();
-        inv4.getLista().add(new Dado("normal", 1, 1, 6));
-        jugadores.add(new Pinguino("Jugador 4 (Amari)", "Amarillo", 0, inv4));
-
+        // Foca
         model.Foca focaJugador = new model.Foca();
         jugadores.add(focaJugador);
+        
+        // Crear círculo de foca si no existe o reutilizar
+        Circle focaCircle = (Circle) tablero.lookup("#FOCA");
+        if (focaCircle == null) {
+            focaCircle = new Circle(15);
+            focaCircle.setId("FOCA");
+            focaCircle.getStyleClass().add("player");
+            focaCircle.setStyle("-fx-fill: linear-gradient(to bottom right, #ffffff, #666666); -fx-stroke: black; -fx-stroke-width: 4; -fx-effect: dropshadow(gaussian, red, 15, 0.5, 0, 0);");
+            GridPane.setMargin(focaCircle, new Insets(0, 0, 0, 136));
+            tablero.getChildren().add(focaCircle);
+        }
+        tokenMap.put(focaJugador, focaCircle);
 
         gestorPartida.nuevaPartida();
         gestorPartida.getPartida().setJugadores(jugadores);
 
-        // Crear ficha de la foca programáticamente
-        Circle focaCircle = new Circle(15);
-        focaCircle.setId("FOCA");
-        focaCircle.getStyleClass().add("player");
-        focaCircle.setStyle("-fx-fill: linear-gradient(to bottom right, #ffffff, #666666); -fx-stroke: black; -fx-stroke-width: 4; -fx-effect: dropshadow(gaussian, red, 15, 0.5, 0, 0);");
-        GridPane.setMargin(focaCircle, new Insets(0, 0, 0, 136));
-        tablero.getChildren().add(focaCircle);
-
-        tokens = new javafx.scene.Node[]{P1, P2, P3, P4, focaCircle};
-
-        // BIND BACKGROUND SIZE
-        if (bgImage != null) {
-            bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
-            bgImage.fitHeightProperty().bind(((StackPane)bgImage.getParent()).heightProperty());
-        }
-
         mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero());
         syncVisualPositions(false);
+        actualizarInventarioUI();
     }
 
     private void mostrarTiposDeCasillasEnTablero(Tablero t) {
@@ -127,6 +151,7 @@ public class PantallaJuego {
                     case "Oso" -> "🐻";
                     case "Trineo" -> "🛷";
                     case "SueloQuebradizo" -> "⛸️";
+                    case "Evento" -> "✨";
                     default -> "❄️";
                 };
                 
@@ -180,49 +205,94 @@ public class PantallaJuego {
             return;
         }
 
-        // Tirada actual (sea humano o CPU dependiendo a quién le toque)
-        boolean seguirTurnoCpu = true;
-        
-        while (seguirTurnoCpu && !gestorPartida.getPartida().isFinalizada()) {
-            Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
-            dado.setDisable(true);
-            
-            // Ejecutamos el turno real
-            gestorPartida.ejecutarTurnoCompleto();
-            
-            // Actualizar textos
-            dadoResultText.setText("Turno completado por: " + actual.getNombre());
+        dado.setDisable(true);
+        procesarSiguienteTurno();
+    }
+
+    private void procesarSiguienteTurno() {
+        if (gestorPartida.getPartida().isFinalizada()) {
+            dado.setDisable(false);
+            return;
+        }
+
+        Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+        int posAnterior = actual.getPosicion();
+
+        // 1. Acciones IA
+        if (actual.isEsIA()) {
+            gestorPartida.realizarAccionesIA(actual);
+        }
+
+        // 2. Lógica
+        gestorPartida.ejecutarTurnoCompleto();
+        int posNueva = actual.getPosicion();
+
+        // 3. Animación paso a paso
+        animarMovimiento(actual, posAnterior, posNueva, () -> {
+            dadoResultText.setText("Turno de: " + actual.getNombre());
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
-
-            // Sincronizar visualmente
-            syncVisualPositions(true);
             
+            actualizarInventarioUI();
+            gestorPartida.guardarPartida();
+
+            // 4. Siguiente turno (IA o Humano)
             Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
-            // Si el siguiente es Foca, el while hará su turno automáticamente
-            if (siguiente instanceof model.Foca) {
-                seguirTurnoCpu = true;
-                // Pequeña pausa visual no bloqueante real (simulada)
+            if (siguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
+                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
+                pause.setOnFinished(e -> procesarSiguienteTurno());
+                pause.play();
             } else {
-                seguirTurnoCpu = false; 
-                dado.setDisable(false); // Es el turno de un pingüino humano
+                dado.setDisable(false);
             }
-        }
-        
-        // AUTO-SAVE MÀGICO: desprès de cada tira o acció CPU es guarda asíncronament / sincrònicament a BBDD
-        gestorPartida.guardarPartida();
+        });
     }
+
+    private void animarMovimiento(Jugador j, int from, int to, Runnable onFinished) {
+        javafx.scene.Node token = tokenMap.get(j);
+        if (from == to || token == null) {
+            onFinished.run();
+            return;
+        }
+
+        javafx.animation.SequentialTransition seq = new javafx.animation.SequentialTransition();
+        int current = from;
+        int step = (to > from) ? 1 : -1;
+
+        // Si es un salto brusco (Oso, Trineo...), sincronizamos directamente al final
+        if (Math.abs(to - from) > 10) {
+            syncVisualPositions(true);
+            onFinished.run();
+            return;
+        }
+
+        while (current != to) {
+            current += step;
+            final int finalCurrent = current;
+            javafx.animation.PauseTransition stepPause = new javafx.animation.PauseTransition(Duration.millis(200));
+            stepPause.setOnFinished(e -> {
+                int f = finalCurrent;
+                if (f < 0) f = 0; if (f >= 50) f = 49;
+                GridPane.setRowIndex(token, f / COLUMNS);
+                GridPane.setColumnIndex(token, f % COLUMNS);
+            });
+            seq.getChildren().add(stepPause);
+        }
+
+        seq.setOnFinished(e -> onFinished.run());
+        seq.play();
+    }
+    
 
     /**
      * Sincroniza todas las fichas en la vista con sus posiciones lógicas.
      */
     private void syncVisualPositions(boolean animar) {
-        ArrayList<Jugador> jugadores = gestorPartida.getPartida().getJugadores();
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            javafx.scene.Node token = tokenMap.get(j);
+            if (token == null) continue;
 
-        for (int i = 0; i < jugadores.size() && i < tokens.length; i++) {
-            Jugador j = jugadores.get(i);
             int pos = j.getPosicion();
-            
             if (pos >= 50) pos = 49;
             if (pos < 0) pos = 0;
 
@@ -230,24 +300,15 @@ public class PantallaJuego {
             int newCol = pos % COLUMNS;
 
             if (animar) {
-                TranslateTransition slide = new TranslateTransition(Duration.millis(350), tokens[i]);
-                tokens[i].setTranslateX(0);
-                tokens[i].setTranslateY(0);
-                GridPane.setRowIndex(tokens[i], newRow);
-                GridPane.setColumnIndex(tokens[i], newCol);
+                javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
+                token.setTranslateX(0);
+                token.setTranslateY(0);
+                GridPane.setRowIndex(token, newRow);
+                GridPane.setColumnIndex(token, newCol);
+                slide.play();
             } else {
-                GridPane.setRowIndex(tokens[i], newRow);
-                GridPane.setColumnIndex(tokens[i], newCol);
-                tokens[i].setTranslateX(0);
-                tokens[i].setTranslateY(0);
-            }
-
-            if(gestorPartida.getPartida().getJugadorActual() == i && !gestorPartida.getPartida().isFinalizada()) {
-                if(!tokens[i].getStyleClass().contains("current-player")) {
-                    tokens[i].getStyleClass().add("current-player");
-                }
-            } else {
-                tokens[i].getStyleClass().remove("current-player");
+                GridPane.setRowIndex(token, newRow);
+                GridPane.setColumnIndex(token, newCol);
             }
         }
     }

@@ -150,21 +150,47 @@ public class GestorPartida {
 
     /**
      * Tira el dado correspondiente al jugador.
-     * Si el jugador tiene un dado especial en el inventario, lo usa;
-     * de lo contrario, usa un dado normal (1-6).
+     * Si el jugador es IA, decide qué dado usar.
+     * Si es Humano, usa el dado que se le indique (por defecto normal si no hay elección).
      */
     private int tirarDadoParaJugador(Jugador j) {
         if (j instanceof Pinguino p) {
-            Item dadoItem = p.getInv().getItem(Dado.class);
-            if (dadoItem instanceof Dado dado) {
-                int resultado = dado.tirar(random);
-                dado.setCantidad(dado.getCantidad() - 1);
-                if (dado.getCantidad() <= 0) p.getInv().quitarItem(dado);
-                return resultado;
+            // Lógica de elección de dado para IA
+            if (p.isEsIA()) {
+                Item it = decidirDadoIA(p);
+                if (it instanceof Dado d) {
+                    return usarDadoEspecial(p, d);
+                }
             }
+            // Si es humano o no eligió dado especial, dado normal
         }
-        // Dado normal 1-6
         return 1 + random.nextInt(6);
+    }
+
+    private Item decidirDadoIA(Pinguino p) {
+        int r = random.nextInt(100);
+        if (r < 40) { // 40% de probabilidad de que la IA use un dado especial si tiene
+            return p.getInv().getItem(Dado.class);
+        }
+        return null;
+    }
+
+    public int usarDadoEspecial(Pinguino p, Dado d) {
+        int resultado = d.tirar(random);
+        d.setCantidad(d.getCantidad() - 1);
+        if (d.getCantidad() <= 0) p.getInv().quitarItem(d);
+        return resultado;
+    }
+
+    /**
+     * Permite a la IA usar ítems antes de tirar (ej: peces).
+     */
+    public void realizarAccionesIA(Jugador j) {
+        if (!(j instanceof Pinguino p) || !p.isEsIA()) return;
+
+        // Si está cerca de la foca y tiene peces, se los guarda para el encuentro 
+        // o los usa proactivamente si implementamos soborno remoto.
+        // Por ahora, el encuentro con foca ya comprueba el inventario.
     }
 
     /**

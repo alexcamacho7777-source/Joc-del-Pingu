@@ -32,13 +32,13 @@ public class Tablero {
     }
 
     private Casilla crearCasillaAleatoria(int pos, Random r) {
-        int tipo = r.nextInt(10);
+        int tipo = r.nextInt(12); 
         return switch (tipo) {
             case 0 -> new Oso(pos);
             case 1 -> new Agujero(pos);
             case 2 -> new Trineo(pos);
-            case 3 -> new Evento(pos);
-            case 4 -> new SueloQuebradizo(pos);
+            case 3, 4, 5 -> new Evento(pos); // Más frecuencia de eventos
+            case 6 -> new SueloQuebradizo(pos);
             default -> new Normal(pos);
         };
     }
