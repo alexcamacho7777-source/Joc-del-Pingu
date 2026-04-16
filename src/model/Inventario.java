@@ -64,10 +64,19 @@ public class Inventario {
     public int contarItems(String tipo) {
         int total = 0;
         for (Item i : lista) {
-            if (tipo.equals("Peces") && i instanceof Pez) total += i.getCantidad();
-            else if (tipo.equals("BolaNieve") && i instanceof BolaDeNieve) total += i.getCantidad();
-            else if (i instanceof Dado && ((Dado)i).getNombre().toLowerCase().contains(tipo.toLowerCase().replace("dado", ""))) {
+            String nombreLower = i instanceof Dado ? ((Dado) i).getNombre().toLowerCase() : "";
+            
+            if (tipo.equals("Peces") && i instanceof Pez) {
                 total += i.getCantidad();
+            } else if (tipo.equals("BolaNieve") && i instanceof BolaDeNieve) {
+                total += i.getCantidad();
+            } else if (i instanceof Dado) {
+                // Normalizar búsqueda para ignorar tildes básicas o buscar coincidencias clave
+                if (tipo.contains("Rapido") && (nombreLower.contains("rapido") || nombreLower.contains("rápido"))) {
+                    total += i.getCantidad();
+                } else if (tipo.contains("Lento") && (nombreLower.contains("lento"))) {
+                    total += i.getCantidad();
+                }
             }
         }
         return total;

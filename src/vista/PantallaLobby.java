@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
@@ -13,6 +14,8 @@ import javafx.fxml.FXMLLoader;
 public class PantallaLobby {
 
     @FXML private Text welcomeText;
+    @FXML private ChoiceBox<Integer> choiceHumans;
+    @FXML private ChoiceBox<Integer> choiceIA;
     @FXML private Button btnNuevaPartida;
     @FXML private Button btnCargarPartida;
     @FXML private Button btnCerrarSesion;
@@ -22,6 +25,10 @@ public class PantallaLobby {
     @FXML
     private void initialize() {
         System.out.println("PantallaLobby initialized");
+        choiceHumans.getItems().addAll(1, 2, 3, 4);
+        choiceIA.getItems().addAll(0, 1, 2, 3);
+        choiceHumans.setValue(1); 
+        choiceIA.setValue(1); 
     }
 
     public void setUsuarioLogueado(String username) {
@@ -33,13 +40,17 @@ public class PantallaLobby {
 
     @FXML
     private void handleNuevaPartida(ActionEvent event) {
-        System.out.println("Creando nueva partida para: " + username);
+        // Validar máximo 4 jugadores en total si se quiere
+        int total = choiceHumans.getValue() + choiceIA.getValue();
+        if (total > 4) {
+             System.out.println("Error: Máximo 4 pingüinos totales.");
+             // Podríamos mostrar un alert
+        }
         lanzarJuego(event, false);
     }
 
     @FXML
     private void handleCargarPartida(ActionEvent event) {
-        System.out.println("Cargando partida para: " + username);
         lanzarJuego(event, true);
     }
 
@@ -65,8 +76,10 @@ public class PantallaLobby {
             PantallaJuego controladorJoc = loader.getController();
             controladorJoc.setUsuarioLogueado(username);
             
+            // Pasamos los recuentos elegidos
+            controladorJoc.configurarJugadores(choiceHumans.getValue(), choiceIA.getValue());
+            
             if (cargarPartida) {
-                // Aquí podrías decirle al controlador que inicie cargando la partida
                 controladorJoc.iniciarCargandoPartida();
             }
 

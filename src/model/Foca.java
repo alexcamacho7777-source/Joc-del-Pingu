@@ -9,6 +9,7 @@ public class Foca extends Jugador {
         super("Foca (CPU)", "Gris");
         this.sobornada = false;
         this.turnosBloqueada = 0;
+        this.setEsIA(true);
     }
 
     public boolean isSobornada() { 

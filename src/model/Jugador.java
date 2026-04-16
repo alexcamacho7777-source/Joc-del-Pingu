@@ -3,15 +3,20 @@ package model;
 
 public abstract class Jugador {
 
-	private int posicion;
+    private int posicion;
     private String nombre;
     private String color;
+    private boolean esIA;
 
     public Jugador(String nombre, String color) {
         this.nombre = nombre;
         this.color = color;
         this.posicion = 0;
+        this.esIA = false;
     }
+
+    public boolean isEsIA() { return esIA; }
+    public void setEsIA(boolean esIA) { this.esIA = esIA; }
 
     public int getPosicion() { return posicion; }
     public void setPosicion(int posicion) { this.posicion = posicion; }
