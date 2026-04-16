@@ -19,6 +19,7 @@ public class PantallaLobby {
     @FXML private Button btnNuevaPartida;
     @FXML private Button btnCargarPartida;
     @FXML private Button btnCerrarSesion;
+    @FXML private ChoiceBox<Integer> choicePartidas;
 
     private String username;
 
@@ -29,6 +30,14 @@ public class PantallaLobby {
         choiceIA.getItems().addAll(0, 1, 2, 3);
         choiceHumans.setValue(1); 
         choiceIA.setValue(1); 
+
+        // Carregar llista de partides de la BBDD
+        controlador.GestorBBDD bd = new controlador.GestorBBDD();
+        java.util.ArrayList<Integer> partidas = bd.getListaPartidas();
+        choicePartidas.getItems().addAll(partidas);
+        if (!partidas.isEmpty()) {
+            choicePartidas.setValue(partidas.get(0));
+        }
     }
 
     public void setUsuarioLogueado(String username) {
@@ -80,7 +89,13 @@ public class PantallaLobby {
             controladorJoc.configurarJugadores(choiceHumans.getValue(), choiceIA.getValue());
             
             if (cargarPartida) {
-                controladorJoc.iniciarCargandoPartida();
+                Integer gameId = choicePartidas.getValue();
+                if (gameId != null) {
+                    controladorJoc.iniciarCargandoPartida(gameId);
+                } else {
+                    System.out.println("No s'ha seleccionat cap partida per carregar.");
+                    return; // No lancem si no hi ha selecció
+                }
             }
 
             Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);

@@ -6,6 +6,7 @@ import java.util.Random;
 
 public class Partida {
 
+    private int id;
     private Tablero tablero;
     private ArrayList<Jugador> jugadores;
     private int turnos;
@@ -15,6 +16,9 @@ public class Partida {
     private List<String> logEventos;
     private Pinguino jugadorPierdeTurno;
     private Random random;
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
 
     public Partida() {

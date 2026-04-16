@@ -7,12 +7,16 @@ import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.Group;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -119,16 +123,24 @@ public class PantallaJuego {
         jugadores.add(focaJugador);
         
         // Crear círculo de foca si no existe o reutilizar
-        Circle focaCircle = (Circle) tablero.lookup("#FOCA");
-        if (focaCircle == null) {
-            focaCircle = new Circle(15);
-            focaCircle.setId("FOCA");
-            focaCircle.getStyleClass().add("player");
-            focaCircle.setStyle("-fx-fill: linear-gradient(to bottom right, #ffffff, #666666); -fx-stroke: black; -fx-stroke-width: 4; -fx-effect: dropshadow(gaussian, red, 15, 0.5, 0, 0);");
-            GridPane.setMargin(focaCircle, new Insets(0, 0, 0, 136));
-            tablero.getChildren().add(focaCircle);
+        javafx.scene.Node focaAvatar = tablero.lookup("#FOCA");
+        if (focaAvatar == null) {
+            StackPane sp = new StackPane();
+            sp.setId("FOCA");
+            sp.getStyleClass().add("player");
+            
+            Circle bg = new Circle(18);
+            bg.setStyle("-fx-fill: linear-gradient(to bottom right, #ffffff, #808080); -fx-stroke: #333333; -fx-stroke-width: 2;");
+            
+            Text emoji = new Text("🦭");
+            emoji.setStyle("-fx-font-size: 20px;");
+            
+            sp.getChildren().addAll(bg, emoji);
+            GridPane.setMargin(sp, new Insets(0, 0, 0, 136));
+            tablero.getChildren().add(sp);
+            focaAvatar = sp;
         }
-        tokenMap.put(focaJugador, focaCircle);
+        tokenMap.put(focaJugador, focaAvatar);
 
         gestorPartida.nuevaPartida();
         gestorPartida.getPartida().setJugadores(jugadores);
@@ -146,26 +158,104 @@ public class PantallaJuego {
 
             if (i > 0 && i < 49) {
                 String tipo = casilla.getClass().getSimpleName();
-                String icon = switch (tipo) {
-                    case "Agujero" -> "🕳️";
-                    case "Oso" -> "🐻";
-                    case "Trineo" -> "🛷";
-                    case "SueloQuebradizo" -> "⛸️";
-                    case "Evento" -> "✨";
-                    default -> "❄️";
+                String imagePath = switch (tipo) {
+                    case "Agujero" -> "/resources/images/casillas/agujero.png";
+                    case "Oso" -> "/resources/images/casillas/oso.png";
+                    case "Trineo" -> "/resources/images/casillas/trineo.png";
+                    case "SueloQuebradizo" -> "/resources/images/casillas/suelo_quebradizo.png";
+                    case "Evento" -> "/resources/images/casillas/normal.png"; // Usamos normal como base si no hay imagen propia
+                    default -> "/resources/images/casillas/normal.png";
                 };
                 
-                Text texto = new Text(icon + "\n" + tipo);
-                texto.setUserData(TAG_CASILLA_TEXT);
-                texto.getStyleClass().add("cell-type");
-                texto.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+                VBox box = new VBox(2);
+                box.setUserData(TAG_CASILLA_TEXT);
+                box.setAlignment(Pos.CENTER);
+                box.setMaxSize(60, 60);
+
+                try {
+                    // Intentamos localizar el recurso de múltiples maneras posibles
+                    java.net.URL url = null;
+                    String[] attempts = {
+                        "/resources/images/casillas/" + tipo.toLowerCase() + ".png",
+                        "/images/casillas/" + tipo.toLowerCase() + ".png",
+                        "resources/images/casillas/" + tipo.toLowerCase() + ".png",
+                        "images/casillas/" + tipo.toLowerCase() + ".png",
+                        "/resources/images/casillas/normal.png"
+                    };
+
+                    for (String path : attempts) {
+                        url = getClass().getResource(path);
+                        if (url == null) url = getClass().getClassLoader().getResource(path);
+                        if (url == null && path.startsWith("/")) url = getClass().getResource(path.substring(1));
+                        if (url != null) break;
+                    }
+
+                    // Intento desesperado: Ruta de archivo absoluta (solo funciona en desarrollo local)
+                    if (url == null) {
+                        try {
+                            java.io.File file = new java.io.File("src/resources/images/casillas/" + tipo.toLowerCase() + ".png");
+                            if (file.exists()) url = file.toURI().toURL();
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (url != null) {
+                        Image img = new Image(url.toExternalForm(), true); // 'true' activa carga en background
+                        ImageView iv = new ImageView(img);
+                        iv.setFitWidth(38);
+                        iv.setFitHeight(38);
+                        iv.setPreserveRatio(true);
+                        iv.setSmooth(true);
+                        
+                        // Si es evento, usamos un StackPane para poner un icono encima de la base de hielo
+                        if ("Evento".equals(tipo)) {
+                            StackPane stack = new StackPane();
+                            stack.getChildren().add(iv);
+                            Text icon = new Text("✨");
+                            icon.setStyle("-fx-font-size: 18px; -fx-fill: gold;");
+                            stack.getChildren().add(icon);
+                            box.getChildren().add(stack);
+                        } else if ("Oso".equals(tipo)) {
+                            StackPane stack = new StackPane();
+                            iv.setStyle("-fx-effect: inner-shadow(gaussian, red, 10, 0.5, 0, 0);");
+                            stack.getChildren().add(iv);
+                            Text angry = new Text("💢");
+                            angry.setStyle("-fx-font-size: 14px;");
+                            StackPane.setAlignment(angry, Pos.TOP_RIGHT);
+                            stack.getChildren().add(angry);
+                            box.getChildren().add(stack);
+                        } else {
+                            box.getChildren().add(iv);
+                        }
+                    } else {
+                        // Fallback a emoji temático si todo falla
+                        String emojiText = switch (tipo) {
+                            case "Agujero" -> "🕳️";
+                            case "Oso" -> "🐻";
+                            case "Trineo" -> "🛷";
+                            case "SueloQuebradizo" -> "⛸️";
+                            case "Evento" -> "✨";
+                            default -> "❄️";
+                        };
+                        Text fallback = new Text(emojiText);
+                        fallback.setStyle("-fx-font-size: 24px; -fx-fill: white;");
+                        box.getChildren().add(fallback);
+                    }
+                } catch (Exception e) {
+                    Text fallback = new Text("?");
+                    box.getChildren().add(fallback);
+                }
+
+                Label label = new Label(tipo);
+                label.getStyleClass().add("cell-type");
+                label.setStyle("-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold;");
+                box.getChildren().add(label);
 
                 int row = i / COLUMNS;
                 int col = i % COLUMNS;
-                GridPane.setRowIndex(texto, row);
-                GridPane.setColumnIndex(texto, col);
-                GridPane.setHalignment(texto, javafx.geometry.HPos.CENTER);
-                tablero.getChildren().add(texto);
+                GridPane.setRowIndex(box, row);
+                GridPane.setColumnIndex(box, col);
+                GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
+                tablero.getChildren().add(box);
             }
         }
     }
@@ -189,12 +279,12 @@ public class PantallaJuego {
     }
     @FXML private void handleQuitGame() { System.exit(0); }
 
-    public void iniciarCargandoPartida() {
-        // En lugar de inicializar todo a cero, cargamos la partida desde la BD
-        gestorPartida.cargarPartida(1);
+    public void iniciarCargandoPartida(int id) {
+        // Cargamos la partida desde la BD con el ID seleccionado
+        gestorPartida.cargarPartida(id);
         syncVisualPositions(false);
         actualizarInventarioUI();
-        eventos.setText("Partida cargada exitosamente. ¡Sigue jugando!");
+        eventos.setText("Partida #" + id + " carregada exitosament.");
     }
 
     // Button actions
