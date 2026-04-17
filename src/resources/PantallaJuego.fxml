@@ -47,7 +47,7 @@
     </top>
 
     <center>
-        <StackPane>
+        <StackPane fx:id="boardStack">
             <!-- AMBIENT BACKGROUND -->
             <ImageView fx:id="bgImage" opacity="0.15" preserveRatio="false">
                 <image>

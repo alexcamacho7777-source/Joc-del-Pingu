@@ -347,16 +347,62 @@ public class PantallaJuego {
             actualizarInventarioUI();
             gestorPartida.guardarPartida();
 
-            // 4. Siguiente turno (IA o Humano)
-            Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
-            if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
-                javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
-                pause.setOnFinished(e -> procesarSiguienteTurno());
-                pause.play();
+            // 4. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
+            Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
+            if (casillaActual instanceof Evento && actual instanceof Pinguino p) {
+                mostrarRuleta(p, this::finalizarTurnoComplet);
             } else {
-                dado.setDisable(false);
+                finalizarTurnoComplet();
             }
         });
+    }
+
+    private void finalizarTurnoComplet() {
+        Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
+        dadoResultText.setText("Torn de: " + (proxSiguienteTurno != null ? proxSiguienteTurno.getNombre() : "..."));
+        
+        java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
+        if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
+
+        if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
+            pause.setOnFinished(e -> procesarSiguienteTurno());
+            pause.play();
+        } else {
+            dado.setDisable(false);
+        }
+        actualizarInventarioUI();
+    }
+
+    private void mostrarRuleta(Pinguino p, Runnable onFinished) {
+        try {
+            if (boardStack == null) {
+                System.err.println("Error: boardStack es null. Revisa la FXML.");
+                onFinished.run();
+                return;
+            }
+
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaRuleta.fxml"));
+            javafx.scene.Parent ruletaRoot = loader.load();
+            PantallaRuleta controller = loader.getController();
+            
+            controller.setGameContext(gestorPartida.getPartida(), p);
+            
+            // Afegim la ruleta al StackPane principal per sobre del taulell
+            boardStack.getChildren().add(ruletaRoot);
+            
+            // Per detectar que s'ha tancat, podem mirar si ruletaRoot segueix sent fill
+            ruletaRoot.parentProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal == null) {
+                    onFinished.run();
+                }
+            });
+
+        } catch (Exception e) {
+            System.err.println("Error al carregar la ruleta: " + e.getMessage());
+            e.printStackTrace();
+            onFinished.run();
+        }
     }
 
     private void animarMovimiento(Jugador j, int from, int to, Runnable onFinished) {

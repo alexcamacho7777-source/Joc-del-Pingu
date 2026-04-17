@@ -10,6 +10,7 @@ import javafx.scene.Group;
 import javafx.util.Duration;
 import java.util.Random;
 import java.util.function.Consumer;
+import model.*;
 
 public class PantallaRuleta {
 
@@ -22,6 +23,8 @@ public class PantallaRuleta {
     private final Random random = new Random();
     private Consumer<String> onFinishedCallback;
     private boolean isSpinning = false;
+    private Partida partida;
+    private Pinguino jugador;
 
     // Resultados mapeados a ángulos (Norte/Oeste/Sur/Este)
     // 0: Boles de neu (Norte)
@@ -42,6 +45,18 @@ public class PantallaRuleta {
 
     public void setOnFinishedCallback(Consumer<String> callback) {
         this.onFinishedCallback = callback;
+    }
+
+    public void setGameContext(Partida partida, Pinguino jugador) {
+        this.partida = partida;
+        this.jugador = jugador;
+        
+        // Si és IA, fem que giti automàticament després de 1 segon
+        if (jugador != null && jugador.isEsIA()) {
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.seconds(1));
+            pause.setOnFinished(e -> handleGirar());
+            pause.play();
+        }
     }
 
     @FXML
@@ -73,6 +88,20 @@ public class PantallaRuleta {
             isSpinning = false;
             String result = results[resultIndex];
             resultLabel.setText("¡Te ha tocado: " + result + "!");
+            
+            // Aplicar el resultat al jugador
+            if (jugador != null) {
+                switch (result) {
+                    case "Boles de neu" -> jugador.getInv().anadirItem(new BolaDeNieve(1 + random.nextInt(3)));
+                    case "Peix" -> jugador.getInv().anadirItem(new Pez(1));
+                    case "Dau lent" -> jugador.getInv().anadirItem(new Dado("Dau Lent", 1, 1, 3));
+                    case "Dau ràpid" -> jugador.getInv().anadirItem(new Dado("Dau Ràpid", 1, 5, 10));
+                }
+                if (partida != null) {
+                    partida.anadirEvento(jugador.getNombre() + " ha guanyat: " + result);
+                }
+            }
+            
             closeButton.setVisible(true);
             
             if (onFinishedCallback != null) {
