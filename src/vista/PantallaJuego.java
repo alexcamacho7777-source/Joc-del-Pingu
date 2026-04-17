@@ -226,11 +226,13 @@ public class PantallaJuego {
                 // Hacemos que la casilla ocupe todo el espacio disponible en la celda
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 box.setPadding(new Insets(2));
-                
-                // Fondo totalmente transparente sin color sólido, solo un borde sutil opcional
-                box.setStyle("-fx-background-color: transparent; " +
-                             "-fx-border-color: rgba(255, 255, 255, 0.15); " +
-                             "-fx-border-width: 0.5;");
+                // Fondo semi-transparente estilo "Glassmorphism" con bordes redondeados
+                box.setStyle("-fx-background-color: rgba(255, 255, 255, 0.15); " +
+                             "-fx-background-radius: 12; " +
+                             "-fx-border-color: rgba(255, 255, 255, 0.4); " +
+                             "-fx-border-radius: 12; " +
+                             "-fx-border-width: 1.5; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);");
 
                 try {
                     // Intento de carga de imagen (si se encontraran)
@@ -240,8 +242,8 @@ public class PantallaJuego {
                     if (url != null) {
                         Image img = new Image(url.toExternalForm(), true);
                         ImageView iv = new ImageView(img);
-                        iv.setFitWidth(45); // Un poco más grandes
-                        iv.setFitHeight(45);
+                        iv.setFitWidth(50); // Un pelín más contenido para dar margen visual
+                        iv.setFitHeight(50);
                         iv.setPreserveRatio(true);
                         
                         if ("Evento".equals(tipo)) {
@@ -289,9 +291,16 @@ public class PantallaJuego {
                     case "Evento" -> "SORPRESA";
                     default -> "NORMAL";
                 };
+
+                // Etiqueta (Label) bonita para la casilla
                 Label label = new Label(displayTipo);
                 label.getStyleClass().add("cell-type");
-                label.setStyle("-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-effect: dropshadow(one-pass-box, black, 2, 0, 0, 1);");
+                label.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6); " + 
+                               "-fx-background-radius: 5; " + 
+                               "-fx-padding: 2 6 2 6; " + 
+                               "-fx-text-fill: white; " + 
+                               "-fx-font-size: 10px; " + 
+                               "-fx-font-weight: bold;");
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
@@ -489,14 +498,34 @@ public class PantallaJuego {
         while (current != to) {
             current += step;
             final int finalCurrent = current;
-            javafx.animation.PauseTransition stepPause = new javafx.animation.PauseTransition(Duration.millis(600));
-            stepPause.setOnFinished(e -> {
+            
+            // Animación de "Salto": sube, cambia la celda, y vuelve a bajar
+            javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(Duration.millis(120), token);
+            scaleUp.setToX(1.3); scaleUp.setToY(1.3);
+            
+            javafx.animation.TranslateTransition moveYUp = new javafx.animation.TranslateTransition(Duration.millis(120), token);
+            moveYUp.setByY(-15);
+            
+            javafx.animation.ParallelTransition hopUp = new javafx.animation.ParallelTransition(scaleUp, moveYUp);
+            
+            javafx.animation.PauseTransition pauseLayout = new javafx.animation.PauseTransition(Duration.millis(10));
+            pauseLayout.setOnFinished(e -> {
                 int f = finalCurrent;
                 if (f < 0) f = 0; if (f >= 50) f = 49;
                 GridPane.setRowIndex(token, f / COLUMNS);
                 GridPane.setColumnIndex(token, f % COLUMNS);
+                token.toFront();
             });
-            seq.getChildren().add(stepPause);
+
+            javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(Duration.millis(120), token);
+            scaleDown.setToX(1.0); scaleDown.setToY(1.0);
+            
+            javafx.animation.TranslateTransition moveYDown = new javafx.animation.TranslateTransition(Duration.millis(120), token);
+            moveYDown.setByY(15);
+            
+            javafx.animation.ParallelTransition hopDown = new javafx.animation.ParallelTransition(scaleDown, moveYDown);
+
+            seq.getChildren().addAll(hopUp, pauseLayout, hopDown);
         }
 
         seq.setOnFinished(e -> onFinished.run());
@@ -519,10 +548,23 @@ public class PantallaJuego {
             int newRow = pos / COLUMNS;
             int newCol = pos % COLUMNS;
 
+            // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
+            token.toFront();
+
+            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen
+            int index = gestorPartida.getPartida().getJugadores().indexOf(j);
+            double offsetX = 0;
+            double offsetY = 0;
+            if (index == 0) { offsetX = -15; offsetY = -10; }
+            else if (index == 1) { offsetX = 15; offsetY = -10; }
+            else if (index == 2) { offsetX = -15; offsetY = 15; }
+            else if (index == 3) { offsetX = 15; offsetY = 15; }
+            else if (index == 4) { offsetX = 0; offsetY = -20; } // Por si hay un quinto elemento como la foca
+
             if (animar) {
                 javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
-                token.setTranslateX(0);
-                token.setTranslateY(0);
+                slide.setToX(offsetX);
+                slide.setToY(offsetY);
                 GridPane.setRowIndex(token, newRow);
                 GridPane.setColumnIndex(token, newCol);
                 GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
@@ -533,6 +575,8 @@ public class PantallaJuego {
                 GridPane.setColumnIndex(token, newCol);
                 GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
                 GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
+                token.setTranslateX(offsetX);
+                token.setTranslateY(offsetY);
             }
         }
     }
