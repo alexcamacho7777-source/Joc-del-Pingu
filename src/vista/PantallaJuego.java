@@ -21,6 +21,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.paint.Color;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -173,26 +175,7 @@ public class PantallaJuego {
         model.Foca focaJugador = new model.Foca();
         jugadores.add(focaJugador);
         
-        // Crear círculo de foca si no existe o reutilizar
-        javafx.scene.Node focaAvatar = tablero.lookup("#FOCA");
-        if (focaAvatar == null) {
-            StackPane sp = new StackPane();
-            sp.setId("FOCA");
-            sp.getStyleClass().add("player");
-            
-            Circle bg = new Circle(18);
-            bg.setStyle("-fx-fill: linear-gradient(to bottom right, #ffffff, #808080); -fx-stroke: #333333; -fx-stroke-width: 2;");
-            
-            Text emoji = new Text("🦭");
-            emoji.setStyle("-fx-font-size: 20px;");
-            
-            sp.getChildren().addAll(bg, emoji);
-            // El margen anterior de 136px posiblemente desplazaba la foca fuera de la casilla
-            GridPane.setHalignment(sp, javafx.geometry.HPos.CENTER);
-            GridPane.setValignment(sp, javafx.geometry.VPos.CENTER);
-            tablero.getChildren().add(sp);
-            focaAvatar = sp;
-        }
+        javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
         tokenMap.put(focaJugador, focaAvatar);
 
         gestorPartida.nuevaPartida();
@@ -755,6 +738,71 @@ public class PantallaJuego {
     /**
      * Re-vincula els objectes Jugador carregats de la BBDD amb els nodes visuals (P1, P2...).
      */
+    private javafx.scene.Node getOrCreateFocaAvatar() {
+        // Cache-busting ID
+        javafx.scene.Node focaAvatar = tablero.lookup("#ROBOT_SEAL_V3");
+        StackPane sp;
+        
+        if (focaAvatar == null) {
+            sp = new StackPane();
+            sp.setId("ROBOT_SEAL_V3");
+            sp.getStyleClass().add("player");
+            sp.setStyle("-fx-background-color: transparent;"); 
+            tablero.getChildren().add(sp);
+        } else {
+            sp = (StackPane) focaAvatar;
+            sp.getChildren().clear(); 
+        }
+
+        try {
+            // New verified path consistent with other working assets
+            String[] paths = {
+                "/resources/images/casillas/foca_robot.png",
+                "/images/casillas/foca_robot.png",
+                "/resources/foca_robot.png"
+            };
+            Image img = null;
+            for (String p : paths) {
+                java.net.URL url = getClass().getResource(p);
+                if (url != null) {
+                    img = new Image(url.toExternalForm());
+                    break;
+                }
+            }
+
+            if (img != null) {
+                ImageView iv = new ImageView(img);
+                iv.setFitWidth(120);
+                iv.setFitHeight(120);
+                iv.setPreserveRatio(true);
+                // Glow cyan para identificar que el código es el nuevo - Corregido Constructor de DropShadow
+                DropShadow ds = new DropShadow();
+                ds.setColor(Color.CYAN);
+                ds.setRadius(15);
+                ds.setSpread(0.7);
+                iv.setEffect(ds);
+                sp.getChildren().add(iv);
+            } else {
+                // Fallback visual muy claro (SIN EMOJIS que puedan fallar)
+                Rectangle r = new Rectangle(40, 40, Color.web("#1a2a44"));
+                r.setStroke(Color.CYAN);
+                r.setStrokeWidth(2);
+                Text t = new Text("ROBOT");
+                t.setFill(Color.WHITE);
+                t.setStyle("-fx-font-size: 9px; -fx-font-weight: bold;");
+                StackPane.setAlignment(t, Pos.CENTER);
+                sp.getChildren().addAll(r, t);
+            }
+        } catch (Exception e) {
+            System.err.println("CRITICAL: Error loading seal avatar: " + e.getMessage());
+        }
+
+        GridPane.setHalignment(sp, javafx.geometry.HPos.CENTER);
+        GridPane.setValignment(sp, javafx.geometry.VPos.CENTER);
+        
+        return sp;
+    }
+
     private void syncLoadedJugadores() {
         if (gestorPartida == null || gestorPartida.getPartida() == null) return;
         
@@ -765,8 +813,8 @@ public class PantallaJuego {
         for (int i = 0; i < jugadores.size(); i++) {
             Jugador j = jugadores.get(i);
             if (j instanceof model.Foca) {
-                javafx.scene.Node focaAvatar = tablero.lookup("#FOCA");
-                if (focaAvatar != null) tokenMap.put(j, focaAvatar);
+                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
+                tokenMap.put(j, focaAvatar);
             } else if (i < pTokens.length && pTokens[i] != null) {
                 pTokens[i].setVisible(true);
                 tokenMap.put(j, pTokens[i]);
