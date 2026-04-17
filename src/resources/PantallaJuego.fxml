@@ -200,6 +200,8 @@
             <!-- Tarjeta Objetos -->
             <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
                 <Label text="Objectes" styleClass="card-title" />
+                <Label fx:id="nomInventari" text="Inventari de: -" style="-fx-font-weight: bold; -fx-text-fill: #00d2ff;"/>
+
 
                 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="objects-scroll">
                     <content>

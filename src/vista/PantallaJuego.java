@@ -22,12 +22,16 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import controlador.GestorPartida;
+import model.Item;
+import model.Pez;
+import model.BolaDeNieve;
 import model.Casilla;
 import model.Dado;
 import model.Inventario;
 import model.Jugador;
 import model.Pinguino;
 import model.Tablero;
+import model.Foca;
 
 public class PantallaJuego {
 
@@ -51,6 +55,7 @@ public class PantallaJuego {
     @FXML private Text peces_t;
     @FXML private Text nieve_t;
     @FXML private Text eventos;
+    @FXML private Label nomInventari;
 
     // Game board and player pieces
     @FXML private GridPane tablero;
@@ -435,30 +440,121 @@ public class PantallaJuego {
     }
 
     private void usarObjetoYActualizar(String tipo) {
-        // Lógica simplificada: en un futuro interactuará con gestorPartida.usarItem(...)
-        actualizarInventarioUI();
+        if(gestorPartida.getPartida().isFinalizada()) return;
+        
+        Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+        if (!(actual instanceof Pinguino p) || p.isEsIA()) {
+            eventos.setText("No pots usar objectes si no és el teu torn.");
+            return;
+        }
+
+        Inventario inv = p.getInv();
+        if (inv == null) return;
+
+        // Caso Dados: Usar e iniciar turno
+        if (tipo.equals("DadoRapido") || tipo.equals("DadoLento")) {
+            Item item = inv.getItem(Dado.class); // Simplificación: busca el primero de clase Dado que coincida
+            // En una implementación más compleja buscaríamos exactamente el tipo.
+            // Por ahora, buscaremos el dado que coincida con el nombre.
+            Dado dadoElegido = null;
+            for (Item i : inv.getLista()) {
+                if (i instanceof Dado d) {
+                    if (tipo.equals("DadoRapido") && d.getNombre().toLowerCase().contains("rapido")) {
+                        dadoElegido = d; break;
+                    }
+                    if (tipo.equals("DadoLento") && d.getNombre().toLowerCase().contains("lento")) {
+                        dadoElegido = d; break;
+                    }
+                }
+            }
+
+            if (dadoElegido != null && dadoElegido.getCantidad() > 0) {
+                int posAnterior = p.getPosicion();
+                int resultado = gestorPartida.usarDadoEspecial(p, dadoElegido);
+                p.moverPosicion(resultado);
+                
+                // Procesar resto del turno (casilla, etc)
+                Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(p.getPosicion());
+                gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), p, casilla);
+                gestorPartida.getPartida().anadirEvento(p.getNombre() + " usa " + tipo + " i treu un " + resultado);
+                
+                animarMovimiento(p, posAnterior, p.getPosicion(), () -> {
+                    gestorPartida.getPartida().siguienteTurno();
+                    procesarSiguienteTurno();
+                });
+            } else {
+                eventos.setText("No tens aquest objecte!");
+            }
+        } 
+        // Caso Otros: Usar y no pasar turno inmediatamente? (Depende de la regla, usualmente Peces se usa proactivamente)
+        else {
+            if (tipo.equals("Peces")) {
+                Item it = inv.getItem(model.Pez.class);
+                if (it != null && it.getCantidad() > 0) {
+                    it.setCantidad(it.getCantidad() - 1);
+                    if (it.getCantidad() <= 0) inv.quitarItem(it);
+                    eventos.setText(p.getNombre() + " ha menjat peixos!");
+                } else {
+                    eventos.setText("No tens peixos!");
+                }
+            } else if (tipo.equals("BolaNieve")) {
+                Item it = inv.getItem(model.BolaDeNieve.class);
+                if (it != null && it.getCantidad() > 0) {
+                    it.setCantidad(it.getCantidad() - 1);
+                    if (it.getCantidad() <= 0) inv.quitarItem(it);
+                    eventos.setText(p.getNombre() + " ha llançat una bola de neu!");
+                } else {
+                    eventos.setText("No tens boles de neu!");
+                }
+            }
+            actualizarInventarioUI();
+            gestorPartida.guardarPartida();
+        }
     }
 
     private void actualizarInventarioUI() {
         if(gestorPartida.getPartida().getJugadores().size() > 0) {
-           // Buscamos al primer jugador humano para mostrar su inventario
-           Jugador jHumano = null;
-           for(Jugador j : gestorPartida.getPartida().getJugadores()) {
-               if(j instanceof Pinguino p && !p.isEsIA()) {
-                   jHumano = j;
-                   break;
-               }
-           }
-           
-           if (jHumano instanceof Pinguino p) {
-               Inventario inv = p.getInv();
-               if(inv != null) {
-                   rapido_t.setText("Dau ràpid: " + inv.contarItems("DadoRapido"));
-                   lento_t.setText("Dau lent: " + inv.contarItems("DadoLento"));
-                   peces_t.setText("Peixos: " + inv.contarItems("Peces"));
-                   nieve_t.setText("Boles neu: " + inv.contarItems("BolaNieve"));
-               }
-           }
+            Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+            
+            // Si el actual es Foca o IA, mostramos el del primer humano para que no se quede vacío, 
+            // pero indicamos de quién es.
+            Jugador mostrar = actual;
+            if (actual instanceof model.Foca || (actual instanceof Pinguino pin && pin.isEsIA())) {
+                for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+                    if(j instanceof Pinguino p && !p.isEsIA()) {
+                        mostrar = j;
+                        break;
+                    }
+                }
+            }
+            
+            if (mostrar instanceof Pinguino p) {
+                nomInventari.setText("PROPIETARI: " + p.getNombre().toUpperCase());
+                
+                String colorHex = switch(p.getColor().toLowerCase()) {
+                    case "azul", "blau" -> "#0072ff";
+                    case "rojo", "vermell" -> "#ff4b2b";
+                    case "verde", "verd" -> "#11998e";
+                    case "amarillo", "groc" -> "#f2c94c";
+                    default -> "#00d2ff";
+                };
+                nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorHex + "; -fx-font-size: 14px;");
+
+                Inventario inv = p.getInv();
+                if(inv != null) {
+                    rapido_t.setText("Dau ràpid: " + inv.contarItems("DadoRapido"));
+                    lento_t.setText("Dau lent: " + inv.contarItems("DadoLento"));
+                    peces_t.setText("Peixos: " + inv.contarItems("Peces"));
+                    nieve_t.setText("Boles neu: " + inv.contarItems("BolaNieve"));
+                }
+            } else {
+                nomInventari.setText("Inventari buit");
+                nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: #888888;");
+                rapido_t.setText("Dau ràpid: 0");
+                lento_t.setText("Dau lent: 0");
+                peces_t.setText("Peixos: 0");
+                nieve_t.setText("Boles neu: 0");
+            }
         }
     }
 

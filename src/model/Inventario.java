@@ -72,9 +72,9 @@ public class Inventario {
                 total += i.getCantidad();
             } else if (i instanceof Dado) {
                 // Normalizar búsqueda para ignorar tildes básicas o buscar coincidencias clave
-                if (tipo.contains("Rapido") && (nombreLower.contains("rapido") || nombreLower.contains("rápido"))) {
+                if (tipo.contains("Rapido") && (nombreLower.contains("rapid") || nombreLower.contains("ràpid") || nombreLower.contains("rápido"))) {
                     total += i.getCantidad();
-                } else if (tipo.contains("Lento") && (nombreLower.contains("lento"))) {
+                } else if (tipo.contains("Lento") && (nombreLower.contains("lent") || nombreLower.contains("lento"))) {
                     total += i.getCantidad();
                 }
             }
