@@ -59,7 +59,9 @@
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
-            <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" prefHeight="520.0">
+            <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;">
+                <content>
+                    <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" minHeight="0">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="20.0" />
                     <ColumnConstraints percentWidth="20.0" />
@@ -167,7 +169,9 @@
                         </children>
                     </Group>
                 </children>
-            </GridPane>
+                    </GridPane>
+                </content>
+            </ScrollPane>
 
             <!-- LOADING OVERLAY -->
             <StackPane fx:id="loadingOverlay" mouseTransparent="false" styleClass="overlay">
@@ -195,9 +199,9 @@
     </center>
 
     <bottom>
-        <HBox spacing="16" styleClass="bottom-bar">
+        <HBox spacing="16" styleClass="bottom-bar" minHeight="150" maxHeight="200">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="8" right="16" bottom="8" left="16"/>
             </padding>
 
             <!-- Tarjeta Dado -->
