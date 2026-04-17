@@ -16,10 +16,10 @@ public class Oso extends Casilla {
                 // Soborno
                 pez.setCantidad(pez.getCantidad() - 1);
                 if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
-                partida.anadirEvento(p.getNombre() + " ha sobornado al oso con un pez.");
+                partida.anadirEvento(p.getNombre() + " ha subornat l'os amb un peix.");
             } else {
                 p.setPosicion(0);
-                partida.anadirEvento(p.getNombre() + " ha sido capturado por el oso y vuelve al inicio.");
+                partida.anadirEvento(p.getNombre() + " ha estat capturat per l'os i torna a l'inici.");
             }
         }
     }

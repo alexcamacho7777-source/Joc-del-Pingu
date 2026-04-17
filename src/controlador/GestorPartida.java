@@ -55,7 +55,7 @@ public class GestorPartida {
     public void nuevaPartida() {
         partida = new Partida();
         partida.setRandom(random);
-        partida.anadirEvento("Partida iniciada.");
+        partida.anadirEvento("Partida començada.");
     }
 
     /**
@@ -101,50 +101,50 @@ public class GestorPartida {
      * @param jugadorActivo jugador que actúa (para la CPU puede diferir)
      */
     public void procesarTurnoJugador(Jugador jugadorTurno, Jugador jugadorActivo) {
-        // Comprobar si pierde turno
+        // Comprovar si perd el torn
         if (partida.getJugadorPierdeTurno() != null &&
             partida.getJugadorPierdeTurno().equals(jugadorTurno)) {
             partida.setJugadorPierdeTurno(null);
-            partida.anadirEvento(jugadorTurno.getNombre() + " pierde este turno.");
+            partida.anadirEvento(jugadorTurno.getNombre() + " perd aquest torn.");
             partida.siguienteTurno();
             return;
         }
 
-        // Reducir bloqueo de foca si es su turno
+        // Reduir bloqueig de foca si és el seu torn
         if (jugadorTurno instanceof Foca foca) {
             foca.reducirBloqueo();
             if (foca.isSobornada()) {
-                partida.anadirEvento("La foca sigue bloqueada.");
+                partida.anadirEvento("La foca continua bloquejada.");
                 partida.siguienteTurno();
                 return;
             }
         }
 
-        // Tirar dado
+        // Tirar dau
         int pasos = tirarDadoParaJugador(jugadorTurno);
         jugadorTurno.moverPosicion(pasos);
 
-        // Limitar a la última casilla
+        // Limitar a l'última casella
         int maxPos = partida.getTablero().getTotalCasillas() - 1;
         if (jugadorTurno.getPosicion() > maxPos) {
             jugadorTurno.setPosicion(maxPos);
         }
 
-        partida.anadirEvento(jugadorTurno.getNombre() + " avanza " + pasos + " casillas. Posición: " + jugadorTurno.getPosicion());
+        partida.anadirEvento(jugadorTurno.getNombre() + " avança " + pasos + " caselles. Posició: " + jugadorTurno.getPosicion());
 
-        // Aplicar acción de casilla
+        // Aplicar acció de casella
         Casilla casilla = partida.getTablero().getCasilla(jugadorTurno.getPosicion());
         gestorTablero.ejecutarCasilla(partida, jugadorTurno, casilla);
 
-        // Comprobar interacciones entre jugadores en la misma casilla
+        // Comprovar interaccions entre jugadors a la mateixa casella
         if (jugadorTurno instanceof Pinguino p) {
             comprobarInteraccionesEnCasilla(p);
         }
 
-        // Comprobar victoria
+        // Comprovar victòria
         actualizarEstadoTablero();
 
-        // Siguiente turno
+        // Següent torn
         partida.siguienteTurno();
     }
 
@@ -203,26 +203,26 @@ public class GestorPartida {
             if (otro.getPosicion() == p.getPosicion()) {
                 if (otro instanceof Foca foca) {
                     gestorJugador.focaInteraccion(p, foca);
-                    // Si la foca lo golpea, enviar al forat anterior
+                    // Si la foca el colpeja, enviar al forat anterior
                     if (!foca.isSobornada()) {
                         int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
                         p.setPosicion(anteriorAgujero);
-                        partida.anadirEvento("La foca golpea a " + p.getNombre() + " y lo envía a la posición " + anteriorAgujero + ".");
+                        partida.anadirEvento("La foca colpeja a " + p.getNombre() + " i l'envia a la posició " + anteriorAgujero + ".");
                     }
                 } else if (otro instanceof Pinguino p2) {
-                    // Guerra de pingüinos
-                    partida.anadirEvento("¡Guerra entre " + p.getNombre() + " y " + p2.getNombre() + "!");
+                    // Guerra de pingüins
+                    partida.anadirEvento("¡Guerra entre " + p.getNombre() + " i " + p2.getNombre() + "!");
                     gestorJugador.pinguinoGuerraQuema(p, p2);
                 }
             }
         }
 
-        // Foca pasa por casilla de jugador (pierde la mitad del inventario)
+        // Foca passa per casella de jugador (perd la meitat de l'inventari)
         for (Jugador otro : partida.getJugadores()) {
             if (otro instanceof Foca foca && !foca.isSobornada()) {
                 if (foca.getPosicion() == p.getPosicion()) {
                     perderMitadInventario(p);
-                    partida.anadirEvento("La foca pasa por la casilla de " + p.getNombre() + " y le hace perder la mitad del inventario.");
+                    partida.anadirEvento("La foca passa per la casella de " + p.getNombre() + " i li fa perdre la meitat de l'inventari.");
                 }
             }
         }
@@ -248,7 +248,7 @@ public class GestorPartida {
             if (j.getPosicion() >= meta && !(j instanceof Foca)) {
                 partida.setGanador(j);
                 partida.setFinalizada(true);
-                partida.anadirEvento("¡" + j.getNombre() + " ha ganado la partida!");
+                partida.anadirEvento("¡" + j.getNombre() + " ha guanyat la partida!");
                 return;
             }
         }
@@ -270,7 +270,7 @@ public class GestorPartida {
     }
 
     /**
-     * Guarda la partida en base de datos.
+     * Guarda la partida en base de dades.
      */
     public void guardarPartida() {
         if (gestorBBDD != null && partida != null) {
@@ -280,13 +280,13 @@ public class GestorPartida {
     }
 
     /**
-     * Carga una partida desde la base de datos por ID.
+     * Carrega una partida des de la base de dades per ID.
      * @param id identificador de la partida
      */
     public void cargarPartida(int id) {
         if (gestorBBDD != null) {
             partida = gestorBBDD.cargarBBDD(id);
-            partida.anadirEvento("Partida cargada (id=" + id + ").");
+            partida.anadirEvento("Partida carregada (id=" + id + ").");
         }
     }
 }

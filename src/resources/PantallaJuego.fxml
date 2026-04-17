@@ -83,7 +83,7 @@
 
                 <children>
                     <!-- Esquinas -->
-                    <Text text="🏁 INICIO" styleClass="cell-title" />
+                    <Text text="🏁 INICI" styleClass="cell-title" />
                     <Text text="META 🏆" styleClass="cell-title"
                           GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
 
@@ -191,15 +191,15 @@
 
             <!-- Tarjeta Dado -->
             <VBox spacing="10" styleClass="card" prefWidth="280">
-                <Label text="Dado" styleClass="card-title" />
-                <Text fx:id="dadoResultText" text="Ha salido: -" styleClass="big-text" wrappingWidth="240" />
-                <Button fx:id="dado" text="Tirar dado" onAction="#handleDado"
+                <Label text="Dau" styleClass="card-title" />
+                <Text fx:id="dadoResultText" text="Ha sortit: -" styleClass="big-text" wrappingWidth="240" />
+                <Button fx:id="dado" text="Llençar dau" onAction="#handleDado"
                         maxWidth="Infinity" styleClass="primary" />
             </VBox>
 
             <!-- Tarjeta Objetos -->
             <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
-                <Label text="Objetos" styleClass="card-title" />
+                <Label text="Objectes" styleClass="card-title" />
 
                 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="objects-scroll">
                     <content>
@@ -209,27 +209,27 @@
                             </padding>
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="rapido_t" text="Dado rápido: 0" styleClass="stat" />
+                                <Text fx:id="rapido_t" text="Dau ràpid: 0" styleClass="stat" />
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="rapido" text="Usar" onAction="#handleRapido"/>
+                                <Button fx:id="rapido" text="Utilitzar" onAction="#handleRapido"/>
                             </HBox>
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="lento_t" text="Dado lento: 0" styleClass="stat" />
+                                <Text fx:id="lento_t" text="Dau lent: 0" styleClass="stat" />
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="lento" text="Usar" onAction="#handleLento"/>
+                                <Button fx:id="lento" text="Utilitzar" onAction="#handleLento"/>
                             </HBox>
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="peces_t" text="Peces: 0" styleClass="stat" />
+                                <Text fx:id="peces_t" text="Peixos: 0" styleClass="stat" />
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="peces" text="Usar" onAction="#handlePeces"/>
+                                <Button fx:id="peces" text="Utilitzar" onAction="#handlePeces"/>
                             </HBox>
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="nieve_t" text="Bolas de nieve: 0" styleClass="stat" />
+                                <Text fx:id="nieve_t" text="Boles de neu: 0" styleClass="stat" />
                                 <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="nieve" text="Usar" onAction="#handleNieve"/>
+                                <Button fx:id="nieve" text="Utilitzar" onAction="#handleNieve"/>
                             </HBox>
 
                         </VBox>
@@ -239,8 +239,8 @@
 
             <!-- Tarjeta Eventos -->
             <VBox spacing="10" styleClass="card" prefWidth="320">
-                <Label text="Eventos" styleClass="card-title" />
-                <Text fx:id="eventos" text="Evento ocurrido" styleClass="events" wrappingWidth="280" />
+                <Label text="Esdeveniments" styleClass="card-title" />
+                <Text fx:id="eventos" text="Esdeveniment ocorregut" styleClass="events" wrappingWidth="280" />
             </VBox>
 
         </HBox>

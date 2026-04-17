@@ -211,9 +211,9 @@ public class GestorBBDD {
                         "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, ordre) VALUES (" + idJ + ", " + idPartida + ", " + (i + 1) + ")");
             }
             commit(conexion);
-            System.out.println("Guardat correcte.");
+            System.out.println("Desat correctament.");
         } catch (Exception ex) {
-            System.out.println("Error guardar: " + ex.getMessage());
+            System.out.println("Error al desar: " + ex.getMessage());
         }
     }
 

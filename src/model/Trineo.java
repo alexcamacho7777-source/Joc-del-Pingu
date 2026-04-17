@@ -13,12 +13,12 @@ public class Trineo extends Casilla {
         int siguienteTrineo = tablero.buscarSiguienteTrineo(getPosicion());
         if (siguienteTrineo != -1) {
             jugador.setPosicion(siguienteTrineo);
-            partida.anadirEvento(jugador.getNombre() + " ha cogido un trineo y avanza a la posición " + siguienteTrineo + ".");
+            partida.anadirEvento(jugador.getNombre() + " ha agafat un trineu i avança a la posició " + siguienteTrineo + ".");
         } else {
-            partida.anadirEvento(jugador.getNombre() + " ya está en el último trineo, no se mueve.");
+            partida.anadirEvento(jugador.getNombre() + " ja està a l'últim trineu, no es mou.");
         }
 
         
-        System.out.println("No hay más trineos, no pasa nada.");
+        System.out.println("No hi ha més trineus, no passa res.");
     }
 }

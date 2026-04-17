@@ -42,7 +42,7 @@
                         </VBox.margin>
                         <Button fx:id="loginButton" text="🎮 ENTRAR AL JOC" onAction="#handleLogin"
                                 maxWidth="Infinity" styleClass="button-primary"/>
-                        <Button fx:id="registerButton" text="📝 Crear Nova Compte" onAction="#handleRegister"
+                        <Button fx:id="registerButton" text="📝 Crear Nou Compte" onAction="#handleRegister"
                                 maxWidth="Infinity" styleClass="button-secondary"/>
                     </VBox>
                 </VBox>

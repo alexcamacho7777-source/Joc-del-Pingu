@@ -12,6 +12,6 @@ public class Agujero extends Casilla {
         Tablero tablero = partida.getTablero();
         int anteriorAgujero = tablero.buscarAgujeroAnterior(getPosicion());
         jugador.setPosicion(anteriorAgujero);
-        partida.anadirEvento(jugador.getNombre() + " ha caído en un agujero y va a la posición " + anteriorAgujero + ".");
+        partida.anadirEvento(jugador.getNombre() + " ha caigut en un forat i va a la posició " + anteriorAgujero + ".");
     }
 }

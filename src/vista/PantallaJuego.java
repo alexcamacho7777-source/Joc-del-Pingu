@@ -76,7 +76,7 @@ public class PantallaJuego {
 
     @FXML
     private void initialize() {
-        eventos.setText("¡El juego ha comenzado!");        // BIND BACKGROUND SIZE (set managed false to prevent infinite loop/zoom)
+        eventos.setText("El joc ha començat!");        // BIND BACKGROUND SIZE (set managed false to prevent infinite loop/zoom)
         if (bgImage != null) {
             bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
@@ -234,7 +234,15 @@ public class PantallaJuego {
                     box.getChildren().add(new Text("?"));
                 }
 
-                Label label = new Label(tipo.toUpperCase());
+                String displayTipo = switch (tipo) {
+                    case "Agujero" -> "FORAT";
+                    case "Oso" -> "OS";
+                    case "Trineo" -> "TRINEU";
+                    case "SueloQuebradizo" -> "TERRA FRÀGIL";
+                    case "Evento" -> "SORPRESA";
+                    default -> "NORMAL";
+                };
+                Label label = new Label(displayTipo);
                 label.getStyleClass().add("cell-type");
                 label.setStyle("-fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-effect: dropshadow(one-pass-box, black, 2, 0, 0, 1);");
                 box.getChildren().add(label);
@@ -252,7 +260,7 @@ public class PantallaJuego {
     // Menu actions
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        eventos.setText("Partida guardada en BBDD.");
+        eventos.setText("Partida guardada a la BBDD.");
     }
 
     @FXML private void handleQuitGame() { 
@@ -262,7 +270,7 @@ public class PantallaJuego {
             javafx.scene.Parent root = loader.load();
             javafx.stage.Stage stage = (javafx.stage.Stage) tablero.getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
-            stage.setTitle("El Juego del Pingüino - Menú");
+            stage.setTitle("El Joc del Pingüí - Menú");
             stage.setMaximized(false);
         } catch (Exception e) {
             System.out.println("Error al salir: " + e.getMessage());
@@ -278,15 +286,15 @@ public class PantallaJuego {
         actualizarInventarioUI();
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
-        dadoResultText.setText("Turno de: " + (prox != null ? prox.getNombre() : "..."));
-        eventos.setText("Partida #" + id + " carregada exitosament.");
+        dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
+        eventos.setText("Partida #" + id + " carregada correctament.");
     }
 
     // Button actions
     @FXML
     private void handleDado(ActionEvent event) {
         if(gestorPartida.getPartida().isFinalizada()) {
-            eventos.setText("El juego ya ha terminado.");
+            eventos.setText("El joc ja ha acabat.");
             return;
         }
 
@@ -302,7 +310,7 @@ public class PantallaJuego {
 
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
         if (actual == null) {
-            System.out.println("Error: No hay jugador actual definido.");
+            System.out.println("Error: No hi ha jugador actual definit.");
             dado.setDisable(false);
             return;
         }
@@ -319,8 +327,8 @@ public class PantallaJuego {
 
         // 3. Animación paso a paso
         animarMovimiento(actual, posAnterior, posNueva, () -> {
-            Jugador siguiente = gestorPartida.getPartida().getJugadorActualObj();
-            dadoResultText.setText("Turno de: " + (siguiente != null ? siguiente.getNombre() : "..."));
+            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
+            dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
             
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
@@ -329,8 +337,8 @@ public class PantallaJuego {
             gestorPartida.guardarPartida();
 
             // 4. Siguiente turno (IA o Humano)
-            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
-            if (proxSiguiente != null && proxSiguiente.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
+            Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
+            if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
                 javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
                 pause.setOnFinished(e -> procesarSiguienteTurno());
                 pause.play();
@@ -410,19 +418,19 @@ public class PantallaJuego {
     }
 
     @FXML private void handleRapido() { 
-        eventos.setText("Has usado Dado rápido."); 
+        eventos.setText("Has fet servir Dau ràpid."); 
         usarObjetoYActualizar("DadoRapido");
     }
     @FXML private void handleLento()  { 
-        eventos.setText("Has usado Dado lento."); 
+        eventos.setText("Has fet servir Dau lent."); 
         usarObjetoYActualizar("DadoLento");
     }
     @FXML private void handlePeces()  { 
-        eventos.setText("Has comido Peces (+ vida o energía)."); 
+        eventos.setText("Has menjat Peixos (+ vida o energia)."); 
         usarObjetoYActualizar("Peces");
     }
     @FXML private void handleNieve()  { 
-        eventos.setText("Has lanzado una Bola de nieve."); 
+        eventos.setText("Has llançat una Bola de neu."); 
         usarObjetoYActualizar("BolaNieve");
     }
 
@@ -445,10 +453,10 @@ public class PantallaJuego {
            if (jHumano instanceof Pinguino p) {
                Inventario inv = p.getInv();
                if(inv != null) {
-                   rapido_t.setText("Dado rápido: " + inv.contarItems("DadoRapido"));
-                   lento_t.setText("Dado lento: " + inv.contarItems("DadoLento"));
-                   peces_t.setText("Peces: " + inv.contarItems("Peces"));
-                   nieve_t.setText("Bolas nieve: " + inv.contarItems("BolaNieve"));
+                   rapido_t.setText("Dau ràpid: " + inv.contarItems("DadoRapido"));
+                   lento_t.setText("Dau lent: " + inv.contarItems("DadoLento"));
+                   peces_t.setText("Peixos: " + inv.contarItems("Peces"));
+                   nieve_t.setText("Boles neu: " + inv.contarItems("BolaNieve"));
                }
            }
         }

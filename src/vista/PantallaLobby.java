@@ -52,7 +52,7 @@ public class PantallaLobby {
         // Validar máximo 4 jugadores en total si se quiere
         int total = choiceHumans.getValue() + choiceIA.getValue();
         if (total > 4) {
-             System.out.println("Error: Máximo 4 pingüinos totales.");
+             System.out.println("Error: Màxim 4 pingüins totals.");
              // Podríamos mostrar un alert
         }
         lanzarJuego(event, false);
@@ -71,7 +71,7 @@ public class PantallaLobby {
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(scene);
-            stage.setTitle("El Juego del Pingüino");
+            stage.setTitle("El Joc del Pingüí");
         } catch (Exception e) {
             e.printStackTrace();
         }
