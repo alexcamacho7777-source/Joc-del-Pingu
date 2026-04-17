@@ -1,6 +1,8 @@
 .root {
     -fx-font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
-    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #1a2a44, #050a18);
+    -fx-background-image: url("fondo_menu.png");
+    -fx-background-size: cover;
+    -fx-background-position: center bottom;
 }
 
 .title {
@@ -19,12 +21,12 @@
 }
 
 .glass-card {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-color: rgba(5, 15, 35, 0.85);
     -fx-background-radius: 30;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
     -fx-border-radius: 30;
     -fx-border-width: 1.5;
-    -fx-backdrop-filter: blur(20px);
+    -fx-backdrop-filter: blur(30px);
 }
 
 .card-title {

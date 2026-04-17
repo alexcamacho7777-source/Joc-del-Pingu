@@ -70,6 +70,8 @@ public class PantallaIntro {
             Stage stage = (Stage) rootPane.getScene().getWindow();
             stage.setScene(menuScene);
             stage.setTitle("El Juego del Pingüino");
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint("");
         } catch (Exception e) {
             System.err.println("Error al cargar PantallaMenu desde intro:");
             e.printStackTrace();

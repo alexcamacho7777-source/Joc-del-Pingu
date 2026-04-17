@@ -34,11 +34,6 @@
                 
                 <!-- TÍTULOS -->
                 <VBox alignment="CENTER" spacing="0">
-                    <Label text="🐧" style="-fx-font-size: 80px;">
-                        <effect>
-                            <DropShadow color="#ffcc00" radius="15" spread="0.2" />
-                        </effect>
-                    </Label>
                     <Label text="JOC DEL PINGÜÍ" styleClass="title"/>
                     <Label text="L'aventura gelada t'espera" styleClass="subtitle"/>
                 </VBox>
