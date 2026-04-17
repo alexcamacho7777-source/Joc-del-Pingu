@@ -87,30 +87,21 @@
                     <Text text="META 🏆" styleClass="cell-title"
                           GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
 
-                    <!-- Jugadores: fx:id para Controller + id para CSS -->
+                    <!-- Jugadores -->
                     <Group fx:id="P1" id="P1" styleClass="player">
                         <children>
-                            <!-- Alas -->
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
-                            <!-- Pies -->
                             <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
                             <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
-                            <!-- Cuerpo -->
                             <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
-                            <!-- Barriga -->
                             <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
-                            <!-- Cabeza -->
                             <Circle radius="10" fill="BLACK" translateY="-8"/>
-                            <!-- Cara -->
                             <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
                             <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
-                            <!-- Ojos -->
                             <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
                             <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
-                            <!-- Pico -->
                             <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <!-- Sombrero P1 (Azul) -->
                             <Rectangle x="-12" y="-18" width="24" height="2" fill="#0072ff"/>
                             <Rectangle x="-8" y="-30" width="16" height="12" fill="#0072ff"/>
                         </children>
@@ -131,7 +122,6 @@
                             <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
                             <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
                             <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <!-- Sombrero P2 (Rojo) -->
                             <Rectangle x="-12" y="-18" width="24" height="2" fill="#ff4b2b"/>
                             <Rectangle x="-8" y="-30" width="16" height="12" fill="#ff4b2b"/>
                         </children>
@@ -152,7 +142,6 @@
                             <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
                             <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
                             <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <!-- Sombrero P3 (Verde) -->
                             <Rectangle x="-12" y="-18" width="24" height="2" fill="#11998e"/>
                             <Rectangle x="-8" y="-30" width="16" height="12" fill="#11998e"/>
                         </children>
@@ -173,13 +162,35 @@
                             <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
                             <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
                             <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <!-- Sombrero P4 (Amarillo) -->
                             <Rectangle x="-12" y="-18" width="24" height="2" fill="#f2c94c"/>
                             <Rectangle x="-8" y="-30" width="16" height="12" fill="#f2c94c"/>
                         </children>
                     </Group>
                 </children>
             </GridPane>
+
+            <!-- LOADING OVERLAY -->
+            <StackPane fx:id="loadingOverlay" mouseTransparent="false" styleClass="overlay">
+                <ImageView fx:id="loadingBg" preserveRatio="false">
+                    <image>
+                        <Image url="@fondo_carga_new.png"/>
+                    </image>
+                </ImageView>
+                <VBox alignment="CENTER" spacing="30">
+                    <Label text="CARREGANT JOC..." styleClass="loading-text" />
+                    <Rectangle width="300" height="6" fill="rgba(255,255,255,0.1)" arcWidth="6" arcHeight="6" />
+                    <Rectangle fx:id="loadingBar" width="0" height="6" fill="#00d2ff" arcWidth="6" arcHeight="6" translateX="-150" />
+                </VBox>
+            </StackPane>
+
+            <!-- VICTORY OVERLAY -->
+            <StackPane fx:id="winOverlay" visible="false" mouseTransparent="true" styleClass="win-overlay">
+                <VBox alignment="CENTER" spacing="20">
+                    <Label text="🎊 VICTÒRIA! 🎊" styleClass="win-title" />
+                    <Label fx:id="winLabel" text="El jugador ha guanyat!" styleClass="win-subtitle" />
+                    <Button text="TORNAR AL MENÚ" onAction="#handleQuitGame" styleClass="button, primary" />
+                </VBox>
+            </StackPane>
         </StackPane>
     </center>
 
@@ -192,7 +203,7 @@
             <!-- Tarjeta Dado -->
             <VBox spacing="10" styleClass="card" prefWidth="280">
                 <Label text="Dau" styleClass="card-title" />
-                <Text fx:id="dadoResultText" text="Ha sortit: -" styleClass="big-text" wrappingWidth="240" />
+                <Text fx:id="dadoResultText" text="Torn de: -" styleClass="big-text" wrappingWidth="240" />
                 <Button fx:id="dado" text="Llençar dau" onAction="#handleDado"
                         maxWidth="Infinity" styleClass="primary" />
             </VBox>
@@ -200,8 +211,7 @@
             <!-- Tarjeta Objetos -->
             <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
                 <Label text="Objectes" styleClass="card-title" />
-                <Label fx:id="nomInventari" text="Inventari de: -" style="-fx-font-weight: bold; -fx-text-fill: #00d2ff;"/>
-
+                <Label fx:id="nomInventari" text="PROPIETARI: -" style="-fx-font-weight: bold; -fx-text-fill: #00d2ff; -fx-font-size: 14px;" />
 
                 <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="objects-scroll">
                     <content>
@@ -242,7 +252,11 @@
             <!-- Tarjeta Eventos -->
             <VBox spacing="10" styleClass="card" prefWidth="320">
                 <Label text="Esdeveniments" styleClass="card-title" />
-                <Text fx:id="eventos" text="Esdeveniment ocorregut" styleClass="events" wrappingWidth="280" />
+                <ScrollPane fitToWidth="true" styleClass="objects-scroll" prefHeight="100">
+                    <content>
+                         <Text fx:id="eventos" text="El joc ha començat!" styleClass="events" wrappingWidth="280" />
+                    </content>
+                </ScrollPane>
             </VBox>
 
         </HBox>

@@ -3,6 +3,36 @@
     -fx-background-color: radial-gradient(center 50% 50%, radius 80%, #1c3c6a, #0a1128);
 }
 
+/* OVERLAYS */
+.overlay {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #1a2a44, #050a18);
+}
+
+.loading-text {
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, #00d2ff, 15, 0.5, 0, 0);
+    -fx-letter-spacing: 5px;
+}
+
+.win-overlay {
+    -fx-background-color: rgba(5, 15, 35, 0.9);
+}
+
+.win-title {
+    -fx-font-size: 64px;
+    -fx-font-weight: 900;
+    -fx-text-fill: linear-gradient(to bottom, #fff700, #ff8c00);
+    -fx-effect: dropshadow(gaussian, rgba(255, 140, 0, 0.8), 30, 0, 0, 0);
+}
+
+.win-subtitle {
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
 /* MENU BAR */
 .menu-bar {
     -fx-background-color: rgba(10, 20, 45, 0.8);
@@ -16,22 +46,14 @@
 
 /* TABLERO (BOARD) */
 .board {
-    -fx-background-color: rgba(176, 224, 230, 0.2); /* Ice blue tint */
-    -fx-background-radius: 25;
-    -fx-padding: 20;
-    -fx-border-color: rgba(173, 216, 230, 0.4); /* Lighter ice border */
-    -fx-border-radius: 25;
-    -fx-border-width: 4;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 40, 0, 0, 20);
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-radius: 30;
+    -fx-border-color: linear-gradient(to bottom right, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
+    -fx-border-width: 2;
+    -fx-padding: 30;
+    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.5), 50, 0, 0, 0);
 }
 
-.board .cell {
-    -fx-background-color: rgba(255, 255, 255, 0.05);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-width: 1;
-}
-
-/* TEXTOS DEL TABLERO */
 .cell-title {
     -fx-font-size: 24px;
     -fx-font-weight: 900;
@@ -42,24 +64,24 @@
 .cell-type {
     -fx-font-size: 13px;
     -fx-font-weight: 800;
-    -fx-fill: #e0f2f1;
-    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.5), 2, 0, 0, 1);
-}
-
-/* BARRA INFERIOR */
-.bottom-bar {
-    -fx-background-color: transparent;
+    -fx-fill: #e0faff;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 2, 0, 0, 1);
 }
 
 /* TARJETAS GLASSMORPHISM */
 .card {
-    -fx-background-color: rgba(15, 35, 70, 0.45);
-    -fx-background-radius: 18;
+    -fx-background-color: linear-gradient(to bottom right, rgba(30, 60, 110, 0.4), rgba(15, 30, 60, 0.2));
+    -fx-background-radius: 20;
     -fx-padding: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.15);
-    -fx-border-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 20;
     -fx-border-width: 1.5;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 15, 0.2, 0, 5);
+}
+
+.card:hover {
+    -fx-background-color: linear-gradient(to bottom right, rgba(40, 80, 150, 0.5), rgba(20, 40, 80, 0.3));
+    -fx-border-color: rgba(255, 255, 255, 0.2);
 }
 
 .card-title {
@@ -116,19 +138,16 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.6), 12, 0.3, 0, 3);
 }
 
-.button.primary:hover {
-    -fx-background-color: linear-gradient(to right, #0072ff, #00c6ff);
-    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.9), 15, 0.5, 0, 3);
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
-}
-
-/* SCROLL */
+/* SCROLLBAR */
 .objects-scroll {
     -fx-background-color: transparent;
 }
 .objects-scroll .viewport {
     -fx-background-color: transparent;
+}
+.objects-scroll .thumb {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 5;
 }
 
 /* JUGADORES */
@@ -136,91 +155,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 10, 0.5, 0, 3);
 }
 
-/* Colores Neón por Jugador (ya no aplican a la forma base, pero conservamos por si acaso para otros elementos) */
-
-/* Jugador activo (glow) */
 .current-player {
     -fx-effect: dropshadow(gaussian, #00ffff, 25, 0.8, 0, 0);
-    -fx-scale-x: 1.2;
-    -fx-scale-y: 1.2;
-}
-
-/* Efectos de Casillas específicas */
-.cell-type {
-    -fx-font-size: 13px;
-    -fx-font-weight: 800;
-    -fx-fill: #e0faff;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 2, 0, 0, 1);
-}
-
-.board .text {
-    -fx-effect: dropshadow(gaussian, rgba(0, 195, 255, 0.3), 5, 0.2, 0, 0);
-}
-
-/* RULETA OVERLAY */
-.roulette-overlay {
-    -fx-background-color: rgba(0, 5, 15, 0.85);
-}
-
-.roulette-container {
-    -fx-background-color: rgba(15, 35, 70, 0.65);
-    -fx-background-radius: 30;
-    -fx-border-color: rgba(0, 242, 254, 0.4);
-    -fx-border-radius: 30;
-    -fx-border-width: 3;
-    -fx-effect: dropshadow(gaussian, rgba(0, 242, 254, 0.3), 50, 0, 0, 0);
-    -fx-max-width: 650;
-    -fx-max-height: 750;
-    -fx-alignment: center;
-}
-
-.roulette-result {
-    -fx-font-size: 32px;
-    -fx-font-weight: 900;
-    -fx-text-fill: linear-gradient(to right, #ffffff, #00f2fe);
-    -fx-effect: dropshadow(gaussian, #00f2fe, 15, 0.5, 0, 0);
-    -fx-text-alignment: center;
-}
-
-.spin-button {
-    -fx-background-color: linear-gradient(to right, #00d2ff, #0078ff);
-    -fx-background-radius: 40;
-    -fx-text-fill: white;
-    -fx-font-weight: 900;
-    -fx-font-size: 24px;
-    -fx-padding: 15 40;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.6), 20, 0.4, 0, 6);
-}
-
-.spin-button:hover {
-    -fx-scale-x: 1.08;
-    -fx-scale-y: 1.08;
-    -fx-background-color: linear-gradient(to right, #00e5ff, #0084ff);
-}
-
-.spin-button:disabled {
-    -fx-opacity: 0.5;
-    -fx-scale-x: 1.0;
-}
-
-.wheel-text-long {
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-background-color: rgba(0, 5, 15, 0.6);
-    -fx-background-radius: 5;
-    -fx-padding: 1 5;
-    -fx-effect: dropshadow(gaussian, rgba(0, 5, 15, 0.9), 5, 1.0, 0, 0);
-}
-
-.wheel-text-small {
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-background-color: rgba(0, 5, 15, 0.6);
-    -fx-background-radius: 5;
-    -fx-padding: 1 5;
-    -fx-line-spacing: -2;
-    -fx-effect: dropshadow(gaussian, rgba(0, 5, 15, 0.9), 5, 1.0, 0, 0);
 }

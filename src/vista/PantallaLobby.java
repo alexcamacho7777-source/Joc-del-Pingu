@@ -72,6 +72,8 @@ public class PantallaLobby {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(scene);
             stage.setTitle("El Joc del Pingüí");
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint("");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,7 +104,8 @@ public class PantallaLobby {
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(pantallaJuegoScene);
             stage.setTitle("El Joc del Pingüí - Partida");
-            stage.setMaximized(true);
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint("");
         } catch (Exception e) {
             e.printStackTrace();
         }

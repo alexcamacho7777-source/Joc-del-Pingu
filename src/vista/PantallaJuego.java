@@ -18,6 +18,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import java.io.IOException;
@@ -68,6 +72,13 @@ public class PantallaJuego {
     @FXML private Group P4;
     @FXML private ImageView bgImage;
 
+    // Premium UI Elements
+    @FXML private StackPane loadingOverlay;
+    @FXML private ImageView loadingBg;
+    @FXML private Rectangle loadingBar;
+    @FXML private StackPane winOverlay;
+    @FXML private Label winLabel;
+
     // Containers
     @FXML private StackPane boardStack;
 
@@ -87,12 +98,37 @@ public class PantallaJuego {
 
     @FXML
     private void initialize() {
-        eventos.setText("El joc ha començat!");        // BIND BACKGROUND SIZE (set managed false to prevent infinite loop/zoom)
+        eventos.setText("El joc ha començat!");
         if (bgImage != null) {
             bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
             bgImage.fitHeightProperty().bind(((StackPane)bgImage.getParent()).heightProperty());
         }
+        if (loadingBg != null) {
+            loadingBg.setManaged(false);
+            loadingBg.fitWidthProperty().bind(loadingOverlay.widthProperty());
+            loadingBg.fitHeightProperty().bind(loadingOverlay.heightProperty());
+        }
+        ejecutarPantallaCarga();
+    }
+
+    private void ejecutarPantallaCarga() {
+        if (loadingOverlay == null) return;
+        
+        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(Duration.ZERO, new javafx.animation.KeyValue(loadingBar.widthProperty(), 0)),
+            new javafx.animation.KeyFrame(Duration.seconds(2.5), new javafx.animation.KeyValue(loadingBar.widthProperty(), 300))
+        );
+        
+        timeline.setOnFinished(e -> {
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(0.8), loadingOverlay);
+            fade.setFromValue(1.0);
+            fade.setToValue(0.0);
+            fade.setOnFinished(ev -> loadingOverlay.setVisible(false));
+            fade.play();
+        });
+        
+        timeline.play();
     }
 
     private void prepararNuevaPartida() {
@@ -263,7 +299,21 @@ public class PantallaJuego {
                 GridPane.setRowIndex(box, row);
                 GridPane.setColumnIndex(box, col);
                 GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
+                
+                // Animación de entrada para las casillas
+                box.setOpacity(0);
+                box.setScaleX(0); box.setScaleY(0);
                 tablero.getChildren().add(box);
+                
+                javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.millis(300), box);
+                ft.setDelay(Duration.millis(i * 10));
+                ft.setToValue(1.0);
+                
+                javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(Duration.millis(400), box);
+                st.setDelay(Duration.millis(i * 10));
+                st.setToX(1); st.setToY(1);
+                
+                ft.play(); st.play();
             }
         }
     }
@@ -282,7 +332,8 @@ public class PantallaJuego {
             javafx.stage.Stage stage = (javafx.stage.Stage) tablero.getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
             stage.setTitle("El Joc del Pingüí - Menú");
-            stage.setMaximized(false);
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint(""); 
         } catch (Exception e) {
             System.out.println("Error al salir: " + e.getMessage());
             System.exit(0);
@@ -342,10 +393,22 @@ public class PantallaJuego {
             dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
             
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-            if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
+            if(!logs.isEmpty()) {
+                String lastMsg = logs.get(logs.size()-1);
+                eventos.setText(lastMsg);
+                showToast(lastMsg, "#00d2ff");
+            }
             
+            syncVisualPositions(true);
             actualizarInventarioUI();
             gestorPartida.guardarPartida();
+            actualizarGlowTurno();
+            
+            // Comprobar victoria
+            if (gestorPartida.getPartida().isFinalizada()) {
+                mostrarVictoria(gestorPartida.getPartida().getGanador());
+                return;
+            }
 
             // 4. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
@@ -426,7 +489,7 @@ public class PantallaJuego {
         while (current != to) {
             current += step;
             final int finalCurrent = current;
-            javafx.animation.PauseTransition stepPause = new javafx.animation.PauseTransition(Duration.millis(200));
+            javafx.animation.PauseTransition stepPause = new javafx.animation.PauseTransition(Duration.millis(600));
             stepPause.setOnFinished(e -> {
                 int f = finalCurrent;
                 if (f < 0) f = 0; if (f >= 50) f = 49;
@@ -470,6 +533,32 @@ public class PantallaJuego {
                 GridPane.setColumnIndex(token, newCol);
                 GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
                 GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
+            }
+        }
+    }
+
+    private void actualizarGlowTurno() {
+        Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            javafx.scene.Node token = tokenMap.get(j);
+            if (token != null) {
+                if (j.equals(actual)) {
+                    token.getStyleClass().add("current-player");
+                    // Efecto de pulso
+                    javafx.animation.ScaleTransition pulse = new javafx.animation.ScaleTransition(Duration.seconds(0.8), token);
+                    pulse.setFromX(1); pulse.setFromY(1);
+                    pulse.setToX(1.15); pulse.setToY(1.15);
+                    pulse.setCycleCount(javafx.animation.Animation.INDEFINITE);
+                    pulse.setAutoReverse(true);
+                    pulse.play();
+                    token.setUserData(pulse);
+                } else {
+                    token.getStyleClass().remove("current-player");
+                    if (token.getUserData() instanceof javafx.animation.ScaleTransition st) {
+                        st.stop();
+                        token.setScaleX(1); token.setScaleY(1);
+                    }
+                }
             }
         }
     }
@@ -639,6 +728,48 @@ public class PantallaJuego {
                 tokenMap.put(j, pTokens[i]);
             }
         }
+    }
+
+    private void mostrarVictoria(Jugador ganador) {
+        if (winOverlay == null) return;
+        winLabel.setText("🎉 " + ganador.getNombre().toUpperCase() + " HA GUANYAT! 🎉");
+        winOverlay.setVisible(true);
+        winOverlay.setOpacity(0);
+        
+        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1.5), winOverlay);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        fade.play();
+        
+        // Efecto de escala
+        javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(Duration.seconds(1), winOverlay);
+        scale.setFromX(0.5); scale.setFromY(0.5);
+        scale.setToX(1); scale.setToY(1);
+        scale.play();
+    }
+
+    private void showToast(String message, String color) {
+        Label toast = new Label(message);
+        toast.getStyleClass().add("stat");
+        toast.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 10 20; -fx-background-radius: 20; -fx-text-fill: " + color + "; -fx-font-size: 18px;");
+        
+        StackPane container = (StackPane) loadingOverlay.getParent();
+        container.getChildren().add(toast);
+        StackPane.setAlignment(toast, Pos.TOP_CENTER);
+        toast.setTranslateY(100);
+        
+        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(0.5), toast);
+        fade.setFromValue(0); fade.setToValue(1);
+        
+        javafx.animation.TranslateTransition move = new javafx.animation.TranslateTransition(Duration.seconds(2), toast);
+        move.setByY(-50);
+        
+        javafx.animation.FadeTransition fadeOut = new javafx.animation.FadeTransition(Duration.seconds(0.5), toast);
+        fadeOut.setDelay(Duration.seconds(1.5));
+        fadeOut.setFromValue(1); fadeOut.setToValue(0);
+        fadeOut.setOnFinished(e -> container.getChildren().remove(toast));
+        
+        fade.play(); move.play(); fadeOut.play();
     }
 
     /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */

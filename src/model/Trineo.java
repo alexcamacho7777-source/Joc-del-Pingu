@@ -17,8 +17,5 @@ public class Trineo extends Casilla {
         } else {
             partida.anadirEvento(jugador.getNombre() + " ja està a l'últim trineu, no es mou.");
         }
-
-        
-        System.out.println("No hi ha més trineus, no passa res.");
     }
 }
