@@ -9,8 +9,7 @@ public class Agujero extends Casilla {
 
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
-        Tablero tablero = partida.getTablero();
-        int anteriorAgujero = tablero.buscarAgujeroAnterior(getPosicion());
+        int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(getPosicion());
         jugador.setPosicion(anteriorAgujero);
         partida.anadirEvento(jugador.getNombre() + " ha caigut en un forat i va a la posició " + anteriorAgujero + ".");
     }

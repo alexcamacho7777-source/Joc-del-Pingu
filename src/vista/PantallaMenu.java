@@ -77,7 +77,8 @@ public class PantallaMenu {
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                     stage.setScene(pantallaLobbyScene);
                     stage.setTitle("El Joc del Pingüí - Menú Principal");
-                    stage.setMaximized(true);
+                    stage.setFullScreen(true);
+                    stage.setFullScreenExitHint("");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
