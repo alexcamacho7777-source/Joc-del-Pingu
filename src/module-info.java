@@ -2,6 +2,7 @@ module Joc_del_Pingu {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
+    requires javafx.media;
     requires java.sql;
 
     opens vista       to javafx.fxml, javafx.graphics;

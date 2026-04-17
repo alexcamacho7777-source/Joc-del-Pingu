@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import java.io.IOException;
 
 import controlador.GestorPartida;
 import model.Item;
@@ -27,7 +28,9 @@ import model.Pez;
 import model.BolaDeNieve;
 import model.Casilla;
 import model.Dado;
+import model.Evento;
 import model.Inventario;
+import model.Item;
 import model.Jugador;
 import model.Pinguino;
 import model.Tablero;
@@ -64,6 +67,9 @@ public class PantallaJuego {
     @FXML private Group P3;
     @FXML private Group P4;
     @FXML private ImageView bgImage;
+
+    // Containers
+    @FXML private StackPane boardStack;
 
     private GestorPartida gestorPartida;
     private int p1Position = 0;
