@@ -43,9 +43,9 @@
 }
 
 .input-container {
-    -fx-background-color: rgba(0,0,0,0.3);
+    -fx-background-color: rgba(0, 0, 0, 0.3);
     -fx-background-radius: 12;
-    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-radius: 12;
     -fx-padding: 0 12;
 }
@@ -87,6 +87,6 @@
 }
 
 .footer-text {
-    -fx-text-fill: rgba(255,255,255,0.3);
+    -fx-text-fill: rgba(255, 255, 255, 0.3);
     -fx-font-size: 12px;
 }
