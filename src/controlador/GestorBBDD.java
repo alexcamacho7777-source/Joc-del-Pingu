@@ -2,6 +2,7 @@ package controlador;
 
 import model.*;
 
+import java.security.MessageDigest;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -138,16 +139,53 @@ public class GestorBBDD {
 
     // ── MÈTODES ESPECÍFICS JOC ──────────────────────────────────────────────
 
-    public boolean registrarUsuario(String username) {
-        if (conexion == null) return false;
-        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) return true;
+    // ── UTILITAT: SHA-256 ────────────────────────────────────────────────────
+    private String sha256(String text) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(text.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error calculant hash", e);
+        }
+    }
 
+    /**
+     * Registra un nou usuari amb contrasenya (hash SHA-256).
+     * Retorna false si l'usuari ja existeix.
+     */
+    public boolean registrarUsuario(String username, String password) {
+        if (conexion == null) return false;
+        // Si ja existeix, no el tornem a crear
+        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) return false;
+
+        String hashPw = sha256(password);
         ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
         int nextId = 1;
         if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
-        
-        String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories) VALUES (" + nextId + ", '" + username + "', 'Blau', 0)";
+
+        // Intentem inserir amb la columna contrasenya; si la columna no existeix, la creem primer
+        assegurarColumnaContrasenya();
+        String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories, contrasenya) VALUES ("
+                + nextId + ", '" + username + "', 'Blau', 0, '" + hashPw + "')";
         return executeInsUpDel(conexion, sql, "Registro") > 0;
+    }
+
+    /**
+     * Afegeix la columna contrasenya a la taula jugador si no existeix.
+     */
+    private void assegurarColumnaContrasenya() {
+        if (conexion == null) return;
+        // Comprovem si la columna ja existeix
+        ArrayList<LinkedHashMap<String, String>> cols = select(conexion,
+                "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'");
+        if (cols.isEmpty()) {
+            ejecutar(conexion, "ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))");
+            System.out.println("Columna 'contrasenya' afegida a la taula jugador.");
+            commit(conexion);
+        }
     }
 
     public int getIDJugador(String username) {
@@ -156,8 +194,31 @@ public class GestorBBDD {
         return Integer.parseInt(res.get(0).get("ID_JUGADOR"));
     }
 
-    public boolean loginUsuario(String username) {
-        return !select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty();
+    /**
+     * Valida login comprovant usuari I contrasenya (hash SHA-256).
+     * Retorna true si les credencials coincideixen.
+     */
+    public boolean loginUsuario(String username, String password) {
+        if (conexion == null) return false;
+        assegurarColumnaContrasenya();
+        String hashPw = sha256(password);
+        ArrayList<LinkedHashMap<String, String>> res = select(conexion,
+                "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "' AND contrasenya = '" + hashPw + "'");
+        return !res.isEmpty();
+    }
+
+    /**
+     * Registra un jugador (CPU/IA) sense contrasenya.
+     * Només per a jugadors artificials generats pel joc, no per a humans.
+     */
+    private void registrarJugadorSenseContrasenya(String username) {
+        if (conexion == null) return;
+        if (!select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'").isEmpty()) return;
+        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
+        int nextId = 1;
+        if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+        executeInsUpDel(conexion, "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories) VALUES ("
+                + nextId + ", '" + username + "', 'Gris', 0)", "RegistreIA");
     }
 
     public void guardarBBDD(Partida p) {
@@ -165,7 +226,7 @@ public class GestorBBDD {
         try {
             java.util.List<Jugador> jugadores = p.getJugadores();
             for (Jugador j : jugadores) {
-                if (getIDJugador(j.getNombre()) == -1) registrarUsuario(j.getNombre());
+                if (getIDJugador(j.getNombre()) == -1) registrarJugadorSenseContrasenya(j.getNombre());
             }
 
             int idPartida = p.getId();
