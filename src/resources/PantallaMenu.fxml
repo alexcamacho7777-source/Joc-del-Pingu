@@ -2,79 +2,45 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.text.Text?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="vista.PantallaMenu"
            prefWidth="1280" prefHeight="720"
            stylesheets="@PantallaMenu.css">
 
+    <!-- CONTINGUT CENTRAL -->
+    <VBox alignment="CENTER" spacing="0">
 
-    <!-- CAPA DE CONTENIDO -->
-    <BorderPane>
-        <top>
-            <MenuBar styleClass="menu-bar">
-                <menus>
-                    <Menu text="Joc del Pingüí">
-                        <items>
-                            <MenuItem fx:id="newGame"  text="❄️ Nova Partida"     onAction="#handleNewGame"/>
-                            <MenuItem fx:id="saveGame" text="💾 Guardar Partida"  onAction="#handleSaveGame"/>
-                            <MenuItem fx:id="loadGame" text="📂 Carregar Partida" onAction="#handleLoadGame"/>
-                            <SeparatorMenuItem/>
-                            <MenuItem fx:id="quitGame" text="🚪 Sortir"           onAction="#handleQuitGame"/>
-                        </items>
-                    </Menu>
-                </menus>
-            </MenuBar>
-        </top>
+        <!-- CAPÇALERA: Icona usuari dreta -->
+        <HBox alignment="CENTER_RIGHT" style="-fx-padding: 20 30 0 30;">
+            <Button fx:id="btnUsuari" text="Usuari" onAction="#handleUsuari"
+                    styleClass="button-user"/>
+        </HBox>
 
-        <center>
-            <VBox alignment="CENTER" spacing="20">
-                
-                <!-- TÍTULOS -->
-                <VBox alignment="CENTER" spacing="0">
-                    <Label text="JOC DEL PINGÜÍ" styleClass="title"/>
-                    <Label text="L'aventura gelada t'espera" styleClass="subtitle"/>
-                </VBox>
+        <!-- BLOC CENTRAL: Títol + subtítol + botons -->
+        <VBox alignment="CENTER" spacing="40" VBox.vgrow="ALWAYS">
 
-                <!-- CARD DE LOGIN -->
-                <VBox spacing="20" styleClass="glass-card" alignment="CENTER" maxWidth="420">
-                    <padding>
-                        <Insets top="40" right="40" bottom="40" left="40"/>
-                    </padding>
-
-                    <Label text="PERFIL DEL JUGADOR" styleClass="card-title"/>
-
-                    <VBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="USUARI" styleClass="field-label"/>
-                        <HBox styleClass="input-container" alignment="CENTER_LEFT">
-                            <TextField fx:id="userField" promptText="Introdueix el teu nom" HBox.hgrow="ALWAYS" styleClass="styled-input"/>
-                            <Label text="🐧" styleClass="input-icon"/>
-                        </HBox>
-                    </VBox>
-                    
-                    <VBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="CONTRASENYA" styleClass="field-label"/>
-                        <HBox styleClass="input-container" alignment="CENTER_LEFT">
-                            <PasswordField fx:id="passField" promptText="••••••••" HBox.hgrow="ALWAYS" styleClass="styled-input"/>
-                            <Label text="🔒" styleClass="input-icon"/>
-                        </HBox>
-                    </VBox>
-
-                    <VBox spacing="15" alignment="CENTER">
-                        <VBox.margin>
-                            <Insets top="10"/>
-                        </VBox.margin>
-                        <Button fx:id="loginButton" text="🎮 ENTRAR AL JOC" onAction="#handleLogin"
-                                maxWidth="Infinity" styleClass="button-primary"/>
-                        <Button fx:id="registerButton" text="📝 Crear Nou Compte" onAction="#handleRegister"
-                                maxWidth="Infinity" styleClass="button-secondary"/>
-                    </VBox>
-                </VBox>
-
-                <Label text="© 2026 Joc del Pingüí - DW2526 · Grup 03" styleClass="footer-text"/>
+            <!-- Títol -->
+            <VBox alignment="CENTER" spacing="8">
+                <Label text="JOC DEL PINGUÍ" styleClass="title"/>
+                <Label text="L'aventura gelada t'espera" styleClass="subtitle"/>
             </VBox>
-        </center>
-    </BorderPane>
+
+            <!-- Botons principals -->
+            <VBox alignment="CENTER" spacing="16" maxWidth="320">
+                <Button fx:id="btnJugar" text="JUGAR" onAction="#handleJugar"
+                        maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 22px; -fx-padding: 20 50;"/>
+            </VBox>
+
+            <!-- Usuari loguejat (visible quan hi ha sessió) -->
+            <Label fx:id="lblSessio" text="" styleClass="footer-text"
+                   style="-fx-font-size: 14px; -fx-text-fill: #80d8ff;"/>
+        </VBox>
+
+        <!-- PEU -->
+        <Label text="© 2026 Joc del Pingui - DW2526 · Grup 03" styleClass="footer-text"
+               style="-fx-padding: 0 0 20 0;"/>
+    </VBox>
+
 </StackPane>

@@ -232,7 +232,7 @@ public class PantallaJuego {
                         if ("Evento".equals(tipo)) {
                             StackPane stack = new StackPane();
                             stack.getChildren().add(iv);
-                            Text icon = new Text("✨");
+                            Text icon = new Text("?");
                             icon.setStyle("-fx-font-size: 18px; -fx-fill: gold;");
                             stack.getChildren().add(icon);
                             box.getChildren().add(stack);
@@ -240,26 +240,22 @@ public class PantallaJuego {
                             StackPane stack = new StackPane();
                             iv.setStyle("-fx-effect: innershadow(gaussian, red, 10, 0.5, 0, 0);");
                             stack.getChildren().add(iv);
-                            Text angry = new Text("💢");
-                            angry.setStyle("-fx-font-size: 16px;");
-                            StackPane.setAlignment(angry, Pos.TOP_RIGHT);
-                            stack.getChildren().add(angry);
                             box.getChildren().add(stack);
                         } else {
                             box.getChildren().add(iv);
                         }
                     } else {
-                        // Emoji grande y claro si no hay imagen
+                        // Text curt si no hi ha imatge
                         String emojiText = switch (tipo) {
-                            case "Agujero" -> "🕳️";
-                            case "Oso" -> "🐻";
-                            case "Trineo" -> "🛷";
-                            case "SueloQuebradizo" -> "⛸️";
-                            case "Evento" -> "🎁";
-                            default -> "🧊";
+                            case "Agujero" -> "FORAT";
+                            case "Oso" -> "OS";
+                            case "Trineo" -> "TRINEU";
+                            case "SueloQuebradizo" -> "FRÀGIL";
+                            case "Evento" -> "SORPRESA";
+                            default -> "?";
                         };
                         Text fallback = new Text(emojiText);
-                        fallback.setStyle("-fx-font-size: 32px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 5, 0, 0, 1);");
+                        fallback.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 5, 0, 0, 1);");
                         box.getChildren().add(fallback);
                     }
                 } catch (Exception e) {
@@ -824,7 +820,7 @@ public class PantallaJuego {
 
     private void mostrarVictoria(Jugador ganador) {
         if (winOverlay == null) return;
-        winLabel.setText("🎉 " + ganador.getNombre().toUpperCase() + " HA GUANYAT! 🎉");
+        winLabel.setText(ganador.getNombre().toUpperCase() + " HA GUANYAT!");
         winOverlay.setVisible(true);
         winOverlay.setOpacity(0);
         

@@ -85,8 +85,8 @@
 
                 <children>
                     <!-- Esquinas -->
-                    <Text text="🏁 INICI" styleClass="cell-title" />
-                    <Text text="META 🏆" styleClass="cell-title"
+                    <Text text="INICI" styleClass="cell-title" />
+                    <Text text="META" styleClass="cell-title"
                           GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
 
                     <!-- Jugadores -->
@@ -190,7 +190,7 @@
             <!-- VICTORY OVERLAY -->
             <StackPane fx:id="winOverlay" visible="false" mouseTransparent="true" styleClass="win-overlay">
                 <VBox alignment="CENTER" spacing="20">
-                    <Label text="🎊 VICTÒRIA! 🎊" styleClass="win-title" />
+                    <Label text="VICTÒRIA!" styleClass="win-title" />
                     <Label fx:id="winLabel" text="El jugador ha guanyat!" styleClass="win-subtitle" />
                     <Button text="TORNAR AL MENÚ" onAction="#handleQuitGame" styleClass="button, primary" />
                 </VBox>

@@ -328,4 +328,36 @@ public class GestorBBDD {
         for (LinkedHashMap<String, String> f : resList) ids.add(Integer.parseInt(f.get("ID_PARTIDA")));
         return ids;
     }
+
+    /**
+     * Retorna una llista de mapes amb la informació detallada de cada partida:
+     * ID, NOM, DATA, JUGADORS (llista separada per comes), TORN_ACTUAL, FINALITZADA (S/N).
+     */
+    public ArrayList<LinkedHashMap<String, String>> getListaPartidasDetalladas() {
+        if (conexion == null) return new ArrayList<>();
+
+        // Partides bàsiques
+        ArrayList<LinkedHashMap<String, String>> partides = select(conexion,
+                "SELECT id_partida, nom_partida, TO_CHAR(data_creacio,'DD/MM/YYYY') AS data_creacio, " +
+                "torn_actual, finalitzada FROM partida ORDER BY id_partida DESC");
+
+        for (LinkedHashMap<String, String> fila : partides) {
+            String idPartida = fila.get("ID_PARTIDA");
+            // Jugadors de la partida
+            ArrayList<LinkedHashMap<String, String>> jugadors = select(conexion,
+                    "SELECT j.nom_jugador FROM jugador j " +
+                    "JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador " +
+                    "WHERE jp.id_partida = " + idPartida + " ORDER BY jp.id_jugador ASC");
+            StringBuilder sb = new StringBuilder();
+            for (LinkedHashMap<String, String> jf : jugadors) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(jf.get("NOM_JUGADOR"));
+            }
+            fila.put("JUGADORS", sb.length() > 0 ? sb.toString() : "-");
+            // Finalitzada
+            String fin = fila.getOrDefault("FINALITZADA", null);
+            fila.put("FINALITZADA", (fin != null && fin.equalsIgnoreCase("1")) ? "Si" : "No");
+        }
+        return partides;
+    }
 }
