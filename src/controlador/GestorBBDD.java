@@ -336,10 +336,10 @@ public class GestorBBDD {
     public ArrayList<LinkedHashMap<String, String>> getListaPartidasDetalladas() {
         if (conexion == null) return new ArrayList<>();
 
-        // Partides bàsiques
+        // Partides bàsiques sense la columna finalitzada que dóna error
         ArrayList<LinkedHashMap<String, String>> partides = select(conexion,
                 "SELECT id_partida, nom_partida, TO_CHAR(data_creacio,'DD/MM/YYYY') AS data_creacio, " +
-                "torn_actual, finalitzada FROM partida ORDER BY id_partida DESC");
+                "torn_actual FROM partida ORDER BY id_partida DESC");
 
         for (LinkedHashMap<String, String> fila : partides) {
             String idPartida = fila.get("ID_PARTIDA");

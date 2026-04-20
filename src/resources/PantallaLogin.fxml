@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="vista.PantallaLogin"
+           prefWidth="1280" prefHeight="720"
+           stylesheets="@PantallaMenu.css">
+
+    <VBox alignment="CENTER" spacing="30">
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 20 30 0 30;">
+            <Button text="Tornar" onAction="#handleTornar" styleClass="button-secondary"/>
+        </HBox>
+
+        <VBox alignment="CENTER" spacing="20" VBox.vgrow="ALWAYS">
+            <Label text="AUTENTICACIÓ" styleClass="title" style="-fx-font-size: 48px;"/>
+
+            <HBox spacing="20" alignment="CENTER">
+                <Button text="Iniciar Sessió" onAction="#showLogin" styleClass="button-primary"/>
+                <Button text="Crear Usuari" onAction="#showRegister" styleClass="button-secondary"/>
+            </HBox>
+
+            <!-- Login Form -->
+            <VBox fx:id="loginBox" alignment="CENTER" spacing="15" maxWidth="350" visible="false" managed="false" styleClass="glass-card" style="-fx-padding: 30;">
+                <Label text="INICIAR SESSIÓ" styleClass="card-title"/>
+                <TextField fx:id="logUser" promptText="Usuari" styleClass="styled-input, input-container"/>
+                <PasswordField fx:id="logPass" promptText="Contrasenya" styleClass="styled-input, input-container"/>
+                <Button text="ENTRAR" onAction="#handleLogin" maxWidth="Infinity" styleClass="button-primary"/>
+            </VBox>
+
+            <!-- Register Form -->
+            <VBox fx:id="registerBox" alignment="CENTER" spacing="15" maxWidth="350" visible="false" managed="false" styleClass="glass-card" style="-fx-padding: 30;">
+                <Label text="CREAR NOU USUARI" styleClass="card-title"/>
+                <TextField fx:id="regUser" promptText="Usuari" styleClass="styled-input, input-container"/>
+                <PasswordField fx:id="regPass" promptText="Contrasenya" styleClass="styled-input, input-container"/>
+                <PasswordField fx:id="regPassConf" promptText="Repetir Contrasenya" styleClass="styled-input, input-container"/>
+                <Button text="REGISTRAR" onAction="#handleRegister" maxWidth="Infinity" styleClass="button-primary"/>
+            </VBox>
+        </VBox>
+    </VBox>
+</StackPane>

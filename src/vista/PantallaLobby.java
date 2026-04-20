@@ -1,27 +1,36 @@
 package vista;
 
 import javafx.fxml.FXML;
-import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.text.Text;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class PantallaLobby {
 
     @FXML private Text welcomeText;
     @FXML private ChoiceBox<Integer> choiceHumans;
     @FXML private ChoiceBox<Integer> choiceIA;
-    @FXML private Button btnNuevaPartida;
     @FXML private Button btnCargarPartida;
-    @FXML private Button btnCerrarSesion;
-    @FXML private ChoiceBox<Integer> choicePartidas;
 
-    private String username;
+    @FXML private TableView<Map<String, String>> tablaPartidas;
+    @FXML private TableColumn<Map<String, String>, String> colId;
+    @FXML private TableColumn<Map<String, String>, String> colNom;
+    @FXML private TableColumn<Map<String, String>, String> colData;
+    @FXML private TableColumn<Map<String, String>, String> colJugadors;
+    @FXML private TableColumn<Map<String, String>, String> colTorn;
+    @FXML private TableColumn<Map<String, String>, String> colFinalitzada;
 
     @FXML
     private void initialize() {
@@ -31,40 +40,53 @@ public class PantallaLobby {
         choiceHumans.setValue(1); 
         choiceIA.setValue(1); 
 
-        // Carregar llista de partides de la BBDD
-        controlador.GestorBBDD bd = new controlador.GestorBBDD();
-        java.util.ArrayList<Integer> partidas = bd.getListaPartidas();
-        choicePartidas.getItems().addAll(partidas);
-        if (!partidas.isEmpty()) {
-            choicePartidas.setValue(partidas.get(0));
+        if (PantallaMenu.getLoggedInUser() != null) {
+            welcomeText.setText("Benvingut a l'aventura, " + PantallaMenu.getLoggedInUser() + "!");
         }
+
+        configurarTabla();
+        cargarDatosTabla();
     }
 
-    public void setUsuarioLogueado(String username) {
-        this.username = username;
-        if (welcomeText != null) {
-            welcomeText.setText("Benvingut a l'aventura, " + username + "!");
-        }
+    private void configurarTabla() {
+        colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("ID_PARTIDA")));
+        colNom.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("NOM_PARTIDA")));
+        colData.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("DATA_CREACIO")));
+        colJugadors.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("JUGADORS")));
+        colTorn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("TORN_ACTUAL")));
+        colFinalitzada.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().get("FINALITZADA")));
+    }
+
+    private void cargarDatosTabla() {
+        controlador.GestorBBDD bd = new controlador.GestorBBDD();
+        ArrayList<LinkedHashMap<String, String>> data = bd.getListaPartidasDetalladas();
+        ObservableList<Map<String, String>> items = FXCollections.observableArrayList(data);
+        tablaPartidas.setItems(items);
     }
 
     @FXML
     private void handleNuevaPartida(ActionEvent event) {
-        // Validar máximo 4 jugadores en total si se quiere
         int total = choiceHumans.getValue() + choiceIA.getValue();
-        if (total > 4) {
-             System.out.println("Error: Màxim 4 pingüins totals.");
-             // Podríamos mostrar un alert
+        if (total > 4 || total < 1) {
+             mostrarAlert(Alert.AlertType.WARNING, "Límit de jugadors", "El total de jugadors ha de ser entre 1 i 4.");
+             return;
         }
-        lanzarJuego(event, false);
+        lanzarJuego(event, null);
     }
 
     @FXML
     private void handleCargarPartida(ActionEvent event) {
-        lanzarJuego(event, true);
+        Map<String, String> seleccionada = tablaPartidas.getSelectionModel().getSelectedItem();
+        if (seleccionada == null) {
+            mostrarAlert(Alert.AlertType.WARNING, "Cap partida seleccionada", "Si us plau, selecciona una partida de la taula per carregar.");
+            return;
+        }
+        Integer gameId = Integer.parseInt(seleccionada.get("ID_PARTIDA"));
+        lanzarJuego(event, gameId);
     }
 
     @FXML
-    private void handleCerrarSesion(ActionEvent event) {
+    private void handleTornar(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaMenu.fxml"));
             Parent root = loader.load();
@@ -79,25 +101,18 @@ public class PantallaLobby {
         }
     }
 
-    private void lanzarJuego(ActionEvent event, boolean cargarPartida) {
+    private void lanzarJuego(ActionEvent event, Integer gameIdToLoad) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
             Parent pantallaJuegoRoot = loader.load();
             
             PantallaJuego controladorJoc = loader.getController();
-            controladorJoc.setUsuarioLogueado(username);
+            controladorJoc.setUsuarioLogueado(PantallaMenu.getLoggedInUser());
             
-            // Pasamos los recuentos elegidos
             controladorJoc.configurarJugadores(choiceHumans.getValue(), choiceIA.getValue());
             
-            if (cargarPartida) {
-                Integer gameId = choicePartidas.getValue();
-                if (gameId != null) {
-                    controladorJoc.iniciarCargandoPartida(gameId);
-                } else {
-                    System.out.println("No s'ha seleccionat cap partida per carregar.");
-                    return; // No lancem si no hi ha selecció
-                }
+            if (gameIdToLoad != null) {
+                controladorJoc.iniciarCargandoPartida(gameIdToLoad);
             }
 
             Scene pantallaJuegoScene = new Scene(pantallaJuegoRoot);
@@ -108,6 +123,22 @@ public class PantallaLobby {
             stage.setFullScreenExitHint("");
         } catch (Exception e) {
             e.printStackTrace();
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut iniciar el joc.");
+        }
+    }
+
+    private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
+        Alert alert = new Alert(tipus);
+        alert.setTitle(titol);
+        alert.setHeaderText(null);
+        alert.setContentText(missatge);
+        alert.showAndWait();
+    }
+
+    public void setUsuarioLogueado(String username) {
+        // Left for backwards compatibility if needed, but we now use static PantallaMenu.getLoggedInUser()
+        if (username != null && welcomeText != null) {
+            welcomeText.setText("Benvingut a l'aventura, " + username + "!");
         }
     }
 }

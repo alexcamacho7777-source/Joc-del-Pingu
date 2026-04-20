@@ -18,24 +18,26 @@
                     styleClass="button-user"/>
         </HBox>
 
-        <!-- BLOC CENTRAL: Títol + subtítol + botons -->
+        <!-- BLOC CENTRAL: Títol + subtítol + botons amb efecte targeta de vidre -->
         <VBox alignment="CENTER" spacing="40" VBox.vgrow="ALWAYS">
+            <VBox alignment="CENTER" spacing="40" maxWidth="600" styleClass="glass-card" style="-fx-padding: 60;">
+                
+                <!-- Títol -->
+                <VBox alignment="CENTER" spacing="10">
+                    <Label text="JOC DEL PINGÜÍ" styleClass="title" style="-fx-font-size: 80px; -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 25, 0.5, 0, 0);"/>
+                    <Label text="L'aventura polar més divertida" styleClass="subtitle" style="-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #b3d4ff;"/>
+                </VBox>
 
-            <!-- Títol -->
-            <VBox alignment="CENTER" spacing="8">
-                <Label text="JOC DEL PINGUÍ" styleClass="title"/>
-                <Label text="L'aventura gelada t'espera" styleClass="subtitle"/>
+                <!-- Botons principals -->
+                <VBox alignment="CENTER" spacing="16" maxWidth="320">
+                    <Button fx:id="btnJugar" text="COMENÇAR A JUGAR" onAction="#handleJugar"
+                            maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 24px; -fx-padding: 25 50; -fx-background-radius: 25;"/>
+                </VBox>
+
+                <!-- Usuari loguejat (visible quan hi ha sessió) -->
+                <Label fx:id="lblSessio" text="" styleClass="footer-text"
+                       style="-fx-font-size: 16px; -fx-text-fill: #80d8ff; -fx-font-weight: bold;"/>
             </VBox>
-
-            <!-- Botons principals -->
-            <VBox alignment="CENTER" spacing="16" maxWidth="320">
-                <Button fx:id="btnJugar" text="JUGAR" onAction="#handleJugar"
-                        maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 22px; -fx-padding: 20 50;"/>
-            </VBox>
-
-            <!-- Usuari loguejat (visible quan hi ha sessió) -->
-            <Label fx:id="lblSessio" text="" styleClass="footer-text"
-                   style="-fx-font-size: 14px; -fx-text-fill: #80d8ff;"/>
         </VBox>
 
         <!-- PEU -->
