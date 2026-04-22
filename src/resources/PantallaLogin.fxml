@@ -10,7 +10,7 @@
 
     <VBox alignment="CENTER" spacing="30">
         <HBox alignment="CENTER_LEFT" style="-fx-padding: 20 30 0 30;">
-            <Button text="Tornar" onAction="#handleTornar" styleClass="button-secondary"/>
+            <Button text="Tornar" onAction="#handleTornar" styleClass="button-primary"/>
         </HBox>
 
         <VBox alignment="CENTER" spacing="20" VBox.vgrow="ALWAYS">
@@ -18,7 +18,7 @@
 
             <HBox spacing="20" alignment="CENTER">
                 <Button text="Iniciar Sessió" onAction="#showLogin" styleClass="button-primary"/>
-                <Button text="Crear Usuari" onAction="#showRegister" styleClass="button-secondary"/>
+                <Button text="Crear Usuari" onAction="#showRegister" styleClass="button-primary"/>
             </HBox>
 
             <!-- Login Form -->
