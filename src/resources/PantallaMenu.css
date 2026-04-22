@@ -107,3 +107,64 @@
     -fx-scale-x: 1.1;
     -fx-scale-y: 1.1;
 }
+
+.ice-card {
+    -fx-background-color: linear-gradient(to bottom right, rgba(160, 230, 255, 0.45), rgba(50, 150, 255, 0.25));
+    -fx-background-radius: 25;
+    -fx-border-color: #00d2ff;
+    -fx-border-width: 3;
+    -fx-border-radius: 25;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.6), 25, 0.4, 0, 0);
+    -fx-padding: 15;
+}
+
+/* Estils arctic per a la taula */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-padding: 5;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #00c6ff, #0072ff);
+    -fx-background-radius: 15 15 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 40px;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-background-color: white;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: rgba(0, 210, 255, 0.4);
+    -fx-border-color: #00d2ff;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Eliminar el bloc blanc de la capçalera (filler i corner) */
+.table-view .filler, 
+.table-view .corner {
+    -fx-background-color: transparent;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: #a0c4e4;
+    -fx-font-size: 16px;
+    -fx-font-style: italic;
+}

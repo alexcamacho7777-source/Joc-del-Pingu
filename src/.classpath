@@ -11,5 +11,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/alexmla696/Documents/GitHub/Joc-del-Pingu/ojdbc8.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
