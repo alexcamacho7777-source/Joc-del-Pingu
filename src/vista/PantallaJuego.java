@@ -331,7 +331,8 @@ public class PantallaJuego {
     public void iniciarCargandoPartida(int id) {
         // Cargamos la partida desde la BD con el ID seleccionado
         gestorPartida.cargarPartida(id);
-        syncLoadedJugadores(); // ¡Esencial para que los pingüinos se muevan!
+        syncLoadedJugadores();
+        mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero()); // Redibuixar caselles
         syncVisualPositions(false);
         actualizarInventarioUI();
         

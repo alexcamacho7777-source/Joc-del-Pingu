@@ -30,14 +30,22 @@ public class GestorBBDD {
 
     private static Connection conectarDirecte(String url, String user, String pwd) {
         try {
-            Class.forName("oracle.jdbc.driver.OracleDriver");
+            try {
+                Class.forName("oracle.jdbc.OracleDriver");
+            } catch (ClassNotFoundException e) {
+                // Alternativa por compatibilidad con versiones antiguas
+                Class.forName("oracle.jdbc.driver.OracleDriver");
+            }
             Connection con = DriverManager.getConnection(url, user, pwd);
             if (con != null && con.isValid(5)) {
                 System.out.println("Connectat a la BBDD correctament.");
             }
             return con;
+        } catch (ClassNotFoundException e) {
+            System.err.println("ERROR: No s'ha trobat el Driver Oracle (ojdbc8.jar).");
+            System.err.println("Assegura't que ojdbc8.jar estigui al Build Path (Modulepath en Java 9+).");
         } catch (Exception e) {
-            System.out.println("Error connexió: " + e.getMessage());
+            System.err.println("Error connexió: " + e.getMessage());
         }
         return null;
     }
@@ -114,6 +122,7 @@ public class GestorBBDD {
             ejecutar(conexion, "INSERT INTO tipus_casella VALUES (3, 'Forat', 'Retrocedeix')");
             ejecutar(conexion, "INSERT INTO tipus_casella VALUES (4, 'Trineu', 'Avanca')");
             ejecutar(conexion, "INSERT INTO tipus_casella VALUES (5, 'Interrogant', 'Event aleatori')");
+            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (6, 'SueloQuebradizo', 'Es trenca al passar')");
         }
 
         // 2. Taulell 1
@@ -239,10 +248,34 @@ public class GestorBBDD {
 
             int numTorn = p.getJugadorActual() + 1;
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + " " +
+                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + " " +
                     "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-                    "VALUES (" + idPartida + ", 1, 'Partida #" + idPartida + "', SYSDATE, " + numTorn + ")";
+                    "VALUES (" + idPartida + ", " + idPartida + ", 'Partida #" + idPartida + "', SYSDATE, " + numTorn + ")";
             ejecutar(conexion, sqlP);
+
+            // Guardar el taulell (taulell i caselles)
+            ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
+                    "WHEN NOT MATCHED THEN INSERT (id_taulell, mida) VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
+            
+            ArrayList<Casilla> casillas = p.getTablero().getCasillas();
+            for (int i = 0; i < casillas.size(); i++) {
+                Casilla c = casillas.get(i);
+                int tipus = 1;
+                if (c instanceof Oso) tipus = 2;
+                else if (c instanceof Agujero) tipus = 3;
+                else if (c instanceof Trineo) tipus = 4;
+                else if (c instanceof Evento) tipus = 5;
+                else if (c instanceof SueloQuebradizo) tipus = 6;
+
+                // Generem un ID únic per a la casella (id_taulell * 100 + i) per evitar col·lisions
+                int idCasellaCalculat = (idPartida * 100) + i;
+                String sqlCas = "MERGE INTO casella dst USING (SELECT " + idPartida + " AS id_t, " + i + " AS num_c FROM dual) src " +
+                        "ON (dst.id_taulell = src.id_t AND dst.numero_casella = src.num_c) " +
+                        "WHEN MATCHED THEN UPDATE SET id_tipus = " + tipus + " " +
+                        "WHEN NOT MATCHED THEN INSERT (id_casella, id_taulell, id_tipus, numero_casella) " +
+                        "VALUES (" + idCasellaCalculat + ", " + idPartida + ", " + tipus + ", " + i + ")";
+                ejecutar(conexion, sqlCas);
+            }
 
             for (int i = 0; i < jugadores.size(); i++) {
                 Jugador j = jugadores.get(i);
@@ -319,6 +352,31 @@ public class GestorBBDD {
             p.anadirJugador(j);
         }
         p.setJugadorActual(ordreActual - 1);
+
+        // Carregar el Taulell
+        int idTaulell = resP.get(0).get("ID_TAULELL") != null ? Integer.parseInt(resP.get(0).get("ID_TAULELL")) : 1;
+        ArrayList<LinkedHashMap<String, String>> resC = select(conexion, "SELECT * FROM casella WHERE id_taulell = " + idTaulell + " ORDER BY numero_casella ASC");
+        if (!resC.isEmpty()) {
+            ArrayList<Casilla> casillas = new ArrayList<>();
+            for (LinkedHashMap<String, String> rowC : resC) {
+                int tipus = Integer.parseInt(rowC.get("ID_TIPUS"));
+                int pos = Integer.parseInt(rowC.get("NUMERO_CASELLA"));
+                Casilla c;
+                switch (tipus) {
+                    case 2: c = new Oso(pos); break;
+                    case 3: c = new Agujero(pos); break;
+                    case 4: c = new Trineo(pos); break;
+                    case 5: c = new Evento(pos); break;
+                    case 6: c = new SueloQuebradizo(pos); break;
+                    default: c = new Normal(pos); break;
+                }
+                casillas.add(c);
+            }
+            Tablero tab = new Tablero();
+            tab.setCasillas(casillas);
+            p.setTablero(tab);
+        }
+
         return p;
     }
 
