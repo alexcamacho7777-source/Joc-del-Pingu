@@ -114,16 +114,13 @@ public class GestorBBDD {
         if (conexion == null) return;
         
         // 1. Tipus de casella
-        ArrayList<LinkedHashMap<String, String>> resTipus = select(conexion, "SELECT COUNT(*) as TOTAL FROM tipus_casella");
-        if (resTipus.isEmpty() || Integer.parseInt(resTipus.get(0).get("TOTAL")) == 0) {
-            System.out.println("Poblant taules mestres...");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (1, 'Normal', 'Sense efecte')");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (2, 'Os', 'Retorna a l''inici')");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (3, 'Forat', 'Retrocedeix')");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (4, 'Trineu', 'Avanca')");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (5, 'Interrogant', 'Event aleatori')");
-            ejecutar(conexion, "INSERT INTO tipus_casella VALUES (6, 'SueloQuebradizo', 'Es trenca al passar')");
-        }
+        System.out.println("Verificant taules mestres...");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (1, 'Normal', 'Sense efecte')");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (2, 'Os', 'Retorna a l''inici')");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (3, 'Forat', 'Retrocedeix')");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (4, 'Trineu', 'Avanca')");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (5, 'Interrogant', 'Event aleatori')");
+        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (6, 'SueloQuebradizo', 'Es trenca al passar')");
 
         // 2. Taulell 1
         ArrayList<LinkedHashMap<String, String>> resTau = select(conexion, "SELECT COUNT(*) as TOTAL FROM taulell WHERE id_taulell = 1");
@@ -247,16 +244,19 @@ public class GestorBBDD {
             }
 
             int numTorn = p.getJugadorActual() + 1;
+            
+            // 1. Guardar el taulell primer (per evitar error de clau forana ORA-02291 a PARTIDA)
+            ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
+                    "WHEN NOT MATCHED THEN INSERT (id_taulell, mida) VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
+
+            // 2. Guardar la partida
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
                     "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + " " +
                     "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
                     "VALUES (" + idPartida + ", " + idPartida + ", 'Partida #" + idPartida + "', SYSDATE, " + numTorn + ")";
             ejecutar(conexion, sqlP);
-
-            // Guardar el taulell (taulell i caselles)
-            ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
-                    "WHEN NOT MATCHED THEN INSERT (id_taulell, mida) VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
             
+            // 3. Guardar les caselles
             ArrayList<Casilla> casillas = p.getTablero().getCasillas();
             for (int i = 0; i < casillas.size(); i++) {
                 Casilla c = casillas.get(i);
