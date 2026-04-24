@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="vista.PantallaEstadistiques"
+           prefWidth="1280" prefHeight="720"
+           stylesheets="@PantallaMenu.css">
+
+    <VBox alignment="CENTER" spacing="20">
+        <VBox alignment="CENTER" spacing="30" maxWidth="1000" styleClass="glass-card" style="-fx-padding: 40;">
+            
+            <Label text="ESTADÍSTIQUES I RANKINGS" styleClass="title" 
+                   style="-fx-font-size: 50px; -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 15, 0.5, 0, 0);"/>
+
+            <HBox spacing="20" alignment="CENTER">
+                <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15; -fx-background-radius: 15;">
+                    <Label text="MITJA GLOBAL" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblMitjaGlobal" text="0.0" style="-fx-text-fill: #00BFFF; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+                </VBox>
+                <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15; -fx-background-radius: 15;">
+                    <Label text="LES TEVES VICTÒRIES" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblVictoriesPropies" text="0" style="-fx-text-fill: #FFD700; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+                </VBox>
+            </HBox>
+
+            <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
+                <Tab text="Ranking Partides">
+                    <TableView fx:id="tblRankingPartides" prefHeight="300">
+                        <columns>
+                            <TableColumn fx:id="colNomPartides" text="Jugador" prefWidth="300"/>
+                            <TableColumn fx:id="colTotalPartides" text="Total Partides" prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </Tab>
+                <Tab text="Ranking Record">
+                    <TableView fx:id="tblRankingRecord" prefHeight="300">
+                        <columns>
+                            <TableColumn fx:id="colNomRecord" text="Jugador" prefWidth="300"/>
+                            <TableColumn fx:id="colMaxPeixos" text="Record (Peixos)" prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </Tab>
+                <Tab text="Calculadora Percentatge">
+                    <VBox spacing="20" alignment="CENTER" style="-fx-padding: 20;">
+                        <Label text="Introdueix una puntuació per saber quin % de jugadors has superat:" style="-fx-text-fill: white;"/>
+                        <HBox spacing="10" alignment="CENTER">
+                            <TextField fx:id="txtPuntuacio" promptText="Puntuació" prefWidth="100"/>
+                            <Button text="Calcular" onAction="#handleCalcularPercentatge" styleClass="button-primary"/>
+                        </HBox>
+                        <Label fx:id="lblResultatPercentatge" text="" style="-fx-text-fill: #00FF00; -fx-font-size: 18px;"/>
+                    </VBox>
+                </Tab>
+            </TabPane>
+
+            <Button text="TORNAR AL MENÚ" onAction="#handleTornar" styleClass="button-user" style="-fx-background-color: #f44336;"/>
+        </VBox>
+    </VBox>
+
+</StackPane>

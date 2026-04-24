@@ -80,6 +80,21 @@ public class PantallaMenu {
         }
     }
 
+    @FXML
+    private void handleStats(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaEstadistiques.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla d'estadístiques.");
+        }
+    }
+
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
         Alert alert = new Alert(tipus);
         alert.setTitle(titol);
