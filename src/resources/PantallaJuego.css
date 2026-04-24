@@ -39,6 +39,7 @@
     -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 0 0 1 0;
 }
+
 .menu-bar .label {
     -fx-text-fill: #e2f1ff;
     -fx-font-weight: bold;
@@ -48,10 +49,10 @@
 .board {
     -fx-background-color: rgba(255, 255, 255, 0.03);
     -fx-background-radius: 30;
-    -fx-border-color: linear-gradient(to bottom right, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
+    -fx-border-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
     -fx-border-width: 2;
     -fx-padding: 10;
-    -fx-effect: innershadow(gaussian, rgba(0,0,0,0.5), 50, 0, 0, 0);
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.5), 50, 0, 0, 0);
 }
 
 .cell-title {
@@ -61,11 +62,26 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 12, 0.6, 0, 0);
 }
 
+.grid-tile {
+    -fx-min-width: 80;
+    -fx-min-height: 80;
+    -fx-max-width: 140;
+    -fx-max-height: 100;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);
+}
+
+.grid-tile:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
 .cell-type {
     -fx-font-size: 13px;
     -fx-font-weight: 800;
     -fx-fill: #e0faff;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 2, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 2, 0, 0, 1);
 }
 
 /* TARJETAS GLASSMORPHISM */
@@ -142,17 +158,19 @@
 .objects-scroll {
     -fx-background-color: transparent;
 }
+
 .objects-scroll .viewport {
     -fx-background-color: transparent;
 }
+
 .objects-scroll .thumb {
-    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-color: rgba(255, 255, 255, 0.2);
     -fx-background-radius: 5;
 }
 
 /* JUGADORES */
 .player {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 10, 0.5, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 10, 0.5, 0, 3);
 }
 
 .current-player {
@@ -161,7 +179,8 @@
 
 /* RULETA */
 .roulette-overlay {
-    -fx-background-color: rgba(5, 15, 35, 0.85); /* Fondo oscuro para resaltar la ruleta */
+    -fx-background-color: rgba(5, 15, 35, 0.85);
+    /* Fondo oscuro para resaltar la ruleta */
 }
 
 .spin-button {

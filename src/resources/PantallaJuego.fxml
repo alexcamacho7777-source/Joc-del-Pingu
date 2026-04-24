@@ -58,7 +58,6 @@
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
-
             <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;">
                 <content>
                     <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" minHeight="0">
@@ -110,7 +109,6 @@
                     </Group>
                     
                     <Group fx:id="P2" id="P2" styleClass="player">
-                        <GridPane.margin><Insets left="34.0" /></GridPane.margin>
                         <children>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
@@ -130,7 +128,6 @@
                     </Group>
                     
                     <Group fx:id="P3" id="P3" styleClass="player">
-                        <GridPane.margin><Insets left="68.0" /></GridPane.margin>
                         <children>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
@@ -150,7 +147,6 @@
                     </Group>
                     
                     <Group fx:id="P4" id="P4" styleClass="player">
-                        <GridPane.margin><Insets left="102.0" /></GridPane.margin>
                         <children>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
                             <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>

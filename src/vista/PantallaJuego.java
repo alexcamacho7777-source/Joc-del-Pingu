@@ -857,11 +857,14 @@ public class PantallaJuego {
         javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
         
         tokenMap.clear();
+        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
+        
         for (int i = 0; i < jugadores.size(); i++) {
             Jugador j = jugadores.get(i);
             if (j instanceof model.Foca) {
                 javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
                 tokenMap.put(j, focaAvatar);
+                focaAvatar.setVisible(true);
             } else if (i < pTokens.length && pTokens[i] != null) {
                 pTokens[i].setVisible(true);
                 tokenMap.put(j, pTokens[i]);
@@ -923,5 +926,7 @@ public class PantallaJuego {
             syncVisualPositions(false);
             actualizarInventarioUI();
         }
+    }
+}
     }
 }
