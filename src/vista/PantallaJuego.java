@@ -456,8 +456,8 @@ public class PantallaJuego {
 
             // 4. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
-            if (casillaActual instanceof Evento && actual instanceof Pinguino p) {
-                mostrarRuleta(p, this::finalizarTurnoComplet);
+            if (casillaActual instanceof Evento) {
+                mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
                 finalizarTurnoComplet();
             }
@@ -481,7 +481,7 @@ public class PantallaJuego {
         actualizarInventarioUI();
     }
 
-    private void mostrarRuleta(Pinguino p, Runnable onFinished) {
+    private void mostrarRuleta(Jugador j, Runnable onFinished) {
         try {
             if (boardStack == null) {
                 System.err.println("Error: boardStack es null. Revisa la FXML.");
@@ -493,7 +493,7 @@ public class PantallaJuego {
             javafx.scene.Parent ruletaRoot = loader.load();
             PantallaRuleta controller = loader.getController();
             
-            controller.setGameContext(gestorPartida.getPartida(), p);
+            controller.setGameContext(gestorPartida.getPartida(), j);
             
             // Afegim la ruleta al StackPane principal per sobre del taulell
             boardStack.getChildren().add(ruletaRoot);
@@ -875,7 +875,11 @@ public class PantallaJuego {
     private void mostrarVictoria(Jugador ganador) {
         if (winOverlay == null) return;
         winLabel.setText(ganador.getNombre().toUpperCase() + " HA GUANYAT!");
+        gestorPartida.getPartida().setFinalizada(true);
+        gestorPartida.getPartida().setGanador(ganador);
+        gestorPartida.guardarPartida();
         winOverlay.setVisible(true);
+        winOverlay.setMouseTransparent(false);
         winOverlay.setOpacity(0);
         
         javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1.5), winOverlay);

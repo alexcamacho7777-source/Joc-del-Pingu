@@ -24,7 +24,7 @@ public class PantallaRuleta {
     private Consumer<String> onFinishedCallback;
     private boolean isSpinning = false;
     private Partida partida;
-    private Pinguino jugador;
+    private Jugador jugador;
 
     // Resultados mapeados a ángulos (Norte/Oeste/Sur/Este)
     // 0: Boles de neu (Norte)
@@ -47,7 +47,7 @@ public class PantallaRuleta {
         this.onFinishedCallback = callback;
     }
 
-    public void setGameContext(Partida partida, Pinguino jugador) {
+    public void setGameContext(Partida partida, Jugador jugador) {
         this.partida = partida;
         this.jugador = jugador;
         

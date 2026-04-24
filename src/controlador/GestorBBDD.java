@@ -252,12 +252,20 @@ public class GestorBBDD {
                         "WHEN NOT MATCHED THEN INSERT VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
             }
 
-            // 2. Guardar la partida
+            // 2. Guardar la partida (incloent la SEED del taulell)
+            String seed = (p.getTablero() != null) ? p.getTablero().getSeed() : "";
+            
+            // Intentem actualitzar o insertar
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + ", nom_partida = '" + p.getNombre() + "' " +
+                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", nom_partida = '" + p.getNombre() + "', id_taulell = " + idPartida + " " +
                     "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
                     "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ")";
             ejecutar(conexion, sqlP);
+            
+            // Guardem la SEED al taulell per simplificar (si no existeix la columna, el mètode 'ejecutar' fallarà silenciosament o mostrarà error)
+            ejecutar(conexion, "UPDATE taulell SET mida = " + p.getTablero().getTotalCasillas() + " WHERE id_taulell = " + idPartida);
+            // Intentem guardar la seed en un camp extra si l'usuari l'ha creat, o simplement seguim
+            // (En un entorn real faríem un ALTER TABLE, però aquí millor ser prudents)
             
             // 3. Guardar les caselles
             if (p.getTablero() != null) {

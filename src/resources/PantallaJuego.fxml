@@ -184,7 +184,7 @@
             </StackPane>
 
             <!-- VICTORY OVERLAY -->
-            <StackPane fx:id="winOverlay" visible="false" mouseTransparent="true" styleClass="win-overlay">
+            <StackPane fx:id="winOverlay" visible="false" mouseTransparent="false" styleClass="win-overlay">
                 <VBox alignment="CENTER" spacing="20">
                     <Label text="VICTÒRIA!" styleClass="win-title" />
                     <Label fx:id="winLabel" text="El jugador ha guanyat!" styleClass="win-subtitle" />
