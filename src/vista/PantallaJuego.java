@@ -535,11 +535,11 @@ public class PantallaJuego {
             int index = gestorPartida.getPartida().getJugadores().indexOf(j);
             double offsetX = 0;
             double offsetY = 0;
-            if (index == 0) { offsetX = -15; offsetY = -10; }
-            else if (index == 1) { offsetX = 15; offsetY = -10; }
-            else if (index == 2) { offsetX = -15; offsetY = 15; }
-            else if (index == 3) { offsetX = 15; offsetY = 15; }
-            else if (index == 4) { offsetX = 0; offsetY = -20; } // Por si hay un quinto elemento como la foca
+            if (index == 0) { offsetX = -100; offsetY = 0; }
+            else if (index == 1) { offsetX = -55; offsetY = 0; }
+            else if (index == 2) { offsetX = 55; offsetY = 0; }
+            else if (index == 3) { offsetX = 100; offsetY = 0; }
+            else if (index == 4) { offsetX = 0; offsetY = 0; }
 
             if (animar) {
                 javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
@@ -745,6 +745,7 @@ public class PantallaJuego {
             sp.setId("ROBOT_SEAL_V3");
             sp.getStyleClass().add("player");
             sp.setStyle("-fx-background-color: transparent;"); 
+            sp.setMaxSize(50, 50); // Evitar que ocupe toda la pantalla
             tablero.getChildren().add(sp);
         } else {
             sp = (StackPane) focaAvatar;
@@ -752,11 +753,11 @@ public class PantallaJuego {
         }
 
         try {
-            // New verified path consistent with other working assets
+            // Path a la imagen proporcionada por el usuario
             String[] paths = {
-                "/resources/images/casillas/foca_robot.png",
-                "/images/casillas/foca_robot.png",
-                "/resources/foca_robot.png"
+                "/resources/images/casillas/foca.png",
+                "/images/casillas/foca.png",
+                "/resources/foca.png"
             };
             Image img = null;
             for (String p : paths) {
@@ -769,15 +770,9 @@ public class PantallaJuego {
 
             if (img != null) {
                 ImageView iv = new ImageView(img);
-                iv.setFitWidth(120);
-                iv.setFitHeight(120);
+                iv.setFitWidth(65);
+                iv.setFitHeight(65);
                 iv.setPreserveRatio(true);
-                // Glow cyan para identificar que el código es el nuevo - Corregido Constructor de DropShadow
-                DropShadow ds = new DropShadow();
-                ds.setColor(Color.CYAN);
-                ds.setRadius(15);
-                ds.setSpread(0.7);
-                iv.setEffect(ds);
                 sp.getChildren().add(iv);
             } else {
                 // Fallback visual muy claro (SIN EMOJIS que puedan fallar)
