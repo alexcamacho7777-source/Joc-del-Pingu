@@ -927,6 +927,6 @@ public class PantallaJuego {
             actualizarInventarioUI();
         }
     }
-}
-    }
+
+    
 }
