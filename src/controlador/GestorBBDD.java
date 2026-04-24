@@ -140,7 +140,18 @@ public class GestorBBDD {
                 ejecutar(conexion, "INSERT INTO casella (id_casella, id_taulell, id_tipus, numero_casella) VALUES (" + i + ", 1, " + tipus + ", " + i + ")");
             }
         }
+        assegurarColumnaFinalitzada();
         commit(conexion);
+    }
+
+    private void assegurarColumnaFinalitzada() {
+        if (conexion == null) return;
+        ArrayList<LinkedHashMap<String, String>> cols = select(conexion,
+                "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='FINALITZADA'");
+        if (cols.isEmpty()) {
+            ejecutar(conexion, "ALTER TABLE partida ADD (finalitzada NUMBER(1) DEFAULT 0)");
+            commit(conexion);
+        }
     }
 
     // ── MÈTODES ESPECÍFICS JOC ──────────────────────────────────────────────
@@ -252,10 +263,11 @@ public class GestorBBDD {
             }
 
             // 2. Guardar la partida
+            int isFin = p.isFinalizada() ? 1 : 0;
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + ", nom_partida = '" + p.getNombre() + "' " +
-                    "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-                    "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ")";
+                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + ", nom_partida = '" + p.getNombre() + "', finalitzada = " + isFin + " " +
+                    "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual, finalitzada) " +
+                    "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ", " + isFin + ")";
             ejecutar(conexion, sqlP);
             
             // 3. Guardar les caselles
@@ -399,7 +411,7 @@ public class GestorBBDD {
         // Partides bàsiques sense la columna finalitzada que dóna error
         ArrayList<LinkedHashMap<String, String>> partides = select(conexion,
                 "SELECT id_partida, nom_partida, TO_CHAR(data_creacio,'DD/MM/YYYY') AS data_creacio, " +
-                "torn_actual FROM partida ORDER BY id_partida DESC");
+                "torn_actual, finalitzada FROM partida ORDER BY id_partida DESC");
 
         for (LinkedHashMap<String, String> fila : partides) {
             String idPartida = fila.get("ID_PARTIDA");
@@ -415,8 +427,9 @@ public class GestorBBDD {
             }
             fila.put("JUGADORS", sb.length() > 0 ? sb.toString() : "-");
             // Finalitzada
-            String fin = fila.getOrDefault("FINALITZADA", null);
-            fila.put("FINALITZADA", (fin != null && fin.equalsIgnoreCase("1")) ? "Si" : "No");
+            String fin = fila.getOrDefault("FINALITZADA", "0");
+            boolean isFin = "1".equals(fin) || "true".equalsIgnoreCase(fin);
+            fila.put("FINALITZADA", isFin ? "Si" : "No");
         }
         return partides;
     }

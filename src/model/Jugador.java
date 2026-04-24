@@ -1,18 +1,19 @@
 package model;
 
-
 public abstract class Jugador {
 
     private int posicion;
     private String nombre;
     private String color;
     private boolean esIA;
+    private Inventario inv;
 
     public Jugador(String nombre, String color) {
         this.nombre = nombre;
         this.color = color;
         this.posicion = 0;
         this.esIA = false;
+        this.inv = new Inventario();
     }
 
     public boolean isEsIA() { return esIA; }
@@ -26,6 +27,9 @@ public abstract class Jugador {
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
+
+    public Inventario getInv() { return inv; }
+    public void setInv(Inventario inv) { this.inv = inv; }
 
     public void moverPosicion(int p) {
         this.posicion += p;
