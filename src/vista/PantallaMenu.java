@@ -40,11 +40,7 @@ public class PantallaMenu {
 
     @FXML
     private void handleJugar(ActionEvent event) {
-        if (loggedInUser == null) {
-            mostrarAlert(Alert.AlertType.WARNING, "Inici de sessió necessari", 
-                        "Has d'iniciar sessió (icona d'usuari) per poder jugar.");
-            return;
-        }
+        // Ja no és necessari estar loguejat al menú principal
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaLobby.fxml"));

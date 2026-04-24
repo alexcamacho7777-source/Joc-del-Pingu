@@ -20,8 +20,6 @@ import java.util.Map;
 public class PantallaLobby {
 
     @FXML private Text welcomeText;
-    @FXML private ChoiceBox<Integer> choiceHumans;
-    @FXML private ChoiceBox<Integer> choiceIA;
     @FXML private Button btnCargarPartida;
 
     @FXML private TableView<Map<String, String>> tablaPartidas;
@@ -35,10 +33,6 @@ public class PantallaLobby {
     @FXML
     private void initialize() {
         System.out.println("PantallaLobby initialized");
-        choiceHumans.getItems().addAll(1, 2, 3, 4);
-        choiceIA.getItems().addAll(0, 1, 2, 3);
-        choiceHumans.setValue(1); 
-        choiceIA.setValue(1); 
 
         if (PantallaMenu.getLoggedInUser() != null) {
             welcomeText.setText("Benvingut a l'aventura, " + PantallaMenu.getLoggedInUser() + "!");
@@ -66,12 +60,17 @@ public class PantallaLobby {
 
     @FXML
     private void handleNuevaPartida(ActionEvent event) {
-        int total = choiceHumans.getValue() + choiceIA.getValue();
-        if (total > 4 || total < 1) {
-             mostrarAlert(Alert.AlertType.WARNING, "Límit de jugadors", "El total de jugadors ha de ser entre 1 i 4.");
-             return;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaCrearPartida.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut obrir el menú de creació.");
         }
-        lanzarJuego(event, null);
     }
 
     @FXML
@@ -108,8 +107,6 @@ public class PantallaLobby {
             
             PantallaJuego controladorJoc = loader.getController();
             controladorJoc.setUsuarioLogueado(PantallaMenu.getLoggedInUser());
-            
-            controladorJoc.configurarJugadores(choiceHumans.getValue(), choiceIA.getValue());
             
             if (gameIdToLoad != null) {
                 controladorJoc.iniciarCargandoPartida(gameIdToLoad);

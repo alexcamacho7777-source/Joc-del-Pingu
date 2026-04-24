@@ -246,35 +246,35 @@ public class GestorBBDD {
             int numTorn = p.getJugadorActual() + 1;
             
             // 1. Guardar el taulell primer (per evitar error de clau forana ORA-02291 a PARTIDA)
-            ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
-                    "WHEN NOT MATCHED THEN INSERT (id_taulell, mida) VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
+            if (p.getTablero() != null) {
+                ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
+                        "WHEN NOT MATCHED THEN INSERT VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
+            }
 
             // 2. Guardar la partida
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + " " +
+                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", id_taulell = " + idPartida + ", nom_partida = '" + p.getNombre() + "' " +
                     "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-                    "VALUES (" + idPartida + ", " + idPartida + ", 'Partida #" + idPartida + "', SYSDATE, " + numTorn + ")";
+                    "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ")";
             ejecutar(conexion, sqlP);
             
             // 3. Guardar les caselles
-            ArrayList<Casilla> casillas = p.getTablero().getCasillas();
-            for (int i = 0; i < casillas.size(); i++) {
-                Casilla c = casillas.get(i);
-                int tipus = 1;
-                if (c instanceof Oso) tipus = 2;
-                else if (c instanceof Agujero) tipus = 3;
-                else if (c instanceof Trineo) tipus = 4;
-                else if (c instanceof Evento) tipus = 5;
-                else if (c instanceof SueloQuebradizo) tipus = 6;
+            if (p.getTablero() != null) {
+                ArrayList<Casilla> casillas = p.getTablero().getCasillas();
+                for (int i = 0; i < casillas.size(); i++) {
+                    Casilla c = casillas.get(i);
+                    int tipus = 1;
+                    if (c instanceof Oso) tipus = 2;
+                    else if (c instanceof Agujero) tipus = 3;
+                    else if (c instanceof Trineo) tipus = 4;
+                    else if (c instanceof Evento) tipus = 5;
+                    else if (c instanceof SueloQuebradizo) tipus = 6;
 
-                // Generem un ID únic per a la casella (id_taulell * 100 + i) per evitar col·lisions
-                int idCasellaCalculat = (idPartida * 100) + i;
-                String sqlCas = "MERGE INTO casella dst USING (SELECT " + idPartida + " AS id_t, " + i + " AS num_c FROM dual) src " +
-                        "ON (dst.id_taulell = src.id_t AND dst.numero_casella = src.num_c) " +
-                        "WHEN MATCHED THEN UPDATE SET id_tipus = " + tipus + " " +
-                        "WHEN NOT MATCHED THEN INSERT (id_casella, id_taulell, id_tipus, numero_casella) " +
-                        "VALUES (" + idCasellaCalculat + ", " + idPartida + ", " + tipus + ", " + i + ")";
-                ejecutar(conexion, sqlCas);
+                    ejecutar(conexion, "MERGE INTO casella dst USING (SELECT " + idPartida + " AS id_t, " + i + " AS num_c FROM dual) src " +
+                            "ON (dst.id_taulell = src.id_t AND dst.numero_casella = src.num_c) " +
+                            "WHEN NOT MATCHED THEN INSERT (id_casella, id_taulell, id_tipus, numero_casella) " +
+                            "VALUES (" + (idPartida * 100 + i) + ", " + idPartida + ", " + tipus + ", " + i + ")");
+                }
             }
 
             for (int i = 0; i < jugadores.size(); i++) {
@@ -318,6 +318,8 @@ public class GestorBBDD {
 
         ArrayList<LinkedHashMap<String, String>> resP = select(conexion, "SELECT * FROM partida WHERE id_partida = " + id_partida);
         if (resP.isEmpty()) return p;
+
+        p.setNombre(resP.get(0).get("NOM_PARTIDA"));
 
         int ordreActual = resP.get(0).get("TORN_ACTUAL") != null ? Integer.parseInt(resP.get(0).get("TORN_ACTUAL")) : 1;
 

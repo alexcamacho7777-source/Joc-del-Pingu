@@ -84,7 +84,7 @@ public class PantallaJuego {
     // Containers
     @FXML private StackPane boardStack;
 
-    private GestorPartida gestorPartida;
+    private GestorPartida gestorPartida = new GestorPartida();
     private int p1Position = 0;
     private static final int COLUMNS = 5;
     private static final String TAG_CASILLA_TEXT = "CASILLA_TEXT";
@@ -98,8 +98,54 @@ public class PantallaJuego {
         prepararNuevaPartida();
     }
 
+    public void iniciarPartidaPersonalizada(String nomPartida, java.util.List<Jugador> jugadores) {
+        // gestorPartida ya está inicializado como campo o en initialize()
+        
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+        // Ocultar todos los tokens primero
+        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
+        tokenMap.clear();
+
+        int pIndex = 0;
+        for (Jugador j : jugadores) {
+            if (j instanceof Pinguino) {
+                if (pIndex < pTokens.length) {
+                    pTokens[pIndex].setVisible(true);
+                    tokenMap.put(j, pTokens[pIndex]);
+                    
+                    // Aplicar color visual al token (opcional, pero mejora la experiencia)
+                    // Como el Pinguino tiene un color String, podríamos mapearlo a colores de JavaFX si quisiéramos.
+                    // Por ahora mantendremos los tokens originales P1, P2...
+                    
+                    pIndex++;
+                }
+            } else if (j instanceof Foca) {
+                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
+                tokenMap.put(j, focaAvatar);
+            }
+        }
+
+        gestorPartida.nuevaPartida(); // Genera el tablero
+        gestorPartida.getPartida().setNombre(nomPartida);
+        gestorPartida.getPartida().setJugadores(new ArrayList<>(jugadores));
+
+        mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero());
+        syncVisualPositions(false);
+        actualizarInventarioUI();
+        actualizarGlowTurno();
+        
+        Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
+        dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
+        eventos.setText("Partida '" + nomPartida + "' començada!");
+    }
+
     @FXML
     private void initialize() {
+        if (gestorPartida == null) {
+            gestorPartida = new GestorPartida();
+        }
+        gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
+        
         eventos.setText("El joc ha començat!");
         if (bgImage != null) {
             bgImage.setManaged(false);
@@ -329,8 +375,17 @@ public class PantallaJuego {
     }
 
     public void iniciarCargandoPartida(int id) {
+        System.out.println("DEBUG: Iniciant càrrega de partida " + id);
+        if (this.gestorPartida == null) {
+            System.out.println("DEBUG: gestorPartida era null, inicialitzant...");
+            this.gestorPartida = new GestorPartida();
+        }
+        if (this.gestorPartida.getGestorBBDD() == null) {
+            this.gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
+        }
+        
         // Cargamos la partida desde la BD con el ID seleccionado
-        gestorPartida.cargarPartida(id);
+        this.gestorPartida.cargarPartida(id);
         syncLoadedJugadores();
         mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero()); // Redibuixar caselles
         syncVisualPositions(false);

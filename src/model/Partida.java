@@ -15,6 +15,7 @@ public class Partida {
     private Jugador ganador;
     private List<String> logEventos;
     private Pinguino jugadorPierdeTurno;
+    private String nombre;
     private Random random;
 
     public int getId() { return id; }
@@ -60,6 +61,9 @@ public class Partida {
 
     public Random getRandom() { return random; }
     public void setRandom(Random random) { this.random = random; }
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
     // --- Métodos ---
     public void anadirJugador(Jugador j) {
