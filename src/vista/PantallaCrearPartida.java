@@ -252,7 +252,7 @@ public class PantallaCrearPartida {
 
             Button btnDelete = new Button("Eliminar");
             btnDelete.getStyleClass().add("button-secondary");
-            btnDelete.setStyle("-fx-font-size: 12px; -fx-text-fill: #ff6b6b; -fx-border-color: #ff6b6b;");
+            btnDelete.setStyle("-fx-font-size: 11px; -fx-text-fill: #ff8e8e; -fx-border-color: rgba(255,142,142,0.3); -fx-background-color: rgba(255,0,0,0.1);");
             btnDelete.setOnAction(e -> {
                 javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(javafx.util.Duration.millis(200), pane);
                 fade.setToValue(0);

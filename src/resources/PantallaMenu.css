@@ -38,13 +38,14 @@
 .field-label {
     -fx-font-size: 12px;
     -fx-font-weight: 900;
-    -fx-text-fill: #a2c1ff;
+    -fx-text-fill: #e0f0ff;
+    -fx-letter-spacing: 1px;
 }
 
 .input-container {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-color: rgba(0, 0, 0, 0.5);
     -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
     -fx-border-radius: 12;
     -fx-padding: 0 12;
 }
@@ -108,13 +109,41 @@
 }
 
 .ice-card {
-    -fx-background-color: linear-gradient(to bottom right, rgba(160, 230, 255, 0.45), rgba(50, 150, 255, 0.25));
+    -fx-background-color: rgba(15, 25, 50, 0.95);
     -fx-background-radius: 25;
     -fx-border-color: #00d2ff;
-    -fx-border-width: 3;
+    -fx-border-width: 2;
     -fx-border-radius: 25;
-    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.6), 25, 0.4, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.3), 15, 0, 0, 0);
     -fx-padding: 15;
+}
+
+.choice-box {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 10;
+    -fx-mark-color: #00d2ff;
+    -fx-padding: 5;
+}
+
+.choice-box .label {
+    -fx-text-fill: white;
+}
+
+.choice-box .context-menu {
+    -fx-background-color: #0f1932;
+    -fx-border-color: #00d2ff;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+}
+
+.choice-box .menu-item:focused {
+    -fx-background-color: #0072ff;
+}
+
+.choice-box .menu-item .label {
+    -fx-text-fill: white;
 }
 
 /* Estils arctic per a la taula */
