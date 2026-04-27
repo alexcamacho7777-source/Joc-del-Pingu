@@ -60,6 +60,11 @@ public class PantallaLobby {
 
     @FXML
     private void handleNuevaPartida(ActionEvent event) {
+        if (PantallaMenu.getLoggedInUser() == null) {
+            mostrarAlert(Alert.AlertType.WARNING, "Sessió no iniciada", "Has d'iniciar sessió per crear una nova partida.");
+            redirigirALogin(event);
+            return;
+        }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaCrearPartida.fxml"));
             Parent root = loader.load();
@@ -75,6 +80,11 @@ public class PantallaLobby {
 
     @FXML
     private void handleCargarPartida(ActionEvent event) {
+        if (PantallaMenu.getLoggedInUser() == null) {
+            mostrarAlert(Alert.AlertType.WARNING, "Sessió no iniciada", "Has d'iniciar sessió per carregar una partida.");
+            redirigirALogin(event);
+            return;
+        }
         Map<String, String> seleccionada = tablaPartidas.getSelectionModel().getSelectedItem();
         if (seleccionada == null) {
             mostrarAlert(Alert.AlertType.WARNING, "Cap partida seleccionada", "Si us plau, selecciona una partida de la taula per carregar.");
@@ -136,6 +146,20 @@ public class PantallaLobby {
         // Left for backwards compatibility if needed, but we now use static PantallaMenu.getLoggedInUser()
         if (username != null && welcomeText != null) {
             welcomeText.setText("Benvingut a l'aventura, " + username + "!");
+        }
+    }
+
+    private void redirigirALogin(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaLogin.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(scene);
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint("");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
