@@ -69,4 +69,9 @@ public class Tablero {
     public int getTotalCasillas() {
         return casillas.size();
     }
+
+	public String getSeed() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
