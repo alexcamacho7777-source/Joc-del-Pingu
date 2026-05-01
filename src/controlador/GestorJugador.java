@@ -66,13 +66,17 @@ public class GestorJugador {
 
         int diferencia = b1 - b2;
         if (diferencia > 0) {
-            // p1 gana, p2 retrocede
-            p2.moverPosicion(-diferencia);
+            // p1 gana, p1 avanza
+            p1.moverPosicion(diferencia);
+            // Asegurar que no se pase de la meta
+            int max = p1.getPosicion() > 49 ? 49 : p1.getPosicion();
+            p1.setPosicion(max);
         } else if (diferencia < 0) {
-            // p2 gana, p1 retrocede
-            p1.moverPosicion(diferencia); // diferencia es negativo
+            // p2 gana, p2 avanza
+            p2.moverPosicion(-diferencia);
+            int max = p2.getPosicion() > 49 ? 49 : p2.getPosicion();
+            p2.setPosicion(max);
         }
-        // Si empate, ninguno retrocede
     }
 
     /**

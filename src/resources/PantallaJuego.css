@@ -223,3 +223,40 @@
     -fx-text-fill: #00f2fe;
     -fx-effect: dropshadow(gaussian, rgba(0, 242, 254, 0.5), 10, 0, 0, 0);
 }
+
+/* SIDEBAR */
+.sidebar {
+    -fx-background-color: rgba(5, 12, 25, 0.8);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 0 0 1.5;
+}
+
+.btn-mini {
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 10;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: #00d2ff;
+    -fx-border-radius: 10;
+}
+
+.btn-mini:hover {
+    -fx-background-color: #00d2ff;
+    -fx-text-fill: #0a1128;
+}
+
+.log-entry {
+    -fx-fill: #b3d4ff;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.3), 1, 0, 0, 1);
+}
+
+.objects-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.objects-scroll .viewport {
+    -fx-background-color: transparent;
+}
