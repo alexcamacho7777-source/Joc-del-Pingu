@@ -43,7 +43,11 @@ public class PantallaMenu {
         // Ja no és necessari estar loguejat al menú principal
 
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaLobby.fxml"));
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLobby.fxml");
+            if (fxmlUrl == null) {
+                throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLobby.fxml");
+            }
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -52,7 +56,7 @@ public class PantallaMenu {
             stage.setFullScreenExitHint("");
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de lobby.");
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de lobby: " + e.getMessage());
         }
     }
 
@@ -67,7 +71,11 @@ public class PantallaMenu {
         }
 
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaLogin.fxml"));
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLogin.fxml");
+            if (fxmlUrl == null) {
+                throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLogin.fxml");
+            }
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -76,14 +84,24 @@ public class PantallaMenu {
             stage.setFullScreenExitHint("");
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de login.");
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de login: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleStats(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaEstadistiques.fxml"));
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaEstadistiques.fxml");
+            if (fxmlUrl == null) {
+                // Intentar sense la barra inicial si falla, o amb el ClassLoader
+                fxmlUrl = PantallaMenu.class.getClassLoader().getResource("resources/PantallaEstadistiques.fxml");
+            }
+            
+            if (fxmlUrl == null) {
+                throw new java.io.IOException("No s'ha trobat el fitxer FXML: resources/PantallaEstadistiques.fxml");
+            }
+
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
             Scene scene = new Scene(root);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -91,7 +109,7 @@ public class PantallaMenu {
             stage.setFullScreen(true);
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla d'estadístiques.");
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla d'estadístiques: " + e.getMessage());
         }
     }
 

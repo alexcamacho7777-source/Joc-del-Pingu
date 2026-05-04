@@ -129,7 +129,7 @@
 
 /* BOTONES */
 .button {
-    -fx-background-image: url("button_frame.png");
+    -fx-background-image: url("marco_boton.png");
     -fx-background-size: 100% 100%;
     -fx-background-repeat: no-repeat;
     -fx-background-color: transparent;
@@ -147,7 +147,7 @@
 }
 
 .button.primary {
-    -fx-background-image: url("button_frame.png");
+    -fx-background-image: url("marco_boton.png");
     -fx-background-size: 100% 100%;
     -fx-background-repeat: no-repeat;
     -fx-background-color: transparent;
@@ -187,7 +187,7 @@
 }
 
 .spin-button {
-    -fx-background-image: url("button_frame.png");
+    -fx-background-image: url("marco_boton.png");
     -fx-background-size: 100% 100%;
     -fx-background-repeat: no-repeat;
     -fx-background-color: transparent;
