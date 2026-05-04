@@ -30,6 +30,10 @@
                 <VBox alignment="CENTER" spacing="16" maxWidth="600" minWidth="-Infinity">
                     <Button fx:id="btnJugar" text="COMENÇAR A JUGAR" onAction="#handleJugar"
                             maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 24px; -fx-padding: 25 50; -fx-background-radius: 25;"/>
+                    
+                    <Button fx:id="btnStats" text="ESTADÍSTIQUES" onAction="#handleStats"
+                            maxWidth="Infinity" styleClass="button-primary" 
+                            style="-fx-font-size: 18px; -fx-padding: 15 30; -fx-background-color: rgba(0, 191, 255, 0.4); -fx-background-radius: 20;"/>
                 </VBox>
 
                 <!-- Usuari loguejat (visible quan hi ha sessió) -->

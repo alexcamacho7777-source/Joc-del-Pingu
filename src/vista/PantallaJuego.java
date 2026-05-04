@@ -30,18 +30,17 @@ import javafx.util.Duration;
 import java.io.IOException;
 
 import controlador.GestorPartida;
-import model.Item;
-import model.Pez;
 import model.BolaDeNieve;
 import model.Casilla;
 import model.Dado;
 import model.Evento;
+import model.Foca;
 import model.Inventario;
 import model.Item;
 import model.Jugador;
 import model.Pinguino;
+import model.Pez;
 import model.Tablero;
-import model.Foca;
 
 public class PantallaJuego {
 

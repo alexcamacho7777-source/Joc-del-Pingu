@@ -7,6 +7,7 @@ import java.util.Random;
 public class Tablero {
 
     private ArrayList<Casilla> casillas;
+    private String seed = ""; 
     public static final int TOTAL_CASILLAS = 50;
 
     public Tablero() {
@@ -70,8 +71,6 @@ public class Tablero {
         return casillas.size();
     }
 
-	public String getSeed() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public String getSeed() { return seed; }
+    public void setSeed(String seed) { this.seed = seed; }
 }

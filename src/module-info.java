@@ -8,4 +8,5 @@ module Joc_del_Pingu {
     opens vista       to javafx.fxml, javafx.graphics;
     opens controlador to javafx.fxml, javafx.graphics;
     opens model       to javafx.base;
+    opens resources   to javafx.fxml;
 }
