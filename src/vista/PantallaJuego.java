@@ -11,6 +11,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -62,7 +63,8 @@ public class PantallaJuego {
     @FXML private Text lento_t;
     @FXML private Text peces_t;
     @FXML private Text nieve_t;
-    @FXML private Text eventos;
+    @FXML private VBox vboxEventos;
+    @FXML private ScrollPane scrollEventos;
     @FXML private Label nomInventari;
 
     // Game board and player pieces
@@ -135,7 +137,21 @@ public class PantallaJuego {
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
         dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        eventos.setText("Partida '" + nomPartida + "' començada!");
+        anadirLog("Partida '" + nomPartida + "' començada!");
+    }
+
+    private void anadirLog(String msg) {
+        if (vboxEventos == null) return;
+        
+        Text text = new Text(msg);
+        text.getStyleClass().add("log-entry");
+        text.setWrappingWidth(300);
+        vboxEventos.getChildren().add(text);
+        
+        // Auto-scroll to bottom
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(50));
+        pause.setOnFinished(e -> scrollEventos.setVvalue(1.0));
+        pause.play();
     }
 
     @FXML
@@ -145,7 +161,8 @@ public class PantallaJuego {
         }
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         
-        eventos.setText("El joc ha començat!");
+        anadirLog("--- Benvingut al Joc del Pingüí ---");
+        anadirLog("El joc ha començat!");
         if (bgImage != null) {
             bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
@@ -354,7 +371,7 @@ public class PantallaJuego {
     // Menu actions
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        eventos.setText("Partida guardada a la BBDD.");
+        anadirLog("Partida guardada a la BBDD.");
     }
 
     @FXML private void handleQuitGame() { 
@@ -392,14 +409,14 @@ public class PantallaJuego {
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
         dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        eventos.setText("Partida #" + id + " carregada correctament.");
+        anadirLog("Partida #" + id + " carregada correctament.");
     }
 
     // Button actions
     @FXML
     private void handleDado(ActionEvent event) {
         if(gestorPartida.getPartida().isFinalizada()) {
-            eventos.setText("El joc ja ha acabat.");
+            anadirLog("El joc ja ha acabat.");
             return;
         }
 
@@ -438,7 +455,7 @@ public class PantallaJuego {
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) {
                 String lastMsg = logs.get(logs.size()-1);
-                eventos.setText(lastMsg);
+                anadirLog(lastMsg);
                 showToast(lastMsg, "#00d2ff");
             }
             
@@ -468,7 +485,7 @@ public class PantallaJuego {
         dadoResultText.setText("Torn de: " + (proxSiguienteTurno != null ? proxSiguienteTurno.getNombre() : "..."));
         
         java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-        if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
+        if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
 
         if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
@@ -642,19 +659,19 @@ public class PantallaJuego {
     }
 
     @FXML private void handleRapido() { 
-        eventos.setText("Has fet servir Dau ràpid."); 
+        anadirLog("Has fet servir Dau ràpid."); 
         usarObjetoYActualizar("DadoRapido");
     }
     @FXML private void handleLento()  { 
-        eventos.setText("Has fet servir Dau lent."); 
+        anadirLog("Has fet servir Dau lent."); 
         usarObjetoYActualizar("DadoLento");
     }
     @FXML private void handlePeces()  { 
-        eventos.setText("Has menjat Peixos (+ vida o energia)."); 
+        anadirLog("Has menjat Peixos."); 
         usarObjetoYActualizar("Peces");
     }
     @FXML private void handleNieve()  { 
-        eventos.setText("Has llançat una Bola de neu."); 
+        anadirLog("Has llançat una Bola de neu."); 
         usarObjetoYActualizar("BolaNieve");
     }
 
@@ -663,7 +680,7 @@ public class PantallaJuego {
         
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
         if (!(actual instanceof Pinguino p) || p.isEsIA()) {
-            eventos.setText("No pots usar objectes si no és el teu torn.");
+            anadirLog("No pots usar objectes si no és el teu torn.");
             return;
         }
 
@@ -702,7 +719,7 @@ public class PantallaJuego {
                     procesarSiguienteTurno();
                 });
             } else {
-                eventos.setText("No tens aquest objecte!");
+                anadirLog("No tens aquest objecte!");
             }
         } 
         // Caso Otros: Usar y no pasar turno inmediatamente? (Depende de la regla, usualmente Peces se usa proactivamente)
@@ -712,18 +729,18 @@ public class PantallaJuego {
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    eventos.setText(p.getNombre() + " ha menjat peixos!");
+                    anadirLog(p.getNombre() + " ha menjat peixos!");
                 } else {
-                    eventos.setText("No tens peixos!");
+                    anadirLog("No tens peixos!");
                 }
             } else if (tipo.equals("BolaNieve")) {
                 Item it = inv.getItem(model.BolaDeNieve.class);
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    eventos.setText(p.getNombre() + " ha llançat una bola de neu!");
+                    anadirLog(p.getNombre() + " ha llançat una bola de neu!");
                 } else {
-                    eventos.setText("No tens boles de neu!");
+                    anadirLog("No tens boles de neu!");
                 }
             }
             actualizarInventarioUI();

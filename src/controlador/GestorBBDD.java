@@ -17,15 +17,26 @@ import java.util.Scanner;
 public class GestorBBDD {
 
     private static final String URL_CENTRO = "jdbc:oracle:thin:@//192.168.3.26:1521/XEPDB2";
+    private static final String URL_REMOTO = "jdbc:oracle:thin:@//oracle.ilerna.com:1521/XEPDB2";
     private static final String USER_PROJ  = "DW2526_GR03_PINGU";
     private static final String PASS_PROJ  = "AACGFAM";
 
     private Connection conexion;
 
     public GestorBBDD() {
+        // Intentem connexió local primer
         this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
+        
+        // Si falla (p.ex. estem fora del centre), intentem la remota
+        if (this.conexion == null) {
+            System.out.println("Intentant connexió remota (oracle.ilerna.com)...");
+            this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ);
+        }
+        
         // Inicialitzem dades estàtiques si les taules estan buides
-        inicializarTablasMaestras();
+        if (this.conexion != null) {
+            inicializarTablasMaestras();
+        }
     }
 
     public Connection getConexion() { return conexion; }
@@ -38,9 +49,11 @@ public class GestorBBDD {
                 // Alternativa por compatibilidad con versiones antiguas
                 Class.forName("oracle.jdbc.driver.OracleDriver");
             }
+            // Establir un timeout curt per a la prova (segons)
+            DriverManager.setLoginTimeout(5); 
             Connection con = DriverManager.getConnection(url, user, pwd);
             if (con != null && con.isValid(5)) {
-                System.out.println("Connectat a la BBDD correctament.");
+                System.out.println("Connectat a " + url + " correctament.");
             }
             return con;
         } catch (ClassNotFoundException e) {

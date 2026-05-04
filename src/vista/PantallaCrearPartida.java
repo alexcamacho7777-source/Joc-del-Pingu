@@ -80,8 +80,8 @@ public class PantallaCrearPartida {
             return;
         }
 
-        if (activeCards.isEmpty()) {
-            mostrarAlert(Alert.AlertType.WARNING, "Sense jugadors", "Has d'afegir almenys un jugador.");
+        if (activeCards.size() < 2) {
+            mostrarAlert(Alert.AlertType.WARNING, "Pocs jugadors", "Has d'afegir almenys 2 jugadors per poder jugar.");
             return;
         }
 

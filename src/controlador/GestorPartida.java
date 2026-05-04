@@ -122,6 +122,7 @@ public class GestorPartida {
 
         // Tirar dau
         int pasos = tirarDadoParaJugador(jugadorTurno);
+        int posAnterior = jugadorTurno.getPosicion();
         jugadorTurno.moverPosicion(pasos);
 
         // Limitar a l'última casella
@@ -129,8 +130,14 @@ public class GestorPartida {
         if (jugadorTurno.getPosicion() > maxPos) {
             jugadorTurno.setPosicion(maxPos);
         }
+        int posNueva = jugadorTurno.getPosicion();
 
         partida.anadirEvento(jugadorTurno.getNombre() + " avança " + pasos + " caselles. Posició: " + jugadorTurno.getPosicion());
+
+        // Lògica específica Foca si passa per sobre de jugadors
+        if (jugadorTurno instanceof Foca foca) {
+            procesarPasoDeFoca(foca, posAnterior, posNueva);
+        }
 
         // Aplicar acció de casella
         Casilla casilla = partida.getTablero().getCasilla(jugadorTurno.getPosicion());
@@ -139,6 +146,9 @@ public class GestorPartida {
         // Comprovar interaccions entre jugadors a la mateixa casella
         if (jugadorTurno instanceof Pinguino p) {
             comprobarInteraccionesEnCasilla(p);
+        } else if (jugadorTurno instanceof Foca foca) {
+            // Re-utilitzem la lògica d'interacció si la foca cau sobre algú
+            comprobarInteraccionesEnCasilla(foca); 
         }
 
         // Comprovar victòria
@@ -197,32 +207,50 @@ public class GestorPartida {
      * Comprueba si el pingüino coincide en casilla con otro jugador o la foca
      * y aplica las reglas correspondientes.
      */
-    private void comprobarInteraccionesEnCasilla(Pinguino p) {
+    private void comprobarInteraccionesEnCasilla(Jugador p) {
+        // 1. Interaccions al FINAL de moure
         for (Jugador otro : partida.getJugadores()) {
             if (otro == p) continue;
             if (otro.getPosicion() == p.getPosicion()) {
                 if (otro instanceof Foca foca) {
-                    gestorJugador.focaInteraccion(p, foca);
-                    // Si la foca el colpeja, enviar al forat anterior
+                    // Si el jugador cau on hi ha la foca
+                    if (p instanceof Pinguino pin) {
+                        gestorJugador.focaInteraccion(pin, foca);
+                    }
                     if (!foca.isSobornada()) {
                         int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
                         p.setPosicion(anteriorAgujero);
-                        partida.anadirEvento("La foca colpeja a " + p.getNombre() + " i l'envia a la posició " + anteriorAgujero + ".");
+                        partida.anadirEvento("La foca colpeja a " + p.getNombre() + " i l'envia al forat anterior (pos " + anteriorAgujero + ").");
                     }
-                } else if (otro instanceof Pinguino p2) {
+                } else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
                     // Guerra de pingüins
-                    partida.anadirEvento("¡Guerra entre " + p.getNombre() + " i " + p2.getNombre() + "!");
-                    gestorJugador.pinguinoGuerraQuema(p, p2);
+                    gestorJugador.pinguinoGuerraQuema(p1, p2);
+                }
+            }
+            
+            // 2. Si la foca és qui s'ha mogut i cau sobre el jugador
+            if (p instanceof Foca foca && !foca.isSobornada()) {
+                if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2) {
+                    int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
+                    p2.setPosicion(anteriorAgujero);
+                    partida.anadirEvento("La foca cau sobre " + p2.getNombre() + " i el colpeja al forat anterior!");
                 }
             }
         }
+    }
 
-        // Foca passa per casella de jugador (perd la meitat de l'inventari)
-        for (Jugador otro : partida.getJugadores()) {
-            if (otro instanceof Foca foca && !foca.isSobornada()) {
-                if (foca.getPosicion() == p.getPosicion()) {
+    /**
+     * Lògica extra per quan la Foca es mou: comprova si passa per sobre de jugadors.
+     */
+    private void procesarPasoDeFoca(Foca foca, int posAnterior, int posNueva) {
+        if (foca.isSobornada()) return;
+        
+        for (Jugador j : partida.getJugadores()) {
+            if (j instanceof Pinguino p && !p.isEsIA()) {
+                // Si la foca ha passat per la posició del jugador (entre posAnterior i posNueva)
+                if (p.getPosicion() > posAnterior && p.getPosicion() <= posNueva) {
                     perderMitadInventario(p);
-                    partida.anadirEvento("La foca passa per la casella de " + p.getNombre() + " i li fa perdre la meitat de l'inventari.");
+                    partida.anadirEvento("La foca ha passat volant per sobre de " + p.getNombre() + " i li ha robat la meitat de l'inventari!");
                 }
             }
         }
@@ -231,7 +259,8 @@ public class GestorPartida {
     /**
      * Hace perder la mitad de los ítems del inventario al pingüino.
      */
-    private void perderMitadInventario(Pinguino p) {
+    private void perderMitadInventario(Jugador p) {
+        if (p.getInv() == null) return;
         int total = p.getInv().totalItems();
         int perder = total / 2;
         for (int i = 0; i < perder; i++) {
