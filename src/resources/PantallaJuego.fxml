@@ -60,7 +60,7 @@
             </padding>
             <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;">
                 <content>
-                    <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" minHeight="0">
+                    <GridPane fx:id="tablero" gridLinesVisible="false" hgap="12" vgap="12" styleClass="board" minHeight="0">
                 <columnConstraints>
                     <ColumnConstraints percentWidth="20.0" />
                     <ColumnConstraints percentWidth="20.0" />

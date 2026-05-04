@@ -271,14 +271,14 @@ public class PantallaJuego {
                 box.setAlignment(Pos.CENTER);
                 // Hacemos que la casilla ocupe todo el espacio disponible en la celda
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-                box.setPadding(new Insets(2));
-                // Fondo semi-transparente estilo "Glassmorphism" con bordes redondeados
-                box.setStyle("-fx-background-color: rgba(255, 255, 255, 0.15); " +
-                             "-fx-background-radius: 12; " +
-                             "-fx-border-color: rgba(255, 255, 255, 0.4); " +
-                             "-fx-border-radius: 12; " +
-                             "-fx-border-width: 1.5; " +
-                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);");
+                box.setPadding(new Insets(5));
+                // Fondo semi-transparente estilo "Glassmorphism" premium con bordes redondeados
+                box.setStyle("-fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)); " +
+                             "-fx-background-radius: 15; " +
+                             "-fx-border-color: rgba(255, 255, 255, 0.7); " +
+                             "-fx-border-radius: 15; " +
+                             "-fx-border-width: 2; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);");
 
                 try {
                     // Intento de carga de imagen (si se encontraran)
@@ -337,12 +337,14 @@ public class PantallaJuego {
                 // Etiqueta (Label) bonita para la casilla
                 Label label = new Label(displayTipo);
                 label.getStyleClass().add("cell-type");
-                label.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6); " + 
-                               "-fx-background-radius: 5; " + 
-                               "-fx-padding: 2 6 2 6; " + 
+                label.setStyle("-fx-background-color: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5)); " + 
+                               "-fx-background-radius: 8; " + 
+                               "-fx-padding: 3 8 3 8; " + 
                                "-fx-text-fill: white; " + 
-                               "-fx-font-size: 10px; " + 
-                               "-fx-font-weight: bold;");
+                               "-fx-font-size: 11px; " + 
+                               "-fx-font-family: 'Segoe UI', sans-serif; " +
+                               "-fx-font-weight: 800; " +
+                               "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 2, 0, 0, 1);");
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
@@ -589,6 +591,15 @@ public class PantallaJuego {
      * Sincroniza todas las fichas en la vista con sus posiciones lógicas.
      */
     private void syncVisualPositions(boolean animar) {
+        // Agrupar jugadores por posición para distribuirlos correctamente
+        java.util.Map<Integer, java.util.List<Jugador>> enCasilla = new java.util.HashMap<>();
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            int pos = j.getPosicion();
+            if (pos >= 50) pos = 49;
+            if (pos < 0) pos = 0;
+            enCasilla.computeIfAbsent(pos, k -> new ArrayList<>()).add(j);
+        }
+
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             javafx.scene.Node token = tokenMap.get(j);
             if (token == null) continue;
@@ -603,15 +614,32 @@ public class PantallaJuego {
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
 
-            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen
-            int index = gestorPartida.getPartida().getJugadores().indexOf(j);
+            java.util.List<Jugador> listaEnPos = enCasilla.get(pos);
+            int indexInCell = listaEnPos.indexOf(j);
+            int countInCell = listaEnPos.size();
+
+            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen, manteniendo el centro
             double offsetX = 0;
             double offsetY = 0;
-            if (index == 0) { offsetX = -100; offsetY = 0; }
-            else if (index == 1) { offsetX = -55; offsetY = 0; }
-            else if (index == 2) { offsetX = 55; offsetY = 0; }
-            else if (index == 3) { offsetX = 100; offsetY = 0; }
-            else if (index == 4) { offsetX = 0; offsetY = 0; }
+
+            if (countInCell == 2) {
+                offsetX = (indexInCell == 0) ? -15 : 15;
+            } else if (countInCell == 3) {
+                if (indexInCell == 0) { offsetX = -15; offsetY = -10; }
+                else if (indexInCell == 1) { offsetX = 15; offsetY = -10; }
+                else { offsetX = 0; offsetY = 15; }
+            } else if (countInCell == 4) {
+                if (indexInCell == 0) { offsetX = -15; offsetY = -15; }
+                else if (indexInCell == 1) { offsetX = 15; offsetY = -15; }
+                else if (indexInCell == 2) { offsetX = -15; offsetY = 15; }
+                else { offsetX = 15; offsetY = 15; }
+            } else if (countInCell > 4) {
+                if (indexInCell == 0) { offsetX = -20; offsetY = -20; }
+                else if (indexInCell == 1) { offsetX = 20; offsetY = -20; }
+                else if (indexInCell == 2) { offsetX = -20; offsetY = 20; }
+                else if (indexInCell == 3) { offsetX = 20; offsetY = 20; }
+                else { offsetX = 0; offsetY = 0; }
+            }
 
             if (animar) {
                 javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
