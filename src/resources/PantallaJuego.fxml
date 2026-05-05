@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+ <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
@@ -204,6 +204,12 @@
                 <Text fx:id="dadoResultText" text="Torn de: -" styleClass="big-text" wrappingWidth="310" />
                 <Button fx:id="dado" text="LLENÇAR DAU" onAction="#handleDado"
                         maxWidth="Infinity" minHeight="60" styleClass="primary" />
+            </VBox>
+
+            <!-- Tarjeta Estado (Eventos directos) -->
+            <VBox spacing="10" styleClass="card">
+                <Label text="ESTAT ACTUAL" styleClass="card-title" />
+                <Label fx:id="eventos" text="Esperant jugada..." styleClass="status-label" wrapText="true" />
             </VBox>
 
             <!-- Tarjeta Objetos -->

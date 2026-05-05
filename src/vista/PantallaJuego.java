@@ -75,6 +75,7 @@ public class PantallaJuego {
     @FXML private VBox vboxEventos;
     @FXML private ScrollPane scrollEventos;
     @FXML private Label nomInventari;
+    @FXML private Label eventos;
 
     // Game board and player pieces
     @FXML private GridPane tablero;
@@ -298,13 +299,7 @@ public class PantallaJuego {
                 // Hacemos que la casilla ocupe todo el espacio disponible en la celda
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 box.setPadding(new Insets(5));
-                // Fondo semi-transparente estilo "Glassmorphism" premium con bordes redondeados
-                box.setStyle("-fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)); " +
-                             "-fx-background-radius: 15; " +
-                             "-fx-border-color: rgba(255, 255, 255, 0.7); " +
-                             "-fx-border-radius: 15; " +
-                             "-fx-border-width: 2; " +
-                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);");
+                box.getStyleClass().add("grid-tile");
 
                 try {
                     // Intento de carga de imagen (si se encontraran)
@@ -376,7 +371,9 @@ public class PantallaJuego {
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
-                int col = i % COLUMNS;
+                // Distribución en forma de serpiente (zig-zag)
+                int col = (row % 2 == 0) ? (i % COLUMNS) : (COLUMNS - 1 - (i % COLUMNS));
+                
                 GridPane.setRowIndex(box, row);
                 GridPane.setColumnIndex(box, col);
                 GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
@@ -432,6 +429,35 @@ public class PantallaJuego {
             stage.showAndWait();
         } catch (Exception e) {
             System.err.println("ERROR carregant Ajustes dende Joc: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void handleGuia(ActionEvent event) {
+        controlador.SoundManager.getInstance().playSound("click");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAyuda.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            javafx.stage.Window owner = null;
+            if (event != null && event.getSource() instanceof Node node) {
+                owner = node.getScene().getWindow();
+            } else if (tablero != null && tablero.getScene() != null) {
+                owner = tablero.getScene().getWindow();
+            }
+            if (owner != null) stage.initOwner(owner);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            stage.setAlwaysOnTop(true);
+            stage.showAndWait();
+        } catch (Exception e) {
+            System.err.println("ERROR carregant Guia dende Joc: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -680,7 +706,7 @@ public class PantallaJuego {
             if (pos < 0) pos = 0;
 
             int newRow = pos / COLUMNS;
-            int newCol = pos % COLUMNS;
+            int newCol = (newRow % 2 == 0) ? (pos % COLUMNS) : (COLUMNS - 1 - (pos % COLUMNS));
 
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
