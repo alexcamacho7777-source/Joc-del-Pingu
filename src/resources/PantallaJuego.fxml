@@ -192,7 +192,7 @@
 
     </center>
 
-    <right>
+    <left>
         <VBox spacing="20" prefWidth="350" styleClass="sidebar">
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
@@ -255,6 +255,6 @@
                 </ScrollPane>
             </VBox>
         </VBox>
-    </right>
+    </left>
 
 </BorderPane>
