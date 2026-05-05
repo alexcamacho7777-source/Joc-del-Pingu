@@ -1048,6 +1048,29 @@ public class PantallaJuego {
     }
 
     /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */
+    @FXML
+    private void handleStats(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaEstadistiques.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            // Intentar obtener la ventana desde el tablero o la escena
+            if (tablero != null && tablero.getScene() != null) {
+                stage.initOwner(tablero.getScene().getWindow());
+            }
+
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle("Estadístiques de Joc");
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            anadirLog("Error carregant estadístiques: " + e.getMessage());
+        }
+    }
+
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
             for (Jugador j : gestorPartida.getPartida().getJugadores()) {

@@ -38,11 +38,10 @@
                 <Menu mnemonicParsing="false" text="Menú">
                     <items>
                         <MenuItem mnemonicParsing="false" text="Ajustes" onAction="#handleAjustes"/>
+                        <MenuItem mnemonicParsing="false" text="Estadístiques" onAction="#handleStats"/>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Guardar partida" onAction="#handleSaveGame"/>
-
                         <SeparatorMenuItem mnemonicParsing="false" />
-
                         <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Sortir al menú principal" onAction="#handleQuitGame"/>
                     </items>
                 </Menu>

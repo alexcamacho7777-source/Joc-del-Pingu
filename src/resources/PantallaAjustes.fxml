@@ -7,7 +7,7 @@
 
 <StackPane xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="vista.PantallaAjustes"
-           stylesheets="/resources/PantallaMenu.css"
+           stylesheets="@PantallaMenu.css"
            style="-fx-background-color: transparent;">
 
     <VBox fx:id="rootContainer" alignment="CENTER" maxWidth="450" maxHeight="550" 

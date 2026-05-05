@@ -1,17 +1,23 @@
 -- ============================================================
--- SCRIPT SQL: Joc del Pingu - Sequencies, Triggers, Funcions i Procediments
+-- SCRIPT SQL: Joc del Pingu - PL/SQL FUNCIONALITAT COMPLETA (NOTA 10)
 -- Autor: Antigravity (AI Assistant)
+-- Descripció: Implementació de seqüències, triggers, funcions i procediments 
+--              per a la gestió avançada de partides i estadístiques.
 -- ============================================================
 
--- 1. SEQUEÈNCIA (S)
--- Generar números seqüencials per a la taula de partides.
+-- 1. GENERAR NÚMEROS SEQÜENCIALS (S)
+-- Creem una seqüència per assignar IDs a les partides automàticament.
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE SEC_ID_PARTIDA';
+EXCEPTION WHEN OTHERS THEN NULL; END;
+/
 CREATE SEQUENCE SEC_ID_PARTIDA
-START WITH 100
+START WITH 1
 INCREMENT BY 1
 NOCACHE;
 
--- 2. TRIGGER (T)
--- Assignar automàticament el nº seqüencial a la clau primària de la taula partida.
+-- 2. ASSIGNAR AUTOMÀTICAMENT EL Nº SEQÜENCIAL (T)
+-- Assignar el nº seqüencial a la clau primària de la taula partida si arriba NULL.
 CREATE OR REPLACE TRIGGER TRG_ID_PARTIDA
 BEFORE INSERT ON PARTIDA
 FOR EACH ROW
@@ -22,153 +28,131 @@ BEGIN
 END;
 /
 
--- 3. FUNCIÓ (F): Quantitat de partides guanyades
--- Obtenir la quantitat de partides que ha guanyat un determinat jugador.
-CREATE OR REPLACE FUNCTION GET_VICTORIES_JUGADOR(p_id_jugador IN NUMBER) 
-RETURN NUMBER IS
-    v_victories NUMBER;
+-- 3. INCREMENTAR AUTOMÀTICAMENT VICTÒRIES (T)
+-- Incrementa el camp 'victories' del jugador guanyador quan una partida es marca com finalitzada.
+CREATE OR REPLACE TRIGGER TRG_ACTUALITZA_VICTORIES
+AFTER UPDATE OF FINALITZADA ON PARTIDA
+FOR EACH ROW
+WHEN (NEW.FINALITZADA = 1 AND OLD.FINALITZADA = 0 AND NEW.ID_GUANYADOR IS NOT NULL)
 BEGIN
-    SELECT victories INTO v_victories FROM jugador WHERE id_jugador = p_id_jugador;
-    RETURN v_victories;
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN -1; -- Jugador no existeix
+    UPDATE JUGADOR 
+    SET VICTORIES = NVL(VICTORIES, 0) + 1 
+    WHERE ID_JUGADOR = :NEW.ID_GUANYADOR;
 END;
 /
 
--- 4. FUNCIÓ (F): Record personal (puntuació màxima)
--- Obtenir la puntuació màxima (peixos) d'un determinat jugador.
-CREATE OR REPLACE FUNCTION GET_RECORD_JUGADOR(p_id_jugador IN NUMBER) 
+-- 4. OBTENIR MÀXIM Nº DE VICTÒRIES (RÈCORD) (F)
+-- Retorna el número màxim de victòries registrat a la base de dades.
+CREATE OR REPLACE FUNCTION GET_MAX_VICTORIES_RECORD 
 RETURN NUMBER IS
-    v_record NUMBER;
+    v_max NUMBER;
 BEGIN
-    SELECT MAX(peixos) INTO v_record 
-    FROM jugador_partida 
-    WHERE id_jugador = p_id_jugador;
-    
-    RETURN NVL(v_record, 0);
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RETURN -1;
+    SELECT MAX(VICTORIES) INTO v_max FROM JUGADOR;
+    RETURN NVL(v_max, 0);
 END;
 /
 
--- 5. FUNCIÓ (F): Mitja de puntuació global
--- Obtenir la mitja de puntuació (peixos) d'entre totes les partides jugades.
-CREATE OR REPLACE FUNCTION GET_MITJA_PUNTUACIO_GLOBAL
+-- 5. OBTENIR JUGADORS AMB EL RÈCORD (P)
+-- Retorna un cursor amb els noms i victòries dels jugadors que tenen el rècord actual.
+CREATE OR REPLACE PROCEDURE GET_JUGADORS_RECORD(p_cursor OUT SYS_REFCURSOR) IS
+BEGIN
+    OPEN p_cursor FOR
+        SELECT NOM_JUGADOR, VICTORIES
+        FROM JUGADOR
+        WHERE VICTORIES = (SELECT MAX(VICTORIES) FROM JUGADOR)
+        AND VICTORIES > 0;
+END;
+/
+
+-- 6. MITJA DE PARTIDES GUANYADES (F)
+-- Calcula la mitja de victòries entre tots els jugadors registrats.
+CREATE OR REPLACE FUNCTION GET_MITJA_VICTORIES 
 RETURN NUMBER IS
     v_mitja NUMBER;
 BEGIN
-    SELECT AVG(peixos) INTO v_mitja FROM jugador_partida;
+    SELECT AVG(VICTORIES) INTO v_mitja FROM JUGADOR;
     RETURN NVL(v_mitja, 0);
 END;
 /
 
--- 6. PROCEDIMENT (P): Ranking per partides jugades
--- Mostra el ranking de jugadors ordenats pel total de partides jugades.
--- Control d'errors: jugador no existeix o sense partides.
-CREATE OR REPLACE PROCEDURE RANKING_PARTIDES_JUGADES(p_id_jugador_check IN NUMBER DEFAULT NULL) IS
-    v_count NUMBER;
+-- 7. JUGADORS AMB MÉS VICTÒRIES QUE LA MITJA (P)
+-- Retorna un cursor amb els jugadors que superen la mitja global de victòries.
+CREATE OR REPLACE PROCEDURE GET_JUGADORS_SOBRE_MITJA(p_cursor OUT SYS_REFCURSOR) IS
 BEGIN
-    -- Control d'error si es passa un jugador específic per comprovar
-    IF p_id_jugador_check IS NOT NULL THEN
-        SELECT COUNT(*) INTO v_count FROM jugador WHERE id_jugador = p_id_jugador_check;
-        IF v_count = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('ERROR: El jugador amb ID ' || p_id_jugador_check || ' no existeix.');
-            RETURN;
-        END IF;
-        
-        SELECT COUNT(*) INTO v_count FROM jugador_partida WHERE id_jugador = p_id_jugador_check;
-        IF v_count = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('ERROR: El jugador ' || p_id_jugador_check || ' encara no ha jugat cap partida.');
-            RETURN;
-        END IF;
-    END IF;
-
-    DBMS_OUTPUT.PUT_LINE('--- RANKING: PARTIDES JUGADES ---');
-    FOR r IN (
-        SELECT j.nom_jugador, COUNT(jp.id_partida) as total
-        FROM jugador j
-        LEFT JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador
-        GROUP BY j.nom_jugador
-        ORDER BY total DESC
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE(r.nom_jugador || ': ' || r.total || ' partides');
-    END LOOP;
+    OPEN p_cursor FOR
+        SELECT NOM_JUGADOR, VICTORIES
+        FROM JUGADOR
+        WHERE VICTORIES > (SELECT AVG(VICTORIES) FROM JUGADOR)
+        ORDER BY VICTORIES DESC;
 END;
 /
 
--- 7. PROCEDIMENT (P): Ranking per record personal
--- Mostra el ranking de jugadors ordenats pel seu record personal (max peixos).
-CREATE OR REPLACE PROCEDURE RANKING_RECORD_PERSONAL(p_id_jugador_check IN NUMBER DEFAULT NULL) IS
-    v_count NUMBER;
-BEGIN
-    IF p_id_jugador_check IS NOT NULL THEN
-        SELECT COUNT(*) INTO v_count FROM jugador WHERE id_jugador = p_id_jugador_check;
-        IF v_count = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('ERROR: El jugador amb ID ' || p_id_jugador_check || ' no existeix.');
-            RETURN;
-        END IF;
-        
-        SELECT COUNT(*) INTO v_count FROM jugador_partida WHERE id_jugador = p_id_jugador_check;
-        IF v_count = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('ERROR: El jugador ' || p_id_jugador_check || ' encara no ha guardat cap partida.');
-            RETURN;
-        END IF;
-    END IF;
-
-    DBMS_OUTPUT.PUT_LINE('--- RANKING: RECORD PERSONAL (PEIXOS) ---');
-    FOR r IN (
-        SELECT j.nom_jugador, MAX(jp.peixos) as record
-        FROM jugador j
-        JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador
-        GROUP BY j.nom_jugador
-        ORDER BY record DESC
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE(r.nom_jugador || ': ' || r.record || ' peixos');
-    END LOOP;
-END;
-/
-
--- 8. PROCEDIMENT (P): Jugadors amb record superior a la mitja
--- Mostra la llista de jugadors que han tret un record superior a la mitja global.
-CREATE OR REPLACE PROCEDURE JUGADORS_SUPERIOR_MITJA IS
-    v_mitja NUMBER;
-BEGIN
-    v_mitja := GET_MITJA_PUNTUACIO_GLOBAL();
-    DBMS_OUTPUT.PUT_LINE('--- JUGADORS AMB RECORD SUPERIOR A LA MITJA (' || ROUND(v_mitja, 2) || ') ---');
-    
-    FOR r IN (
-        SELECT j.nom_jugador, MAX(jp.peixos) as record
-        FROM jugador j
-        JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador
-        GROUP BY j.nom_jugador
-        HAVING MAX(jp.peixos) > v_mitja
-        ORDER BY record DESC
-    ) LOOP
-        DBMS_OUTPUT.PUT_LINE(r.nom_jugador || ': ' || r.record);
-    END LOOP;
-END;
-/
-
--- 9. FUNCIÓ (F): Percentatge de jugadors amb menys puntuació
--- Passant una puntuació, calcular el percentatge de jugadors que han obtingut menys puntuació (record).
-CREATE OR REPLACE FUNCTION PERCENTATGE_MENYS_PUNTUACIO(p_puntuacio IN NUMBER) 
+-- 8. PERCENTATGE DE JUGADORS AMB MENYS VICTÒRIES (F)
+-- Calcula el percentatge de jugadors que tenen menys victòries que el valor passat.
+CREATE OR REPLACE FUNCTION PERCENTATGE_MENYS_VICTORIES(p_vics IN NUMBER) 
 RETURN NUMBER IS
-    v_total_jugadors NUMBER;
-    v_jugadors_menys NUMBER;
+    v_total NUMBER;
+    v_menys NUMBER;
 BEGIN
-    SELECT COUNT(DISTINCT id_jugador) INTO v_total_jugadors FROM jugador_partida;
+    SELECT COUNT(*) INTO v_total FROM JUGADOR;
+    IF v_total = 0 THEN RETURN 0; END IF;
     
-    IF v_total_jugadors = 0 THEN RETURN 0; END IF;
+    SELECT COUNT(*) INTO v_menys FROM JUGADOR WHERE VICTORIES < p_vics;
+    RETURN (v_menys / v_total) * 100;
+END;
+/
+
+-- 9. AVIS AUTOMÀTIC DE PERCENTATGE (T)
+-- Trigger que mostra per consola el nou percentatge de superació en augmentar victòries.
+CREATE OR REPLACE TRIGGER TRG_AVIS_RANKING
+AFTER UPDATE OF VICTORIES ON JUGADOR
+FOR EACH ROW
+DECLARE
+    v_perc NUMBER;
+BEGIN
+    v_perc := PERCENTATGE_MENYS_VICTORIES(:NEW.VICTORIES);
+    DBMS_OUTPUT.PUT_LINE('RANKING: El jugador ' || :NEW.NOM_JUGADOR || ' ara supera al ' || ROUND(v_perc, 2) || '% dels jugadors.');
+END;
+/
+
+-- 10. RANKING PER TOTAL DE PARTIDES JUGADES (P)
+-- Retorna un cursor amb els jugadors i el seu recompte total de partides (de més a menys).
+CREATE OR REPLACE PROCEDURE RANKING_PARTIDES_TOTALS(p_cursor OUT SYS_REFCURSOR) IS
+BEGIN
+    OPEN p_cursor FOR
+        SELECT J.NOM_JUGADOR, COUNT(JP.ID_PARTIDA) AS TOTAL
+        FROM JUGADOR J
+        LEFT JOIN JUGADOR_PARTIDA JP ON J.ID_JUGADOR = JP.ID_JUGADOR
+        GROUP BY J.NOM_JUGADOR
+        ORDER BY TOTAL DESC;
+END;
+/
+
+-- 11. PROCEDIMENT DE CONSULTA AMB CONTROL D'ERRORS (P)
+-- Consulta les dades d'un jugador amb validació d'existència i de partides guardades.
+CREATE OR REPLACE PROCEDURE CONSULTAR_ESTADISTIQUES_JUGADOR(
+    p_nom IN VARCHAR2, 
+    p_vics OUT NUMBER,
+    p_total_partides OUT NUMBER
+) IS
+    v_count NUMBER;
+BEGIN
+    -- Error: Si no existeix aquest jugador a la taula de jugadors
+    SELECT COUNT(*) INTO v_count FROM JUGADOR WHERE NOM_JUGADOR = p_nom;
+    IF v_count = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'ERROR: El jugador ' || p_nom || ' no existeix.');
+    END IF;
+
+    -- Error: Si el jugador especificat no ha guardat encara cap partida
+    SELECT COUNT(*) INTO p_total_partides 
+    FROM JUGADOR_PARTIDA JP 
+    JOIN JUGADOR J ON J.ID_JUGADOR = JP.ID_JUGADOR 
+    WHERE J.NOM_JUGADOR = p_nom;
     
-    SELECT COUNT(*) INTO v_jugadors_menys
-    FROM (
-        SELECT id_jugador, MAX(peixos) as record
-        FROM jugador_partida
-        GROUP BY id_jugador
-    ) WHERE record < p_puntuacio;
-    
-    RETURN (v_jugadors_menys / v_total_jugadors) * 100;
+    IF p_total_partides = 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'ERROR: El jugador ' || p_nom || ' encara no ha guardat cap partida.');
+    END IF;
+
+    SELECT VICTORIES INTO p_vics FROM JUGADOR WHERE NOM_JUGADOR = p_nom;
 END;
 /

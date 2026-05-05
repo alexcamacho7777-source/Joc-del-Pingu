@@ -115,7 +115,7 @@ public class PantallaCrearPartida {
                     }
                 }
 
-                Pinguino p = new Pinguino(user, color, 1, new model.Inventario());
+                Pinguino p = new Pinguino(user, color, 0, new model.Inventario());
                 p.setEsIA(esIA);
                 jugadoresFinales.add(p);
             } else {
