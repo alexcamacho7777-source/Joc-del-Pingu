@@ -163,15 +163,16 @@
 
 /* BOTONES */
 .button {
-    -fx-background-image: url("marco_boton.png");
-    -fx-background-size: 100% 100%;
-    -fx-background-repeat: no-repeat;
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
     -fx-text-fill: #ffffff;
     -fx-font-weight: bold;
     -fx-cursor: hand;
     -fx-padding: 8 20;
-    -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.4), 8, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 2);
 }
 
 .button:hover {
@@ -181,14 +182,16 @@
 }
 
 .button.primary {
-    -fx-background-image: url("marco_boton.png");
-    -fx-background-size: 100% 100%;
-    -fx-background-repeat: no-repeat;
-    -fx-background-color: transparent;
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 25;
+    -fx-border-color: #00d2ff;
+    -fx-border-radius: 25;
+    -fx-border-width: 1.5;
     -fx-text-fill: white;
-    -fx-font-size: 15px;
-    -fx-padding: 12 25;
-    -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 15, 0, 0, 0);
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-padding: 12 30;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.6), 15, 0, 0, 0);
 }
 
 /* SCROLLBAR */
@@ -221,16 +224,14 @@
 }
 
 .spin-button {
-    -fx-background-image: url("marco_boton.png");
-    -fx-background-size: 100% 100%;
-    -fx-background-repeat: no-repeat;
-    -fx-background-color: transparent;
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 20;
     -fx-text-fill: white;
     -fx-font-weight: 900;
     -fx-font-size: 18px;
     -fx-padding: 15 45;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 15, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.8), 15, 0, 0, 0);
 }
 
 .spin-button:hover {

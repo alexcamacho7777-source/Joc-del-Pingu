@@ -48,7 +48,6 @@ import model.Inventario;
 import model.Item;
 import model.Jugador;
 import model.Pinguino;
-import model.Pez;
 import model.Tablero;
 
 public class PantallaJuego {
@@ -433,6 +432,35 @@ public class PantallaJuego {
         }
     }
 
+    @FXML
+    private void handleGuia(ActionEvent event) {
+        controlador.SoundManager.getInstance().playSound("click");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAyuda.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            javafx.stage.Window owner = null;
+            if (event != null && event.getSource() instanceof Node node) {
+                owner = node.getScene().getWindow();
+            } else if (tablero != null && tablero.getScene() != null) {
+                owner = tablero.getScene().getWindow();
+            }
+            if (owner != null) stage.initOwner(owner);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            stage.setAlwaysOnTop(true);
+            stage.showAndWait();
+        } catch (Exception e) {
+            System.err.println("ERROR carregant Guia dende Joc: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @FXML private void handleQuitGame() { 
         try {
             // Regresar al menú principal (Login)
@@ -757,22 +785,22 @@ public class PantallaJuego {
 
     @FXML private void handleRapido() { 
         controlador.SoundManager.getInstance().playSound("click");
-        eventos.setText("Has fet servir Dau ràpid."); 
+        anadirLog("Has fet servir Dau ràpid."); 
         usarObjetoYActualizar("DadoRapido");
     }
     @FXML private void handleLento()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        eventos.setText("Has fet servir Dau lent."); 
+        anadirLog("Has fet servir Dau lent."); 
         usarObjetoYActualizar("DadoLento");
     }
     @FXML private void handlePeces()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        eventos.setText("Has menjat Peixos (+ vida o energia)."); 
+        anadirLog("Has menjat Peixos (+ vida o energia)."); 
         usarObjetoYActualizar("Peces");
     }
     @FXML private void handleNieve()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        eventos.setText("Has llançat una Bola de neu."); 
+        anadirLog("Has llançat una Bola de neu."); 
         usarObjetoYActualizar("BolaNieve");
     }
 

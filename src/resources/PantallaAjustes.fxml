@@ -45,11 +45,11 @@
                 </HBox>
             </VBox>
 
-            <!-- Qualitat -->
-            <VBox spacing="10">
-                <Label text="QUALITAT GRÀFICA" style="-fx-text-fill: white; -fx-font-weight: bold;" />
-                <ChoiceBox fx:id="cbQualitat" maxWidth="1.7976931348623157E308" styleClass="choice-box" 
-                           style="-fx-background-color: rgba(0,0,0,0.4); -fx-border-color: #00c6ff;"/>
+            <!-- Ajuda -->
+            <VBox spacing="10" alignment="CENTER">
+                <Label text="NECESSITES AJUDA?" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                <Button fx:id="btnGuia" text="GUIA DEL JOC" 
+                        style="-fx-background-color: rgba(0,200,255,0.2); -fx-border-color: #00c6ff; -fx-border-radius: 15; -fx-background-radius: 15; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 200; -fx-padding: 10 20; -fx-cursor: hand;"/>
             </VBox>
         </VBox>
 

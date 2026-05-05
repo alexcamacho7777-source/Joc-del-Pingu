@@ -76,7 +76,4 @@ public class Tablero {
     public int getTotalCasillas() {
         return casillas.size();
     }
-
-    public String getSeed() { return seed; }
-    public void setSeed(String seed) { this.seed = seed; }
 }

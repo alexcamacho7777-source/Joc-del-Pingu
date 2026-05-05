@@ -98,6 +98,10 @@ public class SoundManager {
         }
     }
 
+    public void playBackgroundMusic() {
+        playMenuMusic();
+    }
+
     public void playMenuMusic() {
         if (!musicEnabled || menuMusic == null) return;
         if (currentMusic == menuMusic) return; // Ya está sonando

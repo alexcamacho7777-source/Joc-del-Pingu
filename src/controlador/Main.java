@@ -11,7 +11,7 @@ public class main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // Iniciar música de fondo
-        controlador.SoundManager.getInstance().playBackgroundMusic();
+        controlador.SoundManager.getInstance().playMenuMusic();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaIntro.fxml"));
         Parent root = loader.load();

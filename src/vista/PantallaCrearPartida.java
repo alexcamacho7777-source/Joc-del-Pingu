@@ -30,6 +30,7 @@ public class PantallaCrearPartida {
 
     @FXML
     private void initialize() {
+        controlador.SoundManager.getInstance().playMenuMusic();
         // Añadir el primer jugador por defecto (el usuario logueado)
         handleAddPlayer();
         if (!activeCards.isEmpty()) {

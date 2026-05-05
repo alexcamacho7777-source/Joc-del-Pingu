@@ -38,6 +38,7 @@
                 <Menu mnemonicParsing="false" text="Menú">
                     <items>
                         <MenuItem mnemonicParsing="false" text="Ajustes" onAction="#handleAjustes"/>
+                        <MenuItem mnemonicParsing="false" text="Guia del joc" onAction="#handleGuia"/>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Guardar partida" onAction="#handleSaveGame"/>
 
