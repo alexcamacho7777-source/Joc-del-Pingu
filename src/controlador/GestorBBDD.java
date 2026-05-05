@@ -213,8 +213,19 @@ public class GestorBBDD {
         ArrayList<LinkedHashMap<String, String>> colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='FINALITZADA'");
         if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (finalitzada NUMBER(1) DEFAULT 0)");
 
-        colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='ID_GUANYADOR'");
-        if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (id_guanyador NUMBER)");
+        ArrayList<LinkedHashMap<String, String>> colsP2 = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='ID_GUANYADOR'");
+        if (colsP2.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (id_guanyador NUMBER)");
+
+        // 3. Verificació TAULELL
+        ArrayList<LinkedHashMap<String, String>> tabsT = select(conexion, "SELECT table_name FROM user_tables WHERE table_name='TAULELL'");
+        if (tabsT.isEmpty()) {
+            ejecutar(conexion, "CREATE TABLE taulell (id_taulell NUMBER PRIMARY KEY, mida NUMBER DEFAULT 50)");
+        } else {
+            ArrayList<LinkedHashMap<String, String>> colsT = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='TAULELL' AND column_name='MIDA'");
+            if (colsT.isEmpty()) {
+                ejecutar(conexion, "ALTER TABLE taulell ADD (mida NUMBER DEFAULT 50)");
+            }
+        }
 
         System.out.println("Estructura de taules verificada.");
         commit(conexion);
@@ -367,7 +378,7 @@ public class GestorBBDD {
         for (LinkedHashMap<String, String> f : filas) {
             String nom = f.get("NOM_JUGADOR");
             String col = f.get("COLOR_JUGADOR") != null ? f.get("COLOR_JUGADOR") : "Blau";
-            int pos = f.get("POSICIO_ACTUAL") != null ? Integer.parseInt(f.get("POSICIO_ACTUAL")) : 1;
+            int pos = f.get("POSICIO_ACTUAL") != null ? Integer.parseInt(f.get("POSICIO_ACTUAL")) : 0;
 
             Jugador j;
             if (nom.toLowerCase().contains("foca")) {
@@ -602,13 +613,32 @@ public class GestorBBDD {
     }
 
     /**
+     * Consulta les estadístiques d'un jugador amb control d'errors PL/SQL.
+     */
+    public String consultarEstadistiquesJugador(String nom) {
+        if (conexion == null) return "Sense connexió.";
+        try (CallableStatement cs = conexion.prepareCall("{ call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?) }")) {
+            cs.setString(1, nom);
+            cs.registerOutParameter(2, Types.NUMERIC);
+            cs.registerOutParameter(3, Types.NUMERIC);
+            cs.execute();
+            int vics = cs.getInt(2);
+            int total = cs.getInt(3);
+            return "Jugador: " + nom + " | Victòries: " + vics + " | Partides totals: " + total;
+        } catch (SQLException e) {
+            // Captura els errors personalitzats del PL/SQL (RAISE_APPLICATION_ERROR)
+            return e.getMessage(); 
+        }
+    }
+
+    /**
      * Ranking de jugadors per total de partides jugades (Procediment RANKING_PARTIDES_TOTALS).
      */
     public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (conexion == null) return resultados;
         try (CallableStatement cs = conexion.prepareCall("{ call RANKING_PARTIDES_TOTALS(?) }")) {
-            cs.registerOutParameter(1, -10); // -10 es el valor de OracleTypes.CURSOR
+            cs.registerOutParameter(1, -10); // Oracle CURSOR
             cs.execute();
             try (ResultSet rs = (ResultSet) cs.getObject(1)) {
                 while (rs.next()) {

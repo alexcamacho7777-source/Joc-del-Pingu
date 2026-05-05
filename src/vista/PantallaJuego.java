@@ -285,37 +285,51 @@ public class PantallaJuego {
 
         for (int i = 0; i < t.getCasillas().size(); i++) {
             Casilla casilla = t.getCasillas().get(i);
-
-            if (i > 0 && i < 49) {
-                String tipo = casilla.getClass().getSimpleName();
-                String imagePath;
-                switch (tipo) {
-                    case "Agujero": imagePath = "/resources/images/casillas/agujero.png"; break;
-                    case "Oso": imagePath = "/resources/images/casillas/oso.png"; break;
-                    case "Trineo": imagePath = "/resources/images/casillas/trineo.png"; break;
-                    case "SueloQuebradizo": imagePath = "/resources/images/casillas/suelo_quebradizo.png"; break;
-                    case "Evento": imagePath = "/resources/images/casillas/normal.png"; break;
-                    default: imagePath = "/resources/images/casillas/normal.png"; break;
-                }
-                
+            
+            // Casillas especiales Inicio y Meta
+            if (i == 0 || i == 49) {
                 VBox box = new VBox(2);
                 box.setUserData(TAG_CASILLA_TEXT);
                 box.setAlignment(Pos.CENTER);
-                // Hacemos que la casilla ocupe todo el espacio disponible en la celda
+                box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                box.setPadding(new Insets(10));
+                box.getStyleClass().add("grid-tile");
+                box.getStyleClass().add(i == 0 ? "start-tile" : "end-tile");
+                
+                String specialIcon = (i == 0) ? "inicio" : "meta";
+                java.net.URL url = getClass().getResource("/resources/images/casillas/" + specialIcon + ".png");
+                if (url != null) {
+                    ImageView iv = new ImageView(new Image(url.toExternalForm()));
+                    iv.setFitWidth(80); iv.setFitHeight(80);
+                    iv.setPreserveRatio(true);
+                    box.getChildren().add(iv);
+                } else {
+                    Text tStartEnd = new Text(i == 0 ? "INICI" : "META");
+                    tStartEnd.setStyle("-fx-font-size: 20px; -fx-font-weight: 900; -fx-fill: " + (i == 0 ? "#0072ff" : "#ff8c00") + ";");
+                    box.getChildren().add(tStartEnd);
+                }
+                
+                setupTileAnimation(box, i);
+                continue;
+            }
+
+            if (i > 0 && i < 49) {
+                String tipo = casilla.getClass().getSimpleName();
+                VBox box = new VBox(2);
+                box.setUserData(TAG_CASILLA_TEXT);
+                box.setAlignment(Pos.CENTER);
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 box.setPadding(new Insets(5));
                 box.getStyleClass().add("grid-tile");
 
                 try {
-                    // Intento de carga de imagen (si se encontraran)
                     java.net.URL url = getClass().getResource("/resources/images/casillas/" + tipo.toLowerCase() + ".png");
                     if (url == null) url = getClass().getResource("/images/casillas/" + tipo.toLowerCase() + ".png");
 
                     if (url != null) {
                         Image img = new Image(url.toExternalForm(), true);
                         ImageView iv = new ImageView(img);
-                        iv.setFitWidth(50); // Un pelín más contenido para dar margen visual
-                        iv.setFitHeight(50);
+                        iv.setFitWidth(75); iv.setFitHeight(75);
                         iv.setPreserveRatio(true);
                         
                         if ("Evento".equals(tipo)) {
@@ -334,71 +348,59 @@ public class PantallaJuego {
                             box.getChildren().add(iv);
                         }
                     } else {
-                        // Text curt si no hi ha imatge
                         String emojiText;
                         switch (tipo) {
                             case "Agujero": emojiText = "FORAT"; break;
                             case "Oso": emojiText = "OS"; break;
                             case "Trineo": emojiText = "TRINEU"; break;
                             case "SueloQuebradizo": emojiText = "FRÀGIL"; break;
-                            case "Evento": emojiText = "SORPRESA"; break;
+                            case "Evento": emojiText = "?"; break;
                             default: emojiText = "?"; break;
                         }
                         Text fallback = new Text(emojiText);
-                        fallback.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 5, 0, 0, 1);");
+                        fallback.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-fill: " + 
+                            ("Evento".equals(tipo) ? "gold" : "white") + "; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 0);");
                         box.getChildren().add(fallback);
                     }
                 } catch (Exception e) {
                     box.getChildren().add(new Text("?"));
                 }
-
-                String displayTipo;
-                switch (tipo) {
-                    case "Agujero": displayTipo = "FORAT"; break;
-                    case "Oso": displayTipo = "OS"; break;
-                    case "Trineo": displayTipo = "TRINEU"; break;
-                    case "SueloQuebradizo": displayTipo = "TERRA FRÀGIL"; break;
-                    case "Evento": displayTipo = "SORPRESA"; break;
-                    default: displayTipo = "NORMAL"; break;
-                }
-
-                // Etiqueta (Label) bonita para la casilla
-                Label label = new Label(displayTipo);
-                label.getStyleClass().add("cell-type");
-                label.setStyle("-fx-background-color: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5)); " + 
-                               "-fx-background-radius: 8; " + 
-                               "-fx-padding: 3 8 3 8; " + 
-                               "-fx-text-fill: white; " + 
-                               "-fx-font-size: 11px; " + 
-                               "-fx-font-family: 'Segoe UI', sans-serif; " +
-                               "-fx-font-weight: 800; " +
-                               "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 2, 0, 0, 1);");
-                box.getChildren().add(label);
-
-                int row = i / COLUMNS;
-                // Distribución en forma de serpiente (zig-zag)
-                int col = (row % 2 == 0) ? (i % COLUMNS) : (COLUMNS - 1 - (i % COLUMNS));
                 
-                GridPane.setRowIndex(box, row);
-                GridPane.setColumnIndex(box, col);
-                GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
-                
-                // Animación de entrada para las casillas
-                box.setOpacity(0);
-                box.setScaleX(0); box.setScaleY(0);
-                tablero.getChildren().add(box);
-                
-                javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.millis(300), box);
-                ft.setDelay(Duration.millis(i * 10));
-                ft.setToValue(1.0);
-                
-                javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(Duration.millis(400), box);
-                st.setDelay(Duration.millis(i * 10));
-                st.setToX(1); st.setToY(1);
-                
-                ft.play(); st.play();
+                setupTileAnimation(box, i);
             }
         }
+    }
+
+    private void setupTileAnimation(VBox box, int i) {
+        int row = i / COLUMNS;
+        int col = (row % 2 == 0) ? (i % COLUMNS) : (COLUMNS - 1 - (i % COLUMNS));
+        
+        GridPane.setRowIndex(box, row);
+        GridPane.setColumnIndex(box, col);
+        GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
+        
+        double randomRot = (Math.random() * 10) - 5;
+        box.setRotate(randomRot);
+        
+        javafx.animation.TranslateTransition floating = new javafx.animation.TranslateTransition(Duration.seconds(3 + Math.random() * 2), box);
+        floating.setByY((Math.random() * 8) - 4);
+        floating.setAutoReverse(true);
+        floating.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        floating.play();
+        
+        box.setOpacity(0);
+        box.setScaleX(0); box.setScaleY(0);
+        tablero.getChildren().add(box);
+        
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.millis(300), box);
+        ft.setDelay(Duration.millis(i * 10));
+        ft.setToValue(1.0);
+        
+        javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(Duration.millis(400), box);
+        st.setDelay(Duration.millis(i * 10));
+        st.setToX(1); st.setToY(1);
+        
+        ft.play(); st.play();
     }
 
     // Menu actions
@@ -1084,6 +1086,29 @@ public class PantallaJuego {
     }
 
     /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */
+    @FXML
+    private void handleStats(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaEstadistiques.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            // Intentar obtener la ventana desde el tablero o la escena
+            if (tablero != null && tablero.getScene() != null) {
+                stage.initOwner(tablero.getScene().getWindow());
+            }
+
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setTitle("Estadístiques de Joc");
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            anadirLog("Error carregant estadístiques: " + e.getMessage());
+        }
+    }
+
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
             for (Jugador j : gestorPartida.getPartida().getJugadores()) {

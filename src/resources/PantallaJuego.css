@@ -1,11 +1,11 @@
 .root {
     -fx-font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
-    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #0a1128, #000205);
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #0d1b2a, #010409);
 }
 
 /* OVERLAYS */
 .overlay {
-    -fx-background-color: rgba(0, 5, 15, 0.9);
+    -fx-background-color: rgba(1, 4, 9, 0.9);
 }
 
 .loading-text {
@@ -15,105 +15,107 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.5), 15, 0, 0, 0);
 }
 
-.win-overlay {
-    -fx-background-color: rgba(5, 15, 35, 0.95);
-}
-
-.win-title {
-    -fx-font-size: 72px;
-    -fx-font-weight: 900;
-    -fx-text-fill: linear-gradient(to bottom, #ffffff, #00d2ff);
-    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.8), 40, 0, 0, 0);
-}
-
-/* MENU BAR */
-.menu-bar {
-    -fx-background-color: rgba(10, 20, 45, 0.95);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-width: 0 0 1 0;
-}
-
-.menu-bar .label {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-}
-
 /* TABLERO (BOARD) */
 .board {
     -fx-background-color: transparent;
-    -fx-padding: 30;
+    -fx-padding: 40;
 }
 
 .cell-title {
-    -fx-font-size: 30px;
+    -fx-font-size: 42px;
     -fx-font-weight: 900;
     -fx-fill: white;
-    -fx-effect: dropshadow(gaussian, #00d2ff, 10, 0.6, 0, 0);
+    -fx-effect: dropshadow(gaussian, #00d2ff, 15, 0.8, 0, 0);
 }
 
-/* SLEEK GLASS TILE */
+/* SNOW ISLAND TILE */
 .grid-tile {
-    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
-    -fx-background-radius: 15;
-    -fx-border-color: rgba(0, 210, 255, 0.3);
-    -fx-border-radius: 15;
-    -fx-border-width: 1.5;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 8);
-    -fx-min-width: 100;
-    -fx-min-height: 100;
+    /* Frosty semi-transparent island */
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.95), rgba(230, 247, 255, 0.85));
+    -fx-background-radius: 45 20 40 25;
+    -fx-border-color: rgba(255, 255, 255, 0.8) transparent rgba(0, 210, 255, 0.3) transparent;
+    -fx-border-width: 3 0 12 0;
+    -fx-border-radius: 45 20 40 25;
+    -fx-padding: 15;
+    -fx-min-width: 120;
+    -fx-min-height: 120;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 25, 0, 0, 15);
 }
 
 .grid-tile:hover {
-    -fx-background-color: linear-gradient(to bottom right, rgba(0, 210, 255, 0.15), rgba(0, 114, 255, 0.1));
-    -fx-border-color: #00d2ff;
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
-    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.6), 25, 0, 0, 0);
+    -fx-translate-y: -10;
+    -fx-background-color: linear-gradient(to bottom right, #ffffff, #00d2ff);
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.8), 35, 0, 0, 20);
 }
 
-.cell-type {
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: white;
-    -fx-background-color: rgba(0, 210, 255, 0.3);
-    -fx-background-radius: 5;
-    -fx-padding: 2 8;
+/* SPECIAL TILES */
+.start-tile {
+    -fx-border-color: rgba(0, 210, 255, 0.9) transparent rgba(0, 114, 255, 0.5) transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.8), 35, 0, 0, 15);
 }
 
-/* SIDEBAR & CARDS */
+.end-tile {
+    -fx-border-color: rgba(255, 140, 0, 0.9) transparent rgba(255, 69, 0, 0.5) transparent;
+    -fx-effect: dropshadow(gaussian, rgba(255, 140, 0, 0.8), 35, 0, 0, 15);
+}
+
+/* SIDEBAR & VIBRANT GLASS BACKGROUND */
 .sidebar {
-    -fx-background-color: rgba(2, 6, 15, 0.98);
-    -fx-padding: 25;
-    -fx-border-color: rgba(255, 255, 255, 0.05);
-    -fx-border-width: 0 0 0 1.5;
+    -fx-background-color: linear-gradient(to bottom, rgba(20, 45, 80, 0.95), rgba(10, 20, 40, 0.98));
+    -fx-padding: 30;
+    -fx-border-color: rgba(0, 210, 255, 0.2);
+    -fx-border-width: 0 4 0 0;
+    -fx-effect: innershadow(gaussian, rgba(0, 210, 255, 0.1), 50, 0, 0, 0);
 }
 
 .card {
-    -fx-background-color: linear-gradient(to bottom right, rgba(40, 80, 150, 0.15), rgba(10, 20, 40, 0.1));
-    -fx-background-radius: 24;
-    -fx-padding: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.08);
-    -fx-border-radius: 24;
-    -fx-effect: dropshadow(gaussian, black, 20, 0, 0, 10);
+    /* Vibrant Cyan Glass */
+    -fx-background-color: linear-gradient(to bottom right, rgba(40, 100, 200, 0.2), rgba(10, 30, 60, 0.4));
+    -fx-background-radius: 35;
+    -fx-padding: 25;
+    -fx-border-color: rgba(0, 210, 255, 0.3);
+    -fx-border-radius: 35;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.2), 25, 0, 0, 0);
+}
+
+/* LOG INTEGRATION */
+.objects-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: rgba(0, 210, 255, 0.1);
+    -fx-border-radius: 20;
+}
+
+#vboxEventos {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 20;
+    -fx-padding: 15;
+}
+
+.log-entry {
+    -fx-fill: #e0f7ff;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
 }
 
 .card-title {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-weight: 900;
     -fx-text-fill: #00d2ff;
-    -fx-letter-spacing: 3px;
+    -fx-letter-spacing: 2px;
     -fx-text-transform: uppercase;
-}
-
-.status-label {
-    -fx-font-size: 16px;
-    -fx-text-fill: #ffffff;
-    -fx-font-weight: 900;
     -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.5), 10, 0, 0, 0);
 }
 
+.status-label {
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+}
+
 .big-text {
-    -fx-font-size: 28px;
+    -fx-font-size: 30px;
     -fx-font-weight: 900;
     -fx-text-fill: white;
 }
@@ -127,22 +129,21 @@
 
 /* BUTTONS */
 .button {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-background-radius: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-radius: 20;
-    -fx-border-width: 1;
-    -fx-text-fill: #ffffff;
-    -fx-font-weight: bold;
+    -fx-background-radius: 15;
+    -fx-padding: 10 25;
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: #00d2ff;
+    -fx-font-weight: 800;
+    -fx-border-color: rgba(0, 210, 255, 0.2);
+    -fx-border-radius: 15;
     -fx-cursor: hand;
     -fx-padding: 8 20;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 2);
 }
 
 .button:hover {
-    -fx-background-color: rgba(0, 210, 255, 0.1);
+    -fx-background-color: rgba(0, 210, 255, 0.15);
     -fx-border-color: #00d2ff;
-    -fx-scale-x: 1.05;
 }
 
 .button.primary {
@@ -152,118 +153,18 @@
     -fx-border-radius: 25;
     -fx-border-width: 1.5;
     -fx-text-fill: white;
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-padding: 12 30;
-    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.6), 15, 0, 0, 0);
-}
-
-/* SCROLLBAR */
-.objects-scroll {
-    -fx-background-color: transparent;
-}
-
-.objects-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
-.objects-scroll .thumb {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-background-radius: 5;
-}
-
-/* JUGADORES */
-.player {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 10, 0.5, 0, 3);
-}
-
-.current-player {
-    -fx-effect: dropshadow(gaussian, #00ffff, 25, 0.8, 0, 0);
-}
-
-/* RULETA */
-.roulette-overlay {
-    -fx-background-color: rgba(5, 15, 35, 0.85);
-    /* Fondo oscuro para resaltar la ruleta */
-}
-
-.spin-button {
-    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
-    -fx-background-radius: 20;
-    -fx-text-fill: white;
-    -fx-font-weight: 900;
+    -fx-border-color: transparent;
     -fx-font-size: 18px;
-    -fx-padding: 15 45;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.8), 15, 0, 0, 0);
-}
-
-.spin-button:hover {
-    -fx-scale-x: 1.1;
-    -fx-scale-y: 1.1;
-    -fx-effect: dropshadow(gaussian, rgba(255, 255, 255, 1.0), 25, 0, 0, 0);
-}
-
-.button-secondary {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-background-radius: 20;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-padding: 10 25;
-    -fx-border-color: #00c6ff;
-    -fx-border-radius: 20;
-    -fx-cursor: hand;
-}
-
-.button-secondary:hover {
-    -fx-background-color: rgba(0, 198, 255, 0.2);
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
-}
-
-.roulette-result {
-    -fx-font-size: 22px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #00f2fe;
-    -fx-effect: dropshadow(gaussian, rgba(0, 242, 254, 0.5), 10, 0, 0, 0);
-}
-
-/* SIDEBAR */
-.sidebar {
-    -fx-background-color: rgba(5, 12, 25, 0.8);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
-    -fx-border-width: 0 0 0 1.5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 15, 0, 0, 5);
 }
 
 .btn-mini {
-    -fx-font-size: 11px;
-    -fx-padding: 4 10;
-    -fx-background-radius: 10;
-    -fx-background-color: rgba(255, 255, 255, 0.1);
-    -fx-border-color: #00d2ff;
-    -fx-border-radius: 10;
-}
-
-.btn-mini:hover {
-    -fx-background-color: #00d2ff;
-    -fx-text-fill: #0a1128;
-}
-
-.log-entry {
-    -fx-fill: #b3d4ff;
-    -fx-font-size: 13px;
-    -fx-font-weight: 500;
-    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.3), 1, 0, 0, 1);
-}
-
-.objects-scroll {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-}
-.objects-scroll .thumb {
-    -fx-background-color: rgba(0, 210, 255, 0.2);
+    -fx-font-size: 12px;
+    -fx-padding: 5 15;
     -fx-background-radius: 10;
 }
-.objects-scroll .thumb:hover {
-    -fx-background-color: rgba(0, 210, 255, 0.4);
+
+/* JUGADORES */
+.current-player {
+    -fx-effect: dropshadow(gaussian, #00d2ff, 50, 0.8, 0, 0);
 }

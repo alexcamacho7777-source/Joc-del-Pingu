@@ -7,6 +7,7 @@ public class Foca extends Jugador {
 
     public Foca() {
         super("Foca (CPU)", "Gris");
+        this.setPosicion(0); // La foca sí comença a l'Inici (0)
         this.sobornada = false;
         this.turnosBloqueada = 0;
         this.setEsIA(true);
