@@ -35,12 +35,17 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 
 
 import controlador.GestorPartida;
 import model.Pez;
 import model.BolaDeNieve;
 import model.Casilla;
+import model.Oso;
 import model.Dado;
 import model.Evento;
 import model.Foca;
@@ -538,7 +543,8 @@ public class PantallaJuego {
 
         // 3. Animación paso a paso
         animarMovimiento(actual, posAnterior, posNueva, () -> {
-            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
+            comprobarInteraccionesUI(actual, () -> {
+                Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
             dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
             
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
@@ -577,8 +583,9 @@ public class PantallaJuego {
             } else {
                 finalizarTurnoComplet();
             }
-        });
-    }
+        }); // Fin comprobarInteraccionesUI
+    }); // Fin animarMovimiento
+}
 
     private void finalizarTurnoComplet() {
         Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
@@ -828,10 +835,11 @@ public class PantallaJuego {
             for (Item i : inv.getLista()) {
                 if (i instanceof Dado) {
                     Dado d = (Dado) i;
-                    if (tipo.equals("DadoRapido") && d.getNombre().toLowerCase().contains("rapido")) {
+                    String name = d.getNombre().toLowerCase();
+                    if (tipo.equals("DadoRapido") && (name.contains("rapido") || name.contains("ràpid"))) {
                         dadoElegido = d; break;
                     }
-                    if (tipo.equals("DadoLento") && d.getNombre().toLowerCase().contains("lento")) {
+                    if (tipo.equals("DadoLento") && (name.contains("lento") || name.contains("lent"))) {
                         dadoElegido = d; break;
                     }
                 }
@@ -848,8 +856,10 @@ public class PantallaJuego {
                 gestorPartida.getPartida().anadirEvento(p.getNombre() + " usa " + tipo + " i treu un " + resultado);
                 
                 animarMovimiento(p, posAnterior, p.getPosicion(), () -> {
-                    gestorPartida.getPartida().siguienteTurno();
-                    procesarSiguienteTurno();
+                    comprobarInteraccionesUI(p, () -> {
+                        gestorPartida.getPartida().siguienteTurno();
+                        procesarSiguienteTurno();
+                    });
                 });
             } else {
                 anadirLog("No tens aquest objecte!");
@@ -1090,5 +1100,157 @@ public class PantallaJuego {
         }
     }
 
-    
+    /**
+     * Comprueba interacciones que requieren decisión del usuario (Peces vs Oso/Foca)
+     * o eventos especiales (Guerra de bolas de nieve).
+     */
+    private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
+        if (gestorPartida == null || gestorPartida.getPartida() == null) {
+            onDone.run();
+            return;
+        }
+
+        Tablero t = gestorPartida.getPartida().getTablero();
+        Casilla c = t.getCasilla(j.getPosicion());
+        
+        // 1. INTERACCIÓN CON OSO
+        if (c instanceof Oso && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
+            Pinguino p = (Pinguino) j;
+            Item pez = p.getInv().getItem(Pez.class);
+            if (pez != null && pez.getCantidad() > 0) {
+                mostrarDecision("TROBADA AMB L'OS!", 
+                    "L'OS T'HA ATRAPAT! Tens un peix! Vols fer-lo servir per subornar l'os i no tornar a l'inici?", 
+                    () -> {
+                        pez.setCantidad(pez.getCantidad() - 1);
+                        if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
+                        anadirLog(p.getNombre() + " ha usat un peix i se salva de l'os!");
+                        actualizarInventarioUI();
+                        onDone.run();
+                    }, () -> {
+                        p.setPosicion(0);
+                        anadirLog("No has usat peix i tornes a l'inici!");
+                        onDone.run();
+                    });
+                return;
+            } else {
+                p.setPosicion(0);
+                anadirLog("L'os t'ha enviat a l'inici!");
+                onDone.run();
+                return;
+            }
+        }
+
+        // 2. INTERACCIÓN CON FOCA
+        Foca focaEnCasilla = null;
+        for(Jugador otro : gestorPartida.getPartida().getJugadores()) {
+            if (otro instanceof Foca && otro.getPosicion() == j.getPosicion()) {
+                focaEnCasilla = (Foca) otro;
+                break;
+            }
+        }
+
+        if (focaEnCasilla != null && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
+            Pinguino p = (Pinguino) j;
+            final Foca finalFoca = focaEnCasilla;
+            Item pez = p.getInv().getItem(Pez.class);
+            if (pez != null && pez.getCantidad() > 0) {
+                mostrarDecision("FOCA ROBOT!", 
+                    "La foca t'ha atrapat! Vols donar-li un peix per bloquejar-la 2 torns?", 
+                    () -> {
+                        pez.setCantidad(pez.getCantidad() - 1);
+                        if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
+                        finalFoca.activarSoborno();
+                        anadirLog(p.getNombre() + " ha sobornat la foca!");
+                        actualizarInventarioUI();
+                        onDone.run();
+                    }, () -> {
+                        if (!finalFoca.isSobornada()) {
+                            int ant = t.buscarAgujeroAnterior(p.getPosicion());
+                            p.setPosicion(ant);
+                            anadirLog("La foca t'envia al forat anterior!");
+                        }
+                        onDone.run();
+                    });
+                return;
+            } else if (!finalFoca.isSobornada()) {
+                int ant = t.buscarAgujeroAnterior(p.getPosicion());
+                p.setPosicion(ant);
+                anadirLog("La foca t'envia al forat anterior!");
+                onDone.run();
+                return;
+            }
+        }
+
+        // 3. GUERRA DE BOLAS DE NIEVE
+        Jugador oponente = null;
+        for(Jugador otro : gestorPartida.getPartida().getJugadores()) {
+            if (otro != j && otro instanceof Pinguino && otro.getPosicion() == j.getPosicion()) {
+                oponente = otro;
+                break;
+            }
+        }
+
+        if (oponente != null) {
+            ejecutarGuerraBolas((Pinguino)j, (Pinguino)oponente, onDone);
+            return;
+        }
+
+        onDone.run();
+    }
+
+    private void mostrarDecision(String titulo, String msg, Runnable onYes, Runnable onNo) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle(titulo);
+            alert.setHeaderText(null);
+            alert.setContentText(msg);
+            
+            ButtonType btnSi = new ButtonType("SÍ, USAR PEIX");
+            ButtonType btnNo = new ButtonType("NO");
+            alert.getButtonTypes().setAll(btnSi, btnNo);
+
+            alert.showAndWait().ifPresent(response -> {
+                if (response == btnSi) onYes.run();
+                else onNo.run();
+            });
+        });
+    }
+
+    private void ejecutarGuerraBolas(Pinguino p1, Pinguino p2, Runnable onDone) {
+        Item b1it = p1.getInv().getItem(BolaDeNieve.class);
+        Item b2it = p2.getInv().getItem(BolaDeNieve.class);
+        int b1 = b1it != null ? b1it.getCantidad() : 0;
+        int b2 = b2it != null ? b2it.getCantidad() : 0;
+
+        String msg = "GUERRA DE BOLES DE NEU!\n" + p1.getNombre() + " (" + b1 + ") vs " + p2.getNombre() + " (" + b2 + ")";
+        
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("ESDEVENIMENT!");
+            alert.setHeaderText(null);
+            alert.setContentText(msg);
+            alert.showAndWait();
+
+            // Ambos gastan sus bolas
+            if (b1it != null) p1.getInv().quitarItem(b1it);
+            if (b2it != null) p2.getInv().quitarItem(b2it);
+
+            int diff = b1 - b2;
+            if (diff > 0) {
+                anadirLog(p1.getNombre() + " guanya la guerra i avança " + diff + "!");
+                int posAnt = p1.getPosicion();
+                p1.moverPosicion(diff);
+                animarMovimiento(p1, posAnt, p1.getPosicion(), onDone);
+            } else if (diff < 0) {
+                anadirLog(p2.getNombre() + " guanya la guerra i avança " + (-diff) + "!");
+                int posAnt = p2.getPosicion();
+                p2.moverPosicion(-diff);
+                animarMovimiento(p2, posAnt, p2.getPosicion(), onDone);
+            } else {
+                anadirLog("Empat! Cap jugador es mou.");
+                onDone.run();
+            }
+            actualizarInventarioUI();
+        });
+    }
 }

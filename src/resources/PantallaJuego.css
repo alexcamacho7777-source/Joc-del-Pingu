@@ -121,6 +121,7 @@
 .stat {
     -fx-font-size: 16px;
     -fx-text-fill: #e0f7ff;
+    -fx-fill: #e0f7ff;
     -fx-font-weight: bold;
 }
 
