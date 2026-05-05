@@ -22,10 +22,17 @@
             <Text fx:id="welcomeText" text="" fill="#a0c4e4" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
 
             <!-- Create new game button -->
-            <HBox alignment="CENTER" spacing="20" styleClass="glass-card" style="-fx-padding: 20;">
-                <Button text="CREAR UNA NOVA AVENTURA" onAction="#handleNuevaPartida" 
-                        styleClass="button-primary" style="-fx-font-size: 22px; -fx-padding: 15 40;"/>
-            </HBox>
+            <StackPane styleClass="glass-card">
+                <HBox alignment="CENTER" spacing="20" style="-fx-padding: 20;">
+                    <Button text="CREAR UNA NOVA AVENTURA" onAction="#handleNuevaPartida" 
+                            styleClass="button-primary" style="-fx-font-size: 22px; -fx-padding: 15 40;"/>
+                </HBox>
+                <!-- Botó d'Ajustes -->
+                <Button fx:id="btnAjustes" text="⚙" onAction="#handleAjustes" StackPane.alignment="TOP_RIGHT"
+                        styleClass="button-settings" style="-fx-translate-x: -15; -fx-translate-y: 15;"/>
+
+            </StackPane>
+
 
             <!-- Table of existing games wrapped in an ice-card -->
             <VBox styleClass="ice-card" VBox.vgrow="ALWAYS">

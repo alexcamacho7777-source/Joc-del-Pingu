@@ -62,6 +62,8 @@ public class PantallaRuleta {
     @FXML
     private void handleGirar() {
         if (isSpinning) return;
+        controlador.SoundManager.getInstance().playSound("click");
+        controlador.SoundManager.getInstance().playSound("event");
         isSpinning = true;
         spinButton.setDisable(true);
         resultLabel.setText("Girant...!");
@@ -86,6 +88,7 @@ public class PantallaRuleta {
         rt.setCycleCount(1);
         rt.setOnFinished(e -> {
             isSpinning = false;
+            controlador.SoundManager.getInstance().stopSound("event");
             String result = results[resultIndex];
             resultLabel.setText("¡Te ha tocado: " + result + "!");
             
@@ -113,6 +116,7 @@ public class PantallaRuleta {
 
     @FXML
     private void handleClose() {
+        controlador.SoundManager.getInstance().playSound("click");
         if (root.getParent() instanceof StackPane mainStack) {
             mainStack.getChildren().remove(root);
         }

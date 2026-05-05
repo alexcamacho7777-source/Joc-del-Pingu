@@ -14,32 +14,41 @@
 
         <!-- BLOC CENTRAL: Títol + subtítol + botons amb efecte targeta de vidre -->
         <VBox alignment="CENTER" spacing="40" VBox.vgrow="ALWAYS">
-            <VBox alignment="CENTER" spacing="40" maxWidth="950" styleClass="glass-card" style="-fx-padding: 60;">
+            <StackPane maxWidth="950" styleClass="glass-card">
                 
-                <!-- Títol -->
-                <VBox alignment="CENTER" spacing="10">
-                    <Label text="JOC DEL PINGÜÍ" styleClass="title" 
-                           minWidth="-Infinity" 
-                           style="-fx-font-size: 80px; -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 25, 0.5, 0, 0);"/>
-                    <Label text="L'aventura polar més divertida" styleClass="subtitle" 
-                           minWidth="-Infinity"
-                           style="-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #b3d4ff;"/>
+                <VBox alignment="CENTER" spacing="40" style="-fx-padding: 60;">
+                    
+                    <!-- Títol -->
+                    <VBox alignment="CENTER" spacing="10">
+                        <Label text="JOC DEL PINGÜÍ" styleClass="title" 
+                               minWidth="-Infinity" 
+                               style="-fx-font-size: 80px; -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 25, 0.5, 0, 0);"/>
+                        <Label text="L'aventura polar més divertida" styleClass="subtitle" 
+                               minWidth="-Infinity"
+                               style="-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #b3d4ff;"/>
+                    </VBox>
+
+                    <!-- Botons principals -->
+                    <VBox alignment="CENTER" spacing="16" maxWidth="600" minWidth="-Infinity">
+                        <Button fx:id="btnJugar" text="COMENÇAR A JUGAR" onAction="#handleJugar"
+                                maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 24px; -fx-padding: 25 50; -fx-background-radius: 25;"/>
+                    </VBox>
+
+                    <!-- Usuari loguejat (visible quan hi ha sessió) -->
+                    <Label fx:id="lblSessio" text="" styleClass="footer-text"
+                           style="-fx-font-size: 16px; -fx-text-fill: #80d8ff; -fx-font-weight: bold;"/>
+
+                    <!-- Botó d'accés a l'usuari -->
+                    <Button fx:id="btnUsuari" text="Usuari" onAction="#handleUsuari"
+                            styleClass="button-user"/>
                 </VBox>
 
-                <!-- Botons principals -->
-                <VBox alignment="CENTER" spacing="16" maxWidth="600" minWidth="-Infinity">
-                    <Button fx:id="btnJugar" text="COMENÇAR A JUGAR" onAction="#handleJugar"
-                            maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 24px; -fx-padding: 25 50; -fx-background-radius: 25;"/>
-                </VBox>
+                <!-- Botó d'Ajustes (Esquina superior dreta) - ARA AL FINAL PERQUÈ ESTIGUI A SOBRE -->
+                <Button fx:id="btnAjustes" text="⚙" onAction="#handleAjustes" StackPane.alignment="TOP_RIGHT"
+                        styleClass="button-settings" style="-fx-translate-x: -20; -fx-translate-y: 20;"/>
+            </StackPane>
 
-                <!-- Usuari loguejat (visible quan hi ha sessió) -->
-                <Label fx:id="lblSessio" text="" styleClass="footer-text"
-                       style="-fx-font-size: 16px; -fx-text-fill: #80d8ff; -fx-font-weight: bold;"/>
 
-                <!-- Botó d'accés a l'usuari -->
-                <Button fx:id="btnUsuari" text="Usuari" onAction="#handleUsuari"
-                        styleClass="button-user"/>
-            </VBox>
         </VBox>
 
         <!-- PEU -->

@@ -12,6 +12,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
+import javafx.animation.RotateTransition;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,6 +23,8 @@ public class PantallaLobby {
 
     @FXML private Text welcomeText;
     @FXML private Button btnCargarPartida;
+    @FXML private Button btnAjustes;
+
 
     @FXML private TableView<Map<String, String>> tablaPartidas;
     @FXML private TableColumn<Map<String, String>, String> colId;
@@ -32,6 +36,7 @@ public class PantallaLobby {
 
     @FXML
     private void initialize() {
+        controlador.SoundManager.getInstance().playMenuMusic();
         System.out.println("PantallaLobby initialized");
 
         if (PantallaMenu.getLoggedInUser() != null) {
@@ -40,6 +45,20 @@ public class PantallaLobby {
 
         configurarTabla();
         cargarDatosTabla();
+
+        // Animació de rotació per al botó d'ajustes
+        if (btnAjustes != null) {
+            RotateTransition rt = new RotateTransition(Duration.millis(1000), btnAjustes);
+            rt.setByAngle(360);
+            rt.setCycleCount(RotateTransition.INDEFINITE);
+            rt.setInterpolator(javafx.animation.Interpolator.LINEAR);
+
+            btnAjustes.setOnMouseEntered(e -> rt.play());
+            btnAjustes.setOnMouseExited(e -> {
+                rt.stop();
+                btnAjustes.setRotate(0);
+            });
+        }
     }
 
     private void configurarTabla() {
@@ -56,6 +75,31 @@ public class PantallaLobby {
         ArrayList<LinkedHashMap<String, String>> data = bd.getListaPartidasDetalladas();
         ObservableList<Map<String, String>> items = FXCollections.observableArrayList(data);
         tablaPartidas.setItems(items);
+    }
+
+    @FXML
+    private void handleAjustes(ActionEvent event) {
+        System.out.println("DEBUG: Obriu ajustes com overlay dende Lobby...");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAjustes.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            if (event.getSource() instanceof Node node) {
+                stage.initOwner(node.getScene().getWindow());
+            }
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            stage.showAndWait();
+        } catch (Exception e) {
+            System.err.println("ERROR carregant Ajustes dende Lobby: " + e.getMessage());
+            e.printStackTrace();
+            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar el menú d'ajustes: " + e.getMessage());
+        }
     }
 
     @FXML

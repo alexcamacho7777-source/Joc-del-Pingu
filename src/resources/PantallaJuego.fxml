@@ -37,11 +37,16 @@
             <menus>
                 <Menu mnemonicParsing="false" text="Menú">
                     <items>
-                        <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Guardar partida" onAction="#handleSaveGame"/>
+                        <MenuItem mnemonicParsing="false" text="Ajustes" onAction="#handleAjustes"/>
                         <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="saveGame" mnemonicParsing="false" text="Guardar partida" onAction="#handleSaveGame"/>
+
+                        <SeparatorMenuItem mnemonicParsing="false" />
+
                         <MenuItem fx:id="quitGame" mnemonicParsing="false" text="Sortir al menú principal" onAction="#handleQuitGame"/>
                     </items>
                 </Menu>
+
             </menus>
         </MenuBar>
     </top>
@@ -58,113 +63,105 @@
             <padding>
                 <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
+            
             <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="NEVER" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;">
                 <content>
                     <GridPane fx:id="tablero" gridLinesVisible="false" styleClass="board" minHeight="0">
-                <columnConstraints>
-                    <ColumnConstraints percentWidth="20.0" />
-                    <ColumnConstraints percentWidth="20.0" />
-                    <ColumnConstraints percentWidth="20.0" />
-                    <ColumnConstraints percentWidth="20.0" />
-                    <ColumnConstraints percentWidth="20.0" />
-                </columnConstraints>
-
-                <rowConstraints>
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                    <RowConstraints percentHeight="10.0" />
-                </rowConstraints>
-
-                <children>
-                    <!-- Esquinas -->
-                    <Text text="INICI" styleClass="cell-title" />
-                    <Text text="META" styleClass="cell-title"
-                          GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
-
-                    <!-- Jugadores -->
-                    <Group fx:id="P1" id="P1" styleClass="player">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="20.0" />
+                            <ColumnConstraints percentWidth="20.0" />
+                            <ColumnConstraints percentWidth="20.0" />
+                            <ColumnConstraints percentWidth="20.0" />
+                            <ColumnConstraints percentWidth="20.0" />
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                            <RowConstraints percentHeight="10.0" />
+                        </rowConstraints>
                         <children>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
-                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
-                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
-                            <Circle radius="10" fill="BLACK" translateY="-8"/>
-                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
-                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
-                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#0072ff"/>
-                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#0072ff"/>
+                            <Text text="INICI" styleClass="cell-title" />
+                            <Text text="META" styleClass="cell-title" GridPane.columnIndex="4" GridPane.rowIndex="9" GridPane.halignment="RIGHT" />
+                            <Group fx:id="P1" id="P1" styleClass="player">
+                                <children>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                                    <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                                    <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                                    <Circle radius="10" fill="BLACK" translateY="-8"/>
+                                    <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                                    <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                                    <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                                    <Rectangle x="-12" y="-18" width="24" height="2" fill="#0072ff"/>
+                                    <Rectangle x="-8" y="-30" width="16" height="12" fill="#0072ff"/>
+                                </children>
+                            </Group>
+                            <Group fx:id="P2" id="P2" styleClass="player">
+                                <children>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                                    <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                                    <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                                    <Circle radius="10" fill="BLACK" translateY="-8"/>
+                                    <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                                    <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                                    <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                                    <Rectangle x="-12" y="-18" width="24" height="2" fill="#ff4b2b"/>
+                                    <Rectangle x="-8" y="-30" width="16" height="12" fill="#ff4b2b"/>
+                                </children>
+                            </Group>
+                            <Group fx:id="P3" id="P3" styleClass="player">
+                                <children>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                                    <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                                    <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                                    <Circle radius="10" fill="BLACK" translateY="-8"/>
+                                    <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                                    <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                                    <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                                    <Rectangle x="-12" y="-18" width="24" height="2" fill="#11998e"/>
+                                    <Rectangle x="-8" y="-30" width="16" height="12" fill="#11998e"/>
+                                </children>
+                            </Group>
+                            <Group fx:id="P4" id="P4" styleClass="player">
+                                <children>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
+                                    <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
+                                    <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
+                                    <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
+                                    <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
+                                    <Circle radius="10" fill="BLACK" translateY="-8"/>
+                                    <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
+                                    <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
+                                    <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
+                                    <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
+                                    <Rectangle x="-12" y="-18" width="24" height="2" fill="#f2c94c"/>
+                                    <Rectangle x="-8" y="-30" width="16" height="12" fill="#f2c94c"/>
+                                </children>
+                            </Group>
                         </children>
-                    </Group>
-                    
-                    <Group fx:id="P2" id="P2" styleClass="player">
-                        <children>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
-                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
-                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
-                            <Circle radius="10" fill="BLACK" translateY="-8"/>
-                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
-                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
-                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#ff4b2b"/>
-                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#ff4b2b"/>
-                        </children>
-                    </Group>
-                    
-                    <Group fx:id="P3" id="P3" styleClass="player">
-                        <children>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
-                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
-                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
-                            <Circle radius="10" fill="BLACK" translateY="-8"/>
-                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
-                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
-                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#11998e"/>
-                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#11998e"/>
-                        </children>
-                    </Group>
-                    
-                    <Group fx:id="P4" id="P4" styleClass="player">
-                        <children>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="-12" translateY="4" rotate="25"/>
-                            <Ellipse radiusX="4" radiusY="10" fill="BLACK" translateX="12" translateY="4" rotate="-25"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="-6" translateY="17"/>
-                            <Ellipse radiusX="5" radiusY="3" fill="ORANGE" translateX="6" translateY="17"/>
-                            <Ellipse radiusX="12" radiusY="15" fill="BLACK" translateY="5"/>
-                            <Ellipse radiusX="9" radiusY="12" fill="#eeeeee" translateY="6"/>
-                            <Circle radius="10" fill="BLACK" translateY="-8"/>
-                            <Circle radius="5" fill="WHITE" translateX="-3" translateY="-9"/>
-                            <Circle radius="5" fill="WHITE" translateX="3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="-3" translateY="-9"/>
-                            <Circle radius="1.5" fill="BLACK" translateX="3" translateY="-9"/>
-                            <Polygon points="-3,-5, 3,-5, 0,-1" fill="ORANGE"/>
-                            <Rectangle x="-12" y="-18" width="24" height="2" fill="#f2c94c"/>
-                            <Rectangle x="-8" y="-30" width="16" height="12" fill="#f2c94c"/>
-                        </children>
-                    </Group>
-                </children>
                     </GridPane>
                 </content>
             </ScrollPane>
@@ -191,7 +188,9 @@
                     <Button text="TORNAR AL MENÚ" onAction="#handleQuitGame" styleClass="button, primary" />
                 </VBox>
             </StackPane>
+
         </StackPane>
+
     </center>
 
     <bottom>

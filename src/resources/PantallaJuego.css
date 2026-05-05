@@ -35,15 +35,48 @@
 
 /* MENU BAR */
 .menu-bar {
-    -fx-background-color: rgba(10, 20, 45, 0.8);
-    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-background-color: rgba(10, 20, 45, 0.95);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
     -fx-border-width: 0 0 1 0;
 }
 
 .menu-bar .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.menu-bar .menu:hover, .menu-bar .menu:showing {
+    -fx-background-color: #0072ff;
+}
+
+.context-menu {
+    -fx-background-color: #0a142d;
+    -fx-border-color: #00c6ff;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 5);
+}
+
+.menu-item {
+    -fx-padding: 8 15;
+}
+
+.menu-item .label {
     -fx-text-fill: #e2f1ff;
     -fx-font-weight: bold;
 }
+
+.menu-item:focused {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: white;
+}
+
 
 /* TABLERO (BOARD) */
 .board {

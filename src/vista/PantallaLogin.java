@@ -24,6 +24,7 @@ public class PantallaLogin {
 
     @FXML
     private void initialize() {
+        controlador.SoundManager.getInstance().playMenuMusic();
         showLogin();
     }
 

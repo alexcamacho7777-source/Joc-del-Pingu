@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import javafx.animation.TranslateTransition;
+import javafx.animation.RotateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -28,8 +29,14 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 import java.io.IOException;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.scene.Node;
+
+
 import controlador.GestorPartida;
-import model.Item;
 import model.Pez;
 import model.BolaDeNieve;
 import model.Casilla;
@@ -43,6 +50,7 @@ import model.Tablero;
 import model.Foca;
 
 public class PantallaJuego {
+
 
     // Menu items
     @FXML private MenuItem newGame;
@@ -72,7 +80,9 @@ public class PantallaJuego {
     @FXML private Group P2;
     @FXML private Group P3;
     @FXML private Group P4;
+    @FXML private Button btnAjustes;
     @FXML private ImageView bgImage;
+
 
     // Premium UI Elements
     @FXML private StackPane loadingOverlay;
@@ -141,6 +151,7 @@ public class PantallaJuego {
 
     @FXML
     private void initialize() {
+        controlador.SoundManager.getInstance().playGameMusic();
         if (gestorPartida == null) {
             gestorPartida = new GestorPartida();
         }
@@ -158,6 +169,20 @@ public class PantallaJuego {
             loadingBg.fitHeightProperty().bind(loadingOverlay.heightProperty());
         }
         ejecutarPantallaCarga();
+
+        // Animació de rotació per al botó d'ajustes
+        if (btnAjustes != null) {
+            RotateTransition rt = new RotateTransition(Duration.millis(1000), btnAjustes);
+            rt.setByAngle(360);
+            rt.setCycleCount(RotateTransition.INDEFINITE);
+            rt.setInterpolator(javafx.animation.Interpolator.LINEAR);
+
+            btnAjustes.setOnMouseEntered(e -> rt.play());
+            btnAjustes.setOnMouseExited(e -> {
+                rt.stop();
+                btnAjustes.setRotate(0);
+            });
+        }
     }
 
     private void ejecutarPantallaCarga() {
@@ -358,6 +383,36 @@ public class PantallaJuego {
         eventos.setText("Partida guardada a la BBDD.");
     }
 
+    @FXML
+    private void handleAjustes(ActionEvent event) {
+        System.out.println("DEBUG: Obriu ajustes com overlay dende Joc...");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAjustes.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            // Intentar obtener la ventana desde el evento o desde el tablero
+            javafx.stage.Window owner = null;
+            if (event != null && event.getSource() instanceof Node node) {
+                owner = node.getScene().getWindow();
+            } else if (tablero != null && tablero.getScene() != null) {
+                owner = tablero.getScene().getWindow();
+            }
+            
+            if (owner != null) stage.initOwner(owner);
+            
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            stage.showAndWait();
+        } catch (Exception e) {
+            System.err.println("ERROR carregant Ajustes dende Joc: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @FXML private void handleQuitGame() { 
         try {
             // Regresar al menú principal (Login)
@@ -399,6 +454,7 @@ public class PantallaJuego {
     // Button actions
     @FXML
     private void handleDado(ActionEvent event) {
+        controlador.SoundManager.getInstance().playSound("click");
         if(gestorPartida.getPartida().isFinalizada()) {
             eventos.setText("El joc ja ha acabat.");
             return;
@@ -450,12 +506,23 @@ public class PantallaJuego {
             
             // Comprobar victoria
             if (gestorPartida.getPartida().isFinalizada()) {
+                controlador.SoundManager.getInstance().playSoundOnce("win");
                 mostrarVictoria(gestorPartida.getPartida().getGanador());
                 return;
             }
 
-            // 4. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
+            // 4. Sonidos de aterrizaje
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
+            String tipo = casillaActual.getClass().getSimpleName();
+            switch (tipo) {
+                case "Oso" -> controlador.SoundManager.getInstance().playSound("bear");
+                case "Agujero" -> controlador.SoundManager.getInstance().playSound("hole");
+                case "Trineo" -> controlador.SoundManager.getInstance().playSound("sled");
+                case "SueloQuebradizo" -> controlador.SoundManager.getInstance().playSound("ice");
+                case "Evento" -> controlador.SoundManager.getInstance().playSound("event");
+            }
+
+            // 5. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
             if (casillaActual instanceof Evento) {
                 mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
@@ -643,18 +710,22 @@ public class PantallaJuego {
     }
 
     @FXML private void handleRapido() { 
+        controlador.SoundManager.getInstance().playSound("click");
         eventos.setText("Has fet servir Dau ràpid."); 
         usarObjetoYActualizar("DadoRapido");
     }
     @FXML private void handleLento()  { 
+        controlador.SoundManager.getInstance().playSound("click");
         eventos.setText("Has fet servir Dau lent."); 
         usarObjetoYActualizar("DadoLento");
     }
     @FXML private void handlePeces()  { 
+        controlador.SoundManager.getInstance().playSound("click");
         eventos.setText("Has menjat Peixos (+ vida o energia)."); 
         usarObjetoYActualizar("Peces");
     }
     @FXML private void handleNieve()  { 
+        controlador.SoundManager.getInstance().playSound("click");
         eventos.setText("Has llançat una Bola de neu."); 
         usarObjetoYActualizar("BolaNieve");
     }

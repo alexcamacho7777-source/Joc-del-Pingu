@@ -196,3 +196,38 @@
     -fx-font-size: 16px;
     -fx-font-style: italic;
 }
+
+/* Estils per al botó d'ajustes */
+.button-settings {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 15;
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.4), 8, 0, 0, 2);
+}
+
+.button-settings:hover {
+    -fx-background-color: linear-gradient(to right, #0072ff, #00c6ff);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+
+/* Sliders personalitzats per al menú d'ajustes */
+.slider .track {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 5;
+}
+
+.slider .thumb {
+    -fx-background-color: #00d2ff;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.5), 5, 0, 0, 0);
+}
+
+.slider .thumb:hover {
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}

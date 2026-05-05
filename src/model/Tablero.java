@@ -7,20 +7,27 @@ import java.util.Random;
 public class Tablero {
 
     private ArrayList<Casilla> casillas;
+    private String seed = "";
     public static final int TOTAL_CASILLAS = 50;
 
     public Tablero() {
         this.casillas = new ArrayList<>();
-        generarTablero(new Random());
+        this.seed = String.valueOf(System.currentTimeMillis());
+        generarTablero(new Random(Long.parseLong(seed)));
     }
 
     public Tablero(Random r) {
         this.casillas = new ArrayList<>();
+        this.seed = "random_init";
         generarTablero(r);
     }
 
     public ArrayList<Casilla> getCasillas() { return casillas; }
     public void setCasillas(ArrayList<Casilla> casillas) { this.casillas = casillas; }
+    
+    public String getSeed() { return seed; }
+    public void setSeed(String seed) { this.seed = seed; }
+
 
 
     private void generarTablero(Random r) {
