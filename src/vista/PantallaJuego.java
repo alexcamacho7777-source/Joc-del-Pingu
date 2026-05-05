@@ -435,6 +435,35 @@ public class PantallaJuego {
         }
     }
 
+    @FXML
+    private void handleGuia(ActionEvent event) {
+        controlador.SoundManager.getInstance().playSound("click");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAyuda.fxml"));
+            Parent root = loader.load();
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            
+            javafx.stage.Window owner = null;
+            if (event != null && event.getSource() instanceof Node node) {
+                owner = node.getScene().getWindow();
+            } else if (tablero != null && tablero.getScene() != null) {
+                owner = tablero.getScene().getWindow();
+            }
+            if (owner != null) stage.initOwner(owner);
+
+            Scene scene = new Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            stage.setAlwaysOnTop(true);
+            stage.showAndWait();
+        } catch (Exception e) {
+            System.err.println("ERROR carregant Guia dende Joc: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     @FXML private void handleQuitGame() { 
         try {
             // Regresar al menú principal (Login)

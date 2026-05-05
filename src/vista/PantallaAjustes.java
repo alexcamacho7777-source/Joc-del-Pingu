@@ -20,9 +20,9 @@ public class PantallaAjustes {
     @FXML private Slider sldEfectes;
     @FXML private Label lblMusica;
     @FXML private Label lblEfectes;
-    @FXML private ChoiceBox<String> cbQualitat;
     @FXML private Button btnMuteMusica;
     @FXML private Button btnMuteEfectes;
+    @FXML private Button btnGuia;
 
     private double prevMusicaVol = 80;
     private double prevEfectesVol = 100;
@@ -54,9 +54,9 @@ public class PantallaAjustes {
             }
         });
 
-        // Inicialitzar ChoiceBox amb només 2 opcions
-        cbQualitat.setItems(FXCollections.observableArrayList("Baja", "Alta"));
-        cbQualitat.setValue("Alta");
+        if (btnGuia != null) {
+            btnGuia.setOnAction(e -> handleAyuda());
+        }
 
         // Animació d'entrada
         rootContainer.setOpacity(0);
@@ -98,14 +98,49 @@ public class PantallaAjustes {
     }
 
     @FXML
+    public void handleAyuda() {
+        controlador.SoundManager.getInstance().playSound("click");
+        try {
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaAyuda.fxml");
+            if (fxmlUrl == null) {
+                mostrarError("No s'ha trobat el fitxer: /resources/PantallaAyuda.fxml");
+                return;
+            }
+            
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
+            javafx.scene.Parent root = loader.load();
+            
+            Stage stage = new Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            if (rootContainer.getScene() != null) {
+                stage.initOwner(rootContainer.getScene().getWindow());
+            }
+            
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+            
+            // Forzamos que esté encima
+            stage.setAlwaysOnTop(true);
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error carregant la guia: " + e.toString());
+        }
+    }
+
+    private void mostrarError(String msg) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+        alert.setTitle("Error de Guia");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+        alert.showAndWait();
+    }
+
+    @FXML
     private void handleGuardar() {
         controlador.SoundManager.getInstance().playSound("click");
-        String qualitat = cbQualitat.getValue();
-        // Aplicar lògica de qualitat si cal
-        if (qualitat.equals("Baja")) {
-            System.out.println("DEBUG: Aplicant gràfics baixos...");
-            // Aquí es podria desactivar efectes en el controlador principal
-        }
         tancarFinestra();
     }
 

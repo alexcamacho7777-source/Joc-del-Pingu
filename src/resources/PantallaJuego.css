@@ -128,6 +128,7 @@
 
 /* BUTTONS */
 .button {
+<<<<<<< HEAD
     -fx-background-radius: 15;
     -fx-padding: 10 25;
     -fx-background-color: rgba(255, 255, 255, 0.05);
@@ -135,7 +136,18 @@
     -fx-font-weight: 800;
     -fx-border-color: rgba(0, 210, 255, 0.2);
     -fx-border-radius: 15;
+=======
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+>>>>>>> 4f21fde9fc77b7d4f5b2bc8ce5346a68008c87d0
     -fx-cursor: hand;
+    -fx-padding: 8 20;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0, 0, 2);
 }
 
 .button:hover {
@@ -144,8 +156,13 @@
 }
 
 .button.primary {
-    -fx-background-color: linear-gradient(to bottom, #00d2ff, #0072ff);
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 25;
+    -fx-border-color: #00d2ff;
+    -fx-border-radius: 25;
+    -fx-border-width: 1.5;
     -fx-text-fill: white;
+<<<<<<< HEAD
     -fx-border-color: transparent;
     -fx-font-size: 18px;
     -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 15, 0, 0, 5);
@@ -160,4 +177,120 @@
 /* JUGADORES */
 .current-player {
     -fx-effect: dropshadow(gaussian, #00d2ff, 50, 0.8, 0, 0);
+=======
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-padding: 12 30;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.6), 15, 0, 0, 0);
+}
+
+/* SCROLLBAR */
+.objects-scroll {
+    -fx-background-color: transparent;
+}
+
+.objects-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.objects-scroll .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 5;
+}
+
+/* JUGADORES */
+.player {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 10, 0.5, 0, 3);
+}
+
+.current-player {
+    -fx-effect: dropshadow(gaussian, #00ffff, 25, 0.8, 0, 0);
+}
+
+/* RULETA */
+.roulette-overlay {
+    -fx-background-color: rgba(5, 15, 35, 0.85);
+    /* Fondo oscuro para resaltar la ruleta */
+}
+
+.spin-button {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-font-size: 18px;
+    -fx-padding: 15 45;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.8), 15, 0, 0, 0);
+}
+
+.spin-button:hover {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(255, 255, 255, 1.0), 25, 0, 0, 0);
+}
+
+.button-secondary {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 20;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 25;
+    -fx-border-color: #00c6ff;
+    -fx-border-radius: 20;
+    -fx-cursor: hand;
+}
+
+.button-secondary:hover {
+    -fx-background-color: rgba(0, 198, 255, 0.2);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.roulette-result {
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #00f2fe;
+    -fx-effect: dropshadow(gaussian, rgba(0, 242, 254, 0.5), 10, 0, 0, 0);
+}
+
+/* SIDEBAR */
+.sidebar {
+    -fx-background-color: rgba(5, 12, 25, 0.8);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 0 0 1.5;
+}
+
+.btn-mini {
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 10;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-border-color: #00d2ff;
+    -fx-border-radius: 10;
+}
+
+.btn-mini:hover {
+    -fx-background-color: #00d2ff;
+    -fx-text-fill: #0a1128;
+}
+
+.log-entry {
+    -fx-fill: #b3d4ff;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.3), 1, 0, 0, 1);
+}
+
+.objects-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.objects-scroll .thumb {
+    -fx-background-color: rgba(0, 210, 255, 0.2);
+    -fx-background-radius: 10;
+}
+.objects-scroll .thumb:hover {
+    -fx-background-color: rgba(0, 210, 255, 0.4);
+>>>>>>> 4f21fde9fc77b7d4f5b2bc8ce5346a68008c87d0
 }

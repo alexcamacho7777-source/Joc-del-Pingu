@@ -78,5 +78,4 @@ public class Tablero {
     public int getTotalCasillas() {
         return casillas.size();
     }
-
 }

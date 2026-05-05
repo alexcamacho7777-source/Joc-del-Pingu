@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="vista.PantallaAyuda"
+           stylesheets="/resources/PantallaMenu.css"
+           style="-fx-background-color: transparent;">
+
+    <VBox fx:id="rootContainer" alignment="CENTER" maxWidth="600" maxHeight="700" 
+          style="-fx-background-color: linear-gradient(to bottom right, #001a33, #050f23); -fx-background-radius: 30; -fx-border-color: #00c6ff; -fx-border-radius: 30; -fx-border-width: 2; -fx-padding: 30;" 
+          spacing="20">
+        
+        <Label text="COM JUGAR" styleClass="title" style="-fx-font-size: 32px; -fx-text-fill: white;"/>
+
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" hbarPolicy="NEVER">
+            <VBox spacing="25" style="-fx-padding: 10;">
+                
+                <!-- Objectiu -->
+                <VBox spacing="5">
+                    <Label text="OBJECTIU" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px;" />
+                    <Label text="Arriba a la meta abans que els altres pingüins i la foca robot!" 
+                           wrapText="true" style="-fx-text-fill: white; -fx-font-size: 14px;" />
+                </VBox>
+
+                <Separator style="-fx-background-color: rgba(255,255,255,0.1);" />
+
+                <!-- Caselles -->
+                <VBox spacing="15">
+                    <Label text="CASELLES ESPECIALS" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px;" />
+                                        <HBox spacing="15" alignment="CENTER_LEFT">
+                        <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
+                            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                                <Image url="@images/casillas/oso.png"/>
+                            </ImageView>
+                        </StackPane>
+                        <VBox>
+                            <Label text="OS POLAR" style="-fx-text-fill: #ff4b2b; -fx-font-weight: bold;" />
+                            <Label text="L'os t'espanta i et fa tornar a la casella d'inici!" 
+                                   wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
+                            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                                <Image url="@images/casillas/foca_robot.png"/>
+                            </ImageView>
+                        </StackPane>
+                        <VBox>
+                            <Label text="FOCA ROBOT" style="-fx-text-fill: #11998e; -fx-font-weight: bold;" />
+                            <Label text="La foca es mou sola cada torn. No deixis que t'avança!" 
+                                   wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
+                            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                                <Image url="@images/casillas/suelo_quebradizo.png"/>
+                            </ImageView>
+                        </StackPane>
+                        <VBox>
+                            <Label text="TERRA FRÀGIL" style="-fx-text-fill: #00c6ff; -fx-font-weight: bold;" />
+                            <Label text="Aquesta casella es trenca després de ser trepitjada una vegada. Si hi caus quan està trencada, caus al forat!" 
+                                   wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
+                            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                                <Image url="@images/casillas/trineo.png"/>
+                            </ImageView>
+                        </StackPane>
+                        <VBox>
+                            <Label text="TRINEU" style="-fx-text-fill: #f2c94c; -fx-font-weight: bold;" />
+                            <Label text="Pujar al trineu et fa avançar ràpidament diverses caselles!" 
+                                   wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
+                            <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                                <Image url="@images/casillas/normal.png"/>
+                            </ImageView>
+                            <Label text="?" style="-fx-font-size: 24px; -fx-text-fill: gold; -fx-font-weight: bold;"/>
+                        </StackPane>
+                        <VBox>
+                            <Label text="EVENT / RULETA" style="-fx-text-fill: gold; -fx-font-weight: bold;" />
+                            <Label text="Activa la ruleta de la sort! Pots guanyar objectes, avançar o... tenir mala sort." 
+                                   wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <Separator style="-fx-background-color: rgba(255,255,255,0.1);" />
+
+                <!-- Objectes -->
+                <VBox spacing="15">
+                    <Label text="OBJECTES" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px;" />
+                    
+                    <VBox spacing="10">
+                        <Label text="• Dau Ràpid:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                        <Label text="Assegura un llançament alt (4, 5 o 6)." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        
+                        <Label text="• Dau Lent:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                        <Label text="Assegura un llançament baix (1, 2 o 3) per evitar perills." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        
+                        <Label text="• Peixos:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                        <Label text="Et donen energia extra per jugar millor." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        
+                        <Label text="• Bola de Neu:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                        <Label text="Llança-la per fer que un rival perdi el seu torn!" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                    </VBox>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+
+        <Button text="ENTÈS!" onAction="#handleCerrar" 
+                style="-fx-background-color: linear-gradient(to right, #00c6ff, #0072ff); -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 150; -fx-padding: 12 30; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 10, 0, 0, 4);"/>
+
+    </VBox>
+
+</StackPane>
