@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -42,12 +43,13 @@ import model.BolaDeNieve;
 import model.Casilla;
 import model.Dado;
 import model.Evento;
+import model.Foca;
 import model.Inventario;
 import model.Item;
 import model.Jugador;
 import model.Pinguino;
+import model.Pez;
 import model.Tablero;
-import model.Foca;
 
 public class PantallaJuego {
 
@@ -71,7 +73,8 @@ public class PantallaJuego {
     @FXML private Text lento_t;
     @FXML private Text peces_t;
     @FXML private Text nieve_t;
-    @FXML private Text eventos;
+    @FXML private VBox vboxEventos;
+    @FXML private ScrollPane scrollEventos;
     @FXML private Label nomInventari;
 
     // Game board and player pieces
@@ -146,7 +149,21 @@ public class PantallaJuego {
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
         dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        eventos.setText("Partida '" + nomPartida + "' començada!");
+        anadirLog("Partida '" + nomPartida + "' començada!");
+    }
+
+    private void anadirLog(String msg) {
+        if (vboxEventos == null) return;
+        
+        Text text = new Text(msg);
+        text.getStyleClass().add("log-entry");
+        text.setWrappingWidth(300);
+        vboxEventos.getChildren().add(text);
+        
+        // Auto-scroll to bottom
+        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(50));
+        pause.setOnFinished(e -> scrollEventos.setVvalue(1.0));
+        pause.play();
     }
 
     @FXML
@@ -157,7 +174,8 @@ public class PantallaJuego {
         }
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         
-        eventos.setText("El joc ha començat!");
+        anadirLog("--- Benvingut al Joc del Pingüí ---");
+        anadirLog("El joc ha començat!");
         if (bgImage != null) {
             bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
@@ -279,14 +297,14 @@ public class PantallaJuego {
                 box.setAlignment(Pos.CENTER);
                 // Hacemos que la casilla ocupe todo el espacio disponible en la celda
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-                box.setPadding(new Insets(2));
-                // Fondo semi-transparente estilo "Glassmorphism" con bordes redondeados
-                box.setStyle("-fx-background-color: rgba(255, 255, 255, 0.15); " +
-                             "-fx-background-radius: 12; " +
-                             "-fx-border-color: rgba(255, 255, 255, 0.4); " +
-                             "-fx-border-radius: 12; " +
-                             "-fx-border-width: 1.5; " +
-                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);");
+                box.setPadding(new Insets(5));
+                // Fondo semi-transparente estilo "Glassmorphism" premium con bordes redondeados
+                box.setStyle("-fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)); " +
+                             "-fx-background-radius: 15; " +
+                             "-fx-border-color: rgba(255, 255, 255, 0.7); " +
+                             "-fx-border-radius: 15; " +
+                             "-fx-border-width: 2; " +
+                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);");
 
                 try {
                     // Intento de carga de imagen (si se encontraran)
@@ -345,12 +363,14 @@ public class PantallaJuego {
                 // Etiqueta (Label) bonita para la casilla
                 Label label = new Label(displayTipo);
                 label.getStyleClass().add("cell-type");
-                label.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6); " + 
-                               "-fx-background-radius: 5; " + 
-                               "-fx-padding: 2 6 2 6; " + 
+                label.setStyle("-fx-background-color: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5)); " + 
+                               "-fx-background-radius: 8; " + 
+                               "-fx-padding: 3 8 3 8; " + 
                                "-fx-text-fill: white; " + 
-                               "-fx-font-size: 10px; " + 
-                               "-fx-font-weight: bold;");
+                               "-fx-font-size: 11px; " + 
+                               "-fx-font-family: 'Segoe UI', sans-serif; " +
+                               "-fx-font-weight: 800; " +
+                               "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 2, 0, 0, 1);");
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
@@ -380,7 +400,7 @@ public class PantallaJuego {
     // Menu actions
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        eventos.setText("Partida guardada a la BBDD.");
+        anadirLog("Partida guardada a la BBDD.");
     }
 
     @FXML
@@ -448,7 +468,7 @@ public class PantallaJuego {
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
         dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        eventos.setText("Partida #" + id + " carregada correctament.");
+        anadirLog("Partida #" + id + " carregada correctament.");
     }
 
     // Button actions
@@ -456,7 +476,7 @@ public class PantallaJuego {
     private void handleDado(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
         if(gestorPartida.getPartida().isFinalizada()) {
-            eventos.setText("El joc ja ha acabat.");
+            anadirLog("El joc ja ha acabat.");
             return;
         }
 
@@ -495,7 +515,7 @@ public class PantallaJuego {
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
             if(!logs.isEmpty()) {
                 String lastMsg = logs.get(logs.size()-1);
-                eventos.setText(lastMsg);
+                anadirLog(lastMsg);
                 showToast(lastMsg, "#00d2ff");
             }
             
@@ -536,7 +556,7 @@ public class PantallaJuego {
         dadoResultText.setText("Torn de: " + (proxSiguienteTurno != null ? proxSiguienteTurno.getNombre() : "..."));
         
         java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-        if(!logs.isEmpty()) eventos.setText(logs.get(logs.size()-1));
+        if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
 
         if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
@@ -639,6 +659,15 @@ public class PantallaJuego {
      * Sincroniza todas las fichas en la vista con sus posiciones lógicas.
      */
     private void syncVisualPositions(boolean animar) {
+        // Agrupar jugadores por posición para distribuirlos correctamente
+        java.util.Map<Integer, java.util.List<Jugador>> enCasilla = new java.util.HashMap<>();
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            int pos = j.getPosicion();
+            if (pos >= 50) pos = 49;
+            if (pos < 0) pos = 0;
+            enCasilla.computeIfAbsent(pos, k -> new ArrayList<>()).add(j);
+        }
+
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             javafx.scene.Node token = tokenMap.get(j);
             if (token == null) continue;
@@ -653,15 +682,32 @@ public class PantallaJuego {
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
 
-            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen
-            int index = gestorPartida.getPartida().getJugadores().indexOf(j);
+            java.util.List<Jugador> listaEnPos = enCasilla.get(pos);
+            int indexInCell = listaEnPos.indexOf(j);
+            int countInCell = listaEnPos.size();
+
+            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen, manteniendo el centro
             double offsetX = 0;
             double offsetY = 0;
-            if (index == 0) { offsetX = -100; offsetY = 0; }
-            else if (index == 1) { offsetX = -55; offsetY = 0; }
-            else if (index == 2) { offsetX = 55; offsetY = 0; }
-            else if (index == 3) { offsetX = 100; offsetY = 0; }
-            else if (index == 4) { offsetX = 0; offsetY = 0; }
+
+            if (countInCell == 2) {
+                offsetX = (indexInCell == 0) ? -15 : 15;
+            } else if (countInCell == 3) {
+                if (indexInCell == 0) { offsetX = -15; offsetY = -10; }
+                else if (indexInCell == 1) { offsetX = 15; offsetY = -10; }
+                else { offsetX = 0; offsetY = 15; }
+            } else if (countInCell == 4) {
+                if (indexInCell == 0) { offsetX = -15; offsetY = -15; }
+                else if (indexInCell == 1) { offsetX = 15; offsetY = -15; }
+                else if (indexInCell == 2) { offsetX = -15; offsetY = 15; }
+                else { offsetX = 15; offsetY = 15; }
+            } else if (countInCell > 4) {
+                if (indexInCell == 0) { offsetX = -20; offsetY = -20; }
+                else if (indexInCell == 1) { offsetX = 20; offsetY = -20; }
+                else if (indexInCell == 2) { offsetX = -20; offsetY = 20; }
+                else if (indexInCell == 3) { offsetX = 20; offsetY = 20; }
+                else { offsetX = 0; offsetY = 0; }
+            }
 
             if (animar) {
                 javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
@@ -735,7 +781,7 @@ public class PantallaJuego {
         
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
         if (!(actual instanceof Pinguino p) || p.isEsIA()) {
-            eventos.setText("No pots usar objectes si no és el teu torn.");
+            anadirLog("No pots usar objectes si no és el teu torn.");
             return;
         }
 
@@ -774,7 +820,7 @@ public class PantallaJuego {
                     procesarSiguienteTurno();
                 });
             } else {
-                eventos.setText("No tens aquest objecte!");
+                anadirLog("No tens aquest objecte!");
             }
         } 
         // Caso Otros: Usar y no pasar turno inmediatamente? (Depende de la regla, usualmente Peces se usa proactivamente)
@@ -784,18 +830,18 @@ public class PantallaJuego {
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    eventos.setText(p.getNombre() + " ha menjat peixos!");
+                    anadirLog(p.getNombre() + " ha menjat peixos!");
                 } else {
-                    eventos.setText("No tens peixos!");
+                    anadirLog("No tens peixos!");
                 }
             } else if (tipo.equals("BolaNieve")) {
                 Item it = inv.getItem(model.BolaDeNieve.class);
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    eventos.setText(p.getNombre() + " ha llançat una bola de neu!");
+                    anadirLog(p.getNombre() + " ha llançat una bola de neu!");
                 } else {
-                    eventos.setText("No tens boles de neu!");
+                    anadirLog("No tens boles de neu!");
                 }
             }
             actualizarInventarioUI();

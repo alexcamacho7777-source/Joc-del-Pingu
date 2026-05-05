@@ -193,72 +193,63 @@
 
     </center>
 
-    <bottom>
-        <HBox spacing="16" styleClass="bottom-bar" minHeight="150" maxHeight="200">
+    <right>
+        <VBox spacing="20" prefWidth="350" styleClass="sidebar">
             <padding>
-                <Insets top="8" right="16" bottom="8" left="16"/>
+                <Insets top="20" right="20" bottom="20" left="20"/>
             </padding>
 
             <!-- Tarjeta Dado -->
-            <VBox spacing="10" styleClass="card" prefWidth="280">
-                <Label text="Dau" styleClass="card-title" />
-                <Text fx:id="dadoResultText" text="Torn de: -" styleClass="big-text" wrappingWidth="240" />
-                <Button fx:id="dado" text="Llençar dau" onAction="#handleDado"
-                        maxWidth="Infinity" styleClass="primary" />
+            <VBox spacing="15" styleClass="card">
+                <Label text="CONTROL DE TORN" styleClass="card-title" />
+                <Text fx:id="dadoResultText" text="Torn de: -" styleClass="big-text" wrappingWidth="310" />
+                <Button fx:id="dado" text="LLENÇAR DAU" onAction="#handleDado"
+                        maxWidth="Infinity" minHeight="60" styleClass="primary" />
             </VBox>
 
             <!-- Tarjeta Objetos -->
-            <VBox spacing="10" styleClass="card" HBox.hgrow="ALWAYS">
-                <Label text="Objectes" styleClass="card-title" />
+            <VBox spacing="10" styleClass="card" VBox.vgrow="SOMETIMES">
+                <Label text="INVENTARI" styleClass="card-title" />
                 <Label fx:id="nomInventari" text="PROPIETARI: -" style="-fx-font-weight: bold; -fx-text-fill: #00d2ff; -fx-font-size: 14px;" />
 
-                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" styleClass="objects-scroll">
-                    <content>
-                        <VBox spacing="10">
-                            <padding>
-                                <Insets top="6" right="6" bottom="6" left="6"/>
-                            </padding>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="rapido_t" text="Dau ràpid: 0" styleClass="stat" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="rapido" text="Utilitzar" onAction="#handleRapido"/>
-                            </HBox>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="lento_t" text="Dau lent: 0" styleClass="stat" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="lento" text="Utilitzar" onAction="#handleLento"/>
-                            </HBox>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="peces_t" text="Peixos: 0" styleClass="stat" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="peces" text="Utilitzar" onAction="#handlePeces"/>
-                            </HBox>
-
-                            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="row">
-                                <Text fx:id="nieve_t" text="Boles de neu: 0" styleClass="stat" />
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Button fx:id="nieve" text="Utilitzar" onAction="#handleNieve"/>
-                            </HBox>
-
-                        </VBox>
-                    </content>
-                </ScrollPane>
+                <VBox spacing="8">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text fx:id="rapido_t" text="Dau ràpid: 0" styleClass="stat" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="rapido" text="Usa" onAction="#handleRapido" styleClass="btn-mini"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text fx:id="lento_t" text="Dau lent: 0" styleClass="stat" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="lento" text="Usa" onAction="#handleLento" styleClass="btn-mini"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text fx:id="peces_t" text="Peixos: 0" styleClass="stat" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="peces" text="Usa" onAction="#handlePeces" styleClass="btn-mini"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Text fx:id="nieve_t" text="Boles de neu: 0" styleClass="stat" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="nieve" text="Usa" onAction="#handleNieve" styleClass="btn-mini"/>
+                    </HBox>
+                </VBox>
             </VBox>
 
             <!-- Tarjeta Eventos -->
-            <VBox spacing="10" styleClass="card" prefWidth="320">
-                <Label text="Esdeveniments" styleClass="card-title" />
-                <ScrollPane fitToWidth="true" styleClass="objects-scroll" prefHeight="100">
+            <VBox spacing="10" styleClass="card" VBox.vgrow="ALWAYS">
+                <Label text="REGISTRE DE PARTIDA" styleClass="card-title" />
+                <ScrollPane fx:id="scrollEventos" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="ALWAYS" styleClass="objects-scroll" VBox.vgrow="ALWAYS">
                     <content>
-                         <Text fx:id="eventos" text="El joc ha començat!" styleClass="events" wrappingWidth="280" />
+                         <VBox fx:id="vboxEventos" spacing="8">
+                            <padding>
+                                <Insets top="5" right="10" bottom="5" left="5"/>
+                            </padding>
+                         </VBox>
                     </content>
                 </ScrollPane>
             </VBox>
-
-        </HBox>
-    </bottom>
+        </VBox>
+    </right>
 
 </BorderPane>

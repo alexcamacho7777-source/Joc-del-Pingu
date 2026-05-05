@@ -14,7 +14,7 @@ public class Partida {
     private boolean finalizada;
     private Jugador ganador;
     private List<String> logEventos;
-    private Pinguino jugadorPierdeTurno;
+    private Jugador jugadorPierdeTurno;
     private String nombre;
     private Random random;
 
@@ -56,8 +56,8 @@ public class Partida {
     public List<String> getLogEventos() { return logEventos; }
     public void setLogEventos(List<String> logEventos) { this.logEventos = logEventos; }
 
-    public Pinguino getJugadorPierdeTurno() { return jugadorPierdeTurno; }
-    public void setJugadorPierdeTurno(Pinguino jugadorPierdeTurno) { this.jugadorPierdeTurno = jugadorPierdeTurno; }
+    public Jugador getJugadorPierdeTurno() { return jugadorPierdeTurno; }
+    public void setJugadorPierdeTurno(Jugador jugadorPierdeTurno) { this.jugadorPierdeTurno = jugadorPierdeTurno; }
 
     public Random getRandom() { return random; }
     public void setRandom(Random random) { this.random = random; }

@@ -4,6 +4,8 @@ import model.*;
 
 import java.security.MessageDigest;
 import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Scanner;
@@ -15,15 +17,26 @@ import java.util.Scanner;
 public class GestorBBDD {
 
     private static final String URL_CENTRO = "jdbc:oracle:thin:@//192.168.3.26:1521/XEPDB2";
+    private static final String URL_REMOTO = "jdbc:oracle:thin:@//oracle.ilerna.com:1521/XEPDB2";
     private static final String USER_PROJ  = "DW2526_GR03_PINGU";
     private static final String PASS_PROJ  = "AACGFAM";
 
     private Connection conexion;
 
     public GestorBBDD() {
+        // Intentem connexió local primer
         this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
+        
+        // Si falla (p.ex. estem fora del centre), intentem la remota
+        if (this.conexion == null) {
+            System.out.println("Intentant connexió remota (oracle.ilerna.com)...");
+            this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ);
+        }
+        
         // Inicialitzem dades estàtiques si les taules estan buides
-        inicializarTablasMaestras();
+        if (this.conexion != null) {
+            inicializarTablasMaestras();
+        }
     }
 
     public Connection getConexion() { return conexion; }
@@ -36,9 +49,11 @@ public class GestorBBDD {
                 // Alternativa por compatibilidad con versiones antiguas
                 Class.forName("oracle.jdbc.driver.OracleDriver");
             }
+            // Establir un timeout curt per a la prova (segons)
+            DriverManager.setLoginTimeout(5); 
             Connection con = DriverManager.getConnection(url, user, pwd);
             if (con != null && con.isValid(5)) {
-                System.out.println("Connectat a la BBDD correctament.");
+                System.out.println("Connectat a " + url + " correctament.");
             }
             return con;
         } catch (ClassNotFoundException e) {
@@ -427,5 +442,71 @@ public class GestorBBDD {
             fila.put("FINALITZADA", (fin != null && fin.equalsIgnoreCase("1")) ? "Si" : "No");
         }
         return partides;
+    }
+
+    /**
+     * Crida la funció SQL per obtenir les victòries d'un jugador.
+     */
+    public int getVictoriesSQL(int idJugador) {
+        if (conexion == null) return 0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call GET_VICTORIES_JUGADOR(?) }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
+            cs.setInt(2, idJugador);
+            cs.execute();
+            return cs.getInt(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_VICTORIES_JUGADOR: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public int getRecordSQL(int idJugador) {
+        if (conexion == null) return 0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call GET_RECORD_JUGADOR(?) }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
+            cs.setInt(2, idJugador);
+            cs.execute();
+            return cs.getInt(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_RECORD_JUGADOR: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public double getMitjaGlobalSQL() {
+        if (conexion == null) return 0.0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call GET_MITJA_PUNTUACIO_GLOBAL }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
+            cs.execute();
+            return cs.getDouble(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_MITJA_PUNTUACIO_GLOBAL: " + e.getMessage());
+            return 0.0;
+        }
+    }
+
+    public ArrayList<LinkedHashMap<String, String>> getRankingPartidesSQL() {
+        return select(conexion, "SELECT j.nom_jugador, COUNT(jp.id_partida) as TOTAL " +
+                               "FROM jugador j LEFT JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador " +
+                               "GROUP BY j.nom_jugador ORDER BY TOTAL DESC");
+    }
+
+    public ArrayList<LinkedHashMap<String, String>> getRankingRecordSQL() {
+        return select(conexion, "SELECT j.nom_jugador, MAX(jp.peixos) as RECORD " +
+                               "FROM jugador j JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador " +
+                               "GROUP BY j.nom_jugador ORDER BY RECORD DESC");
+    }
+
+    public double getPercentatgeMenysSQL(int puntuacio) {
+        if (conexion == null) return 0.0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call PERCENTATGE_MENYS_PUNTUACIO(?) }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
+            cs.setInt(2, puntuacio);
+            cs.execute();
+            return cs.getDouble(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant PERCENTATGE_MENYS_PUNTUACIO: " + e.getMessage());
+            return 0.0;
+        }
     }
 }
