@@ -207,6 +207,12 @@
                         maxWidth="Infinity" minHeight="60" styleClass="primary" />
             </VBox>
 
+            <!-- Tarjeta Estado (Eventos directos) -->
+            <VBox spacing="10" styleClass="card">
+                <Label text="ESTAT ACTUAL" styleClass="card-title" />
+                <Label fx:id="eventos" text="Esperant jugada..." styleClass="status-label" wrapText="true" />
+            </VBox>
+
             <!-- Tarjeta Objetos -->
             <VBox spacing="10" styleClass="card" VBox.vgrow="SOMETIMES">
                 <Label text="INVENTARI" styleClass="card-title" />
