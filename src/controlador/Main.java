@@ -6,12 +6,12 @@ import javafx.scene.Scene;
 import javafx.scene.Parent;
 import javafx.stage.Stage;
 
-public class main extends Application {
+public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Iniciar música de fondo
-        controlador.SoundManager.getInstance().playBackgroundMusic();
+        // Iniciar música de fondo (Menú)
+        SoundManager.getInstance().playMenuMusic();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaIntro.fxml"));
         Parent root = loader.load();

@@ -40,14 +40,16 @@ public class Tablero {
 
     private Casilla crearCasillaAleatoria(int pos, Random r) {
         int tipo = r.nextInt(12); 
-        return switch (tipo) {
-            case 0 -> new Oso(pos);
-            case 1 -> new Agujero(pos);
-            case 2 -> new Trineo(pos);
-            case 3, 4, 5 -> new Evento(pos); // Más frecuencia de eventos
-            case 6 -> new SueloQuebradizo(pos);
-            default -> new Normal(pos);
-        };
+        switch (tipo) {
+            case 0: return new Oso(pos);
+            case 1: return new Agujero(pos);
+            case 2: return new Trineo(pos);
+            case 3:
+            case 4:
+            case 5: return new Evento(pos); 
+            case 6: return new SueloQuebradizo(pos);
+            default: return new Normal(pos);
+        }
     }
 
     public Casilla getCasilla(int pos) {
@@ -76,7 +78,4 @@ public class Tablero {
     public int getTotalCasillas() {
         return casillas.size();
     }
-
-    public String getSeed() { return seed; }
-    public void setSeed(String seed) { this.seed = seed; }
 }
