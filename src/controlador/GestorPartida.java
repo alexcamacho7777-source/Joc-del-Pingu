@@ -219,25 +219,35 @@ public class GestorPartida {
                 if (otro instanceof Foca foca) {
                     // Si el jugador cau on hi ha la foca
                     if (p instanceof Pinguino pin) {
-                        gestorJugador.focaInteraccion(pin, foca);
-                    }
-                    if (!foca.isSobornada()) {
-                        int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
-                        p.setPosicion(anteriorAgujero);
-                        partida.anadirEvento("La foca colpeja a " + p.getNombre() + " i l'envia al forat anterior (pos " + anteriorAgujero + ").");
+                        // Solo automático para IA
+                        if (pin.isEsIA()) {
+                            gestorJugador.focaInteraccion(pin, foca);
+                            if (!foca.isSobornada()) {
+                                int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
+                                p.setPosicion(anteriorAgujero);
+                                partida.anadirEvento("La foca colpeja a " + p.getNombre() + " (IA) i l'envia al forat anterior.");
+                            }
+                        }
                     }
                 } else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
-                    // Guerra de pingüins
-                    gestorJugador.pinguinoGuerraQuema(p1, p2);
+                    // Solo automático si AL MENOS UNO es IA
+                    if (p1.isEsIA() || p2.isEsIA()) {
+                        gestorJugador.pinguinoGuerraQuema(p1, p2);
+                    }
                 }
             }
             
             // 2. Si la foca és qui s'ha mogut i cau sobre el jugador
             if (p instanceof Foca foca && !foca.isSobornada()) {
                 if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2) {
-                    int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
-                    p2.setPosicion(anteriorAgujero);
-                    partida.anadirEvento("La foca cau sobre " + p2.getNombre() + " i el colpeja al forat anterior!");
+                    // Si p2 es IA, automático. Si es humano, el UI lo detectará en su turno o al mover la foca.
+                    // Para simplificar, si la foca cae sobre un humano, lo mandamos al agujero (o podríamos preguntar, pero suele ser automático).
+                    // El usuario pidió pantalla para "si tienes un pez", así que preguntaremos.
+                    if (p2.isEsIA()) {
+                        int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
+                        p2.setPosicion(anteriorAgujero);
+                        partida.anadirEvento("La foca cau sobre " + p2.getNombre() + " (IA) i el colpeja al forat anterior!");
+                    }
                 }
             }
         }

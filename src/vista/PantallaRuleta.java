@@ -32,13 +32,10 @@ public class PantallaRuleta {
     // 2: Dau lent (Sur)
     // 3: Dau ràpid (Este)
     private final String[] results = {
-        "Boles de neu", 
-        "Peix", 
-        "Dau lent", 
-        "Dau ràpid",
-        "Perdre torn",
-        "Perdre objecte",
-        "Motos de neu"
+        "Boles de neu", // 0 grados (Norte)
+        "Peix",         // 270 grados (Oeste)
+        "Dau lent",     // 180 grados (Sur)
+        "Dau ràpid"     // 90 grados (Este)
     };
 
     @FXML
@@ -71,32 +68,37 @@ public class PantallaRuleta {
         spinButton.setDisable(true);
         resultLabel.setText("Girant...!");
 
-        // Probabilitats: Dau lent (alta), Boles de neu, Peix, Dau ràpid (baixa)
-        // Probabilitats expandides
-        int r = random.nextInt(100);
-        int tempIndex;
-        if (r < 30) tempIndex = 2;      // 30% Dau lent
-        else if (r < 50) tempIndex = 0; // 20% Boles de neu
-        else if (r < 65) tempIndex = 1; // 15% Peix
-        else if (r < 75) tempIndex = 3; // 10% Dau ràpid
-        else if (r < 85) tempIndex = 6; // 10% Motos de neu 
-        else if (r < 92) tempIndex = 4; // 7% Perdre torn
-        else tempIndex = 5;            // 8% Perdre objecte
+        // Reset rotation to avoid cumulative errors
+        wheelGroup.setRotate(wheelGroup.getRotate() % 360);
 
-        final int resultIndex = tempIndex;
-        // Ángulos (ahora hay 7 divisiones, pero para simplificar visualmente usaremos 8 o 4)
-        // Como el disco visual original probablemente tiene 4, lo mantendremos girando a uno de los 4 cuadrantes
-        // y el texto dirá el resultado real. Para hacerlo "pro", deberíamos tener 7-8 divisiones.
-        // Pero el usuario pidió "nivel no tan alto", así que la aleatoriedad basta.
-        int visualIndex = resultIndex % 4;
-        double baseAngle = (visualIndex * 90);
-        double randomOffset = (random.nextDouble() * 60) - 30;
-        double targetAngle = baseAngle + randomOffset;
-        
-        double totalRotation = 360 * 8 + targetAngle; 
+        // Elegir resultado (0: Boles, 1: Peix, 2: Dau lent, 3: Dau ràpid)
+        int r = random.nextInt(100);
+        int resultIndex;
+        if (r < 40) resultIndex = 2;      // 40% Dau lent
+        else if (r < 70) resultIndex = 0; // 30% Boles de neu
+        else if (r < 85) resultIndex = 1; // 15% Peix
+        else resultIndex = 3;            // 15% Dau ràpid
+
+        // Cálculo de ángulo preciso:
+        // El puntero está arriba (0°).
+        // Si queremos que el puntero apunte a la sección en el ángulo S, 
+        // la ruleta debe rotar R = (360 - S).
+        double targetSectionAngle = 0;
+        switch(resultIndex) {
+            case 0: targetSectionAngle = 0;   break; // Boles
+            case 1: targetSectionAngle = 270; break; // Peix (Oeste)
+            case 2: targetSectionAngle = 180; break; // Dau lent (Sur)
+            case 3: targetSectionAngle = 90;  break; // Dau ràpid (Este)
+        }
+
+        double targetRotation = 360 - targetSectionAngle;
+        // Añadimos varias vueltas completas para el efecto visual
+        double totalRotation = (360 * 10) + targetRotation; 
 
         RotateTransition rt = new RotateTransition(Duration.seconds(4), wheelGroup);
-        rt.setByAngle(totalRotation);
+        rt.setFromAngle(wheelGroup.getRotate());
+        rt.setToAngle(wheelGroup.getRotate() + totalRotation);
+        rt.setInterpolator(javafx.animation.Interpolator.EASE_BOTH);
         rt.setCycleCount(1);
         rt.setOnFinished(e -> {
             isSpinning = false;
@@ -104,23 +106,12 @@ public class PantallaRuleta {
             String result = results[resultIndex];
             resultLabel.setText("¡Te ha tocado: " + result + "!");
             
-            // Aplicar el resultat al jugador
             if (jugador != null) {
                 switch (result) {
-                    case "Boles de neu" -> jugador.getInv().anadirItem(new BolaDeNieve(1 + random.nextInt(3)));
+                    case "Boles de neu" -> jugador.getInv().anadirItem(new BolaDeNieve(1 + random.nextInt(2)));
                     case "Peix" -> jugador.getInv().anadirItem(new Pez(1));
                     case "Dau lent" -> jugador.getInv().anadirItem(new Dado("Dau Lent", 1, 1, 3));
-                    case "Dau ràpid" -> jugador.getInv().anadirItem(new Dado("Dau Ràpid", 1, 5, 10));
-                    case "Perdre torn" -> {
-                        if (partida != null) partida.setJugadorPierdeTurno(jugador);
-                    }
-                    case "Perdre objecte" -> jugador.getInv().quitarItemAleatorio(random);
-                    case "Motos de neu" -> {
-                        if (partida != null) {
-                            int nextSled = partida.getTablero().buscarSiguienteTrineo(jugador.getPosicion());
-                            if (nextSled != -1) jugador.setPosicion(nextSled);
-                        }
-                    }
+                    case "Dau ràpid" -> jugador.getInv().anadirItem(new Dado("Dau Ràpid", 1, 5, 6));
                 }
                 if (partida != null) {
                     partida.anadirEvento(jugador.getNombre() + " ha obtingut: " + result);
@@ -128,7 +119,6 @@ public class PantallaRuleta {
             }
             
             closeButton.setVisible(true);
-            
             if (onFinishedCallback != null) {
                 onFinishedCallback.accept(result);
             }
