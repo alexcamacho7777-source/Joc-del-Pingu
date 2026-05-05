@@ -111,7 +111,8 @@ public class GestorPartida {
         }
 
         // Reduir bloqueig de foca si és el seu torn
-        if (jugadorTurno instanceof Foca foca) {
+        if (jugadorTurno instanceof Foca) {
+            Foca foca = (Foca) jugadorTurno;
             foca.reducirBloqueo();
             if (foca.isSobornada()) {
                 partida.anadirEvento("La foca continua bloquejada.");
@@ -135,7 +136,8 @@ public class GestorPartida {
         partida.anadirEvento(jugadorTurno.getNombre() + " avança " + pasos + " caselles. Posició: " + jugadorTurno.getPosicion());
 
         // Lògica específica Foca si passa per sobre de jugadors
-        if (jugadorTurno instanceof Foca foca) {
+        if (jugadorTurno instanceof Foca) {
+            Foca foca = (Foca) jugadorTurno;
             procesarPasoDeFoca(foca, posAnterior, posNueva);
         }
 
@@ -144,9 +146,11 @@ public class GestorPartida {
         gestorTablero.ejecutarCasilla(partida, jugadorTurno, casilla);
 
         // Comprovar interaccions entre jugadors a la mateixa casella
-        if (jugadorTurno instanceof Pinguino p) {
+        if (jugadorTurno instanceof Pinguino) {
+            Pinguino p = (Pinguino) jugadorTurno;
             comprobarInteraccionesEnCasilla(p);
-        } else if (jugadorTurno instanceof Foca foca) {
+        } else if (jugadorTurno instanceof Foca) {
+            Foca foca = (Foca) jugadorTurno;
             // Re-utilitzem la lògica d'interacció si la foca cau sobre algú
             comprobarInteraccionesEnCasilla(foca); 
         }
@@ -246,11 +250,14 @@ public class GestorPartida {
         if (foca.isSobornada()) return;
         
         for (Jugador j : partida.getJugadores()) {
-            if (j instanceof Pinguino p && !p.isEsIA()) {
-                // Si la foca ha passat per la posició del jugador (entre posAnterior i posNueva)
-                if (p.getPosicion() > posAnterior && p.getPosicion() <= posNueva) {
-                    perderMitadInventario(p);
-                    partida.anadirEvento("La foca ha passat volant per sobre de " + p.getNombre() + " i li ha robat la meitat de l'inventari!");
+            if (j instanceof Pinguino) {
+                Pinguino p = (Pinguino) j;
+                if (!p.isEsIA()) {
+                    // Si la foca ha passat per la posició del jugador (entre posAnterior i posNueva)
+                    if (p.getPosicion() > posAnterior && p.getPosicion() <= posNueva) {
+                        perderMitadInventario(p);
+                        partida.anadirEvento("La foca ha passat volant per sobre de " + p.getNombre() + " i li ha robat la meitat de l'inventari!");
+                    }
                 }
             }
         }

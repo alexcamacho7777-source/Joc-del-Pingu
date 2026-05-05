@@ -33,8 +33,9 @@ public class GestorBBDD {
             this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ);
         }
         
-        // Inicialitzem dades estàtiques si les taules estan buides
+        // Inicialitzem dades estàtiques i estructura si les taules estan buides
         if (this.conexion != null) {
+            assegurarEstructuraPLSQL();
             inicializarTablasMaestras();
         }
     }
@@ -187,26 +188,36 @@ public class GestorBBDD {
         int nextId = 1;
         if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
 
-        // Intentem inserir amb la columna contrasenya; si la columna no existeix, la creem primer
-        assegurarColumnaContrasenya();
+        // Intentem inserir amb la columna contrasenya
+        assegurarEstructuraPLSQL();
+
         String sql = "INSERT INTO jugador (id_jugador, nom_jugador, color_jugador, victories, contrasenya) VALUES ("
                 + nextId + ", '" + username + "', 'Blau', 0, '" + hashPw + "')";
         return executeInsUpDel(conexion, sql, "Registro") > 0;
     }
 
     /**
-     * Afegeix la columna contrasenya a la taula jugador si no existeix.
+     * Afegeix les columnes i estructura necessària per a la nova funcionalitat PL/SQL si no existeixen.
      */
-    private void assegurarColumnaContrasenya() {
+    private void assegurarEstructuraPLSQL() {
         if (conexion == null) return;
-        // Comprovem si la columna ja existeix
-        ArrayList<LinkedHashMap<String, String>> cols = select(conexion,
-                "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'");
-        if (cols.isEmpty()) {
-            ejecutar(conexion, "ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))");
-            System.out.println("Columna 'contrasenya' afegida a la taula jugador.");
-            commit(conexion);
-        }
+        
+        // 1. Columnes a JUGADOR
+        ArrayList<LinkedHashMap<String, String>> colsJ = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'");
+        if (colsJ.isEmpty()) ejecutar(conexion, "ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))");
+        
+        colsJ = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='VICTORIES'");
+        if (colsJ.isEmpty()) ejecutar(conexion, "ALTER TABLE jugador ADD (victories NUMBER DEFAULT 0)");
+
+        // 2. Columnes a PARTIDA
+        ArrayList<LinkedHashMap<String, String>> colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='FINALITZADA'");
+        if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (finalitzada NUMBER(1) DEFAULT 0)");
+
+        colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='ID_GUANYADOR'");
+        if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (id_guanyador NUMBER)");
+
+        System.out.println("Estructura de taules verificada.");
+        commit(conexion);
     }
 
     public int getIDJugador(String username) {
@@ -221,7 +232,8 @@ public class GestorBBDD {
      */
     public boolean loginUsuario(String username, String password) {
         if (conexion == null) return false;
-        assegurarColumnaContrasenya();
+        assegurarEstructuraPLSQL();
+
         String hashPw = sha256(password);
         ArrayList<LinkedHashMap<String, String>> res = select(conexion,
                 "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "' AND contrasenya = '" + hashPw + "'");
@@ -266,20 +278,20 @@ public class GestorBBDD {
                         "WHEN NOT MATCHED THEN INSERT VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
             }
 
-            // 2. Guardar la partida (incloent la SEED del taulell)
-            String seed = (p.getTablero() != null) ? p.getTablero().getSeed() : "";
-            
-            // Intentem actualitzar o insertar
+            int idGuanyador = (p.isFinalizada() && p.getGanador() != null) ? getIDJugador(p.getGanador().getNombre()) : -1;
+            String valFinalitzada = p.isFinalizada() ? "1" : "0";
+            String valGuanyador = (idGuanyador != -1) ? String.valueOf(idGuanyador) : "NULL";
+
+            // 2. Guardar la partida (incloent estat de finalització i guanyador)
             String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", nom_partida = '" + p.getNombre() + "', id_taulell = " + idPartida + " " +
-                    "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-                    "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ")";
+                    "WHEN MATCHED THEN UPDATE SET torn_actual = " + numTorn + ", nom_partida = '" + p.getNombre() + "', " +
+                    "finalitzada = " + valFinalitzada + ", id_guanyador = " + valGuanyador + " " +
+                    "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual, finalitzada, id_guanyador) " +
+                    "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ", " + valFinalitzada + ", " + valGuanyador + ")";
             ejecutar(conexion, sqlP);
             
             // Guardem la SEED al taulell per simplificar (si no existeix la columna, el mètode 'ejecutar' fallarà silenciosament o mostrarà error)
             ejecutar(conexion, "UPDATE taulell SET mida = " + p.getTablero().getTotalCasillas() + " WHERE id_taulell = " + idPartida);
-            // Intentem guardar la seed en un camp extra si l'usuari l'ha creat, o simplement seguim
-            // (En un entorn real faríem un ALTER TABLE, però aquí millor ser prudents)
             
             // 3. Guardar les caselles
             if (p.getTablero() != null) {
@@ -305,15 +317,15 @@ public class GestorBBDD {
                 int idJ = getIDJugador(j.getNombre());
                 if (idJ == -1) continue;
 
-                if (p.isFinalizada() && j.equals(p.getGanador())) {
-                    ejecutar(conexion, "UPDATE jugador SET victories = victories + 1 WHERE id_jugador = " + idJ);
-                }
 
                 int d=0, pe=0, b=0;
-                if (j instanceof Pinguino pin && pin.getInv() != null) {
-                    d = pin.getInv().contarItems("DadoRapido") + pin.getInv().contarItems("DadoLento");
-                    pe = pin.getInv().contarItems("Peces");
-                    b = pin.getInv().contarItems("BolaNieve");
+                if (j instanceof Pinguino) {
+                    Pinguino pin = (Pinguino) j;
+                    if (pin.getInv() != null) {
+                        d = pin.getInv().contarItems("DadoRapido") + pin.getInv().contarItems("DadoLento");
+                        pe = pin.getInv().contarItems("Peces");
+                        b = pin.getInv().contarItems("BolaNieve");
+                    }
                 }
 
                 ejecutar(conexion, "MERGE INTO jugador_partida dst USING (SELECT " + idJ + " AS id_j, " + idPartida + " AS id_p FROM dual) src " +
@@ -497,16 +509,118 @@ public class GestorBBDD {
                                "GROUP BY j.nom_jugador ORDER BY RECORD DESC");
     }
 
-    public double getPercentatgeMenysSQL(int puntuacio) {
-        if (conexion == null) return 0.0;
-        try (CallableStatement cs = conexion.prepareCall("{ ? = call PERCENTATGE_MENYS_PUNTUACIO(?) }")) {
+    /**
+     * Retorna el rècord màxim de victòries registrat (Funció GET_MAX_VICTORIES_RECORD).
+     */
+    public int getMaxVictoriesRecordSQL() {
+        if (conexion == null) return 0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call GET_MAX_VICTORIES_RECORD }")) {
             cs.registerOutParameter(1, Types.NUMERIC);
-            cs.setInt(2, puntuacio);
+            cs.execute();
+            return cs.getInt(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_MAX_VICTORIES_RECORD: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Retorna els jugadors que tenen el rècord de victòries (Procediment GET_JUGADORS_RECORD).
+     */
+    public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion == null) return resultados;
+        try (CallableStatement cs = conexion.prepareCall("{ call GET_JUGADORS_RECORD(?) }")) {
+            cs.registerOutParameter(1, -10); // -10 es el valor de OracleTypes.CURSOR
+            cs.execute();
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("VICTORIES", rs.getString("VICTORIES"));
+                    resultados.add(fila);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_JUGADORS_RECORD: " + e.getMessage());
+        }
+        return resultados;
+    }
+
+    /**
+     * Retorna la mitja de victòries (Funció GET_MITJA_VICTORIES).
+     */
+    public double getMitjaVictoriesSQL() {
+        if (conexion == null) return 0.0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call GET_MITJA_VICTORIES }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
             cs.execute();
             return cs.getDouble(1);
         } catch (SQLException e) {
-            System.err.println("Error cridant PERCENTATGE_MENYS_PUNTUACIO: " + e.getMessage());
+            System.err.println("Error cridant GET_MITJA_VICTORIES: " + e.getMessage());
             return 0.0;
         }
+    }
+
+    /**
+     * Retorna jugadors amb victòries per sobre de la mitja (Procediment GET_JUGADORS_SOBRE_MITJA).
+     */
+    public ArrayList<LinkedHashMap<String, String>> getJugadorsSobreMitjaSQL() {
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion == null) return resultados;
+        try (CallableStatement cs = conexion.prepareCall("{ call GET_JUGADORS_SOBRE_MITJA(?) }")) {
+            cs.registerOutParameter(1, -10); // -10 es el valor de OracleTypes.CURSOR
+            cs.execute();
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("VICTORIES", rs.getString("VICTORIES"));
+                    resultados.add(fila);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error cridant GET_JUGADORS_SOBRE_MITJA: " + e.getMessage());
+        }
+        return resultados;
+    }
+
+    /**
+     * Retorna el percentatge de jugadors amb menys victòries que el valor passat (Funció PERCENTATGE_MENYS_VICTORIES).
+     */
+    public double getPercentatgeMenysVictoriesSQL(int vics) {
+        if (conexion == null) return 0.0;
+        try (CallableStatement cs = conexion.prepareCall("{ ? = call PERCENTATGE_MENYS_VICTORIES(?) }")) {
+            cs.registerOutParameter(1, Types.NUMERIC);
+            cs.setInt(2, vics);
+            cs.execute();
+            return cs.getDouble(1);
+        } catch (SQLException e) {
+            System.err.println("Error cridant PERCENTATGE_MENYS_VICTORIES: " + e.getMessage());
+            return 0.0;
+        }
+    }
+
+    /**
+     * Ranking de jugadors per total de partides jugades (Procediment RANKING_PARTIDES_TOTALS).
+     */
+    public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion == null) return resultados;
+        try (CallableStatement cs = conexion.prepareCall("{ call RANKING_PARTIDES_TOTALS(?) }")) {
+            cs.registerOutParameter(1, -10); // -10 es el valor de OracleTypes.CURSOR
+            cs.execute();
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("TOTAL", rs.getString("TOTAL"));
+                    resultados.add(fila);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error cridant RANKING_PARTIDES_TOTALS: " + e.getMessage());
+        }
+        return resultados;
     }
 }
