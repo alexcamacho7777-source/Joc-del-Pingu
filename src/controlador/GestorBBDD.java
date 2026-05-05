@@ -213,8 +213,19 @@ public class GestorBBDD {
         ArrayList<LinkedHashMap<String, String>> colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='FINALITZADA'");
         if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (finalitzada NUMBER(1) DEFAULT 0)");
 
-        colsP = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='ID_GUANYADOR'");
-        if (colsP.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (id_guanyador NUMBER)");
+        ArrayList<LinkedHashMap<String, String>> colsP2 = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='PARTIDA' AND column_name='ID_GUANYADOR'");
+        if (colsP2.isEmpty()) ejecutar(conexion, "ALTER TABLE partida ADD (id_guanyador NUMBER)");
+
+        // 3. Verificació TAULELL
+        ArrayList<LinkedHashMap<String, String>> tabsT = select(conexion, "SELECT table_name FROM user_tables WHERE table_name='TAULELL'");
+        if (tabsT.isEmpty()) {
+            ejecutar(conexion, "CREATE TABLE taulell (id_taulell NUMBER PRIMARY KEY, mida NUMBER DEFAULT 50)");
+        } else {
+            ArrayList<LinkedHashMap<String, String>> colsT = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='TAULELL' AND column_name='MIDA'");
+            if (colsT.isEmpty()) {
+                ejecutar(conexion, "ALTER TABLE taulell ADD (mida NUMBER DEFAULT 50)");
+            }
+        }
 
         System.out.println("Estructura de taules verificada.");
         commit(conexion);
