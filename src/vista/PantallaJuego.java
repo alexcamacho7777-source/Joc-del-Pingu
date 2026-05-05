@@ -75,6 +75,7 @@ public class PantallaJuego {
     @FXML private VBox vboxEventos;
     @FXML private ScrollPane scrollEventos;
     @FXML private Label nomInventari;
+    @FXML private Label eventos;
 
     // Game board and player pieces
     @FXML private GridPane tablero;
@@ -282,14 +283,15 @@ public class PantallaJuego {
 
             if (i > 0 && i < 49) {
                 String tipo = casilla.getClass().getSimpleName();
-                String imagePath = switch (tipo) {
-                    case "Agujero" -> "/resources/images/casillas/agujero.png";
-                    case "Oso" -> "/resources/images/casillas/oso.png";
-                    case "Trineo" -> "/resources/images/casillas/trineo.png";
-                    case "SueloQuebradizo" -> "/resources/images/casillas/suelo_quebradizo.png";
-                    case "Evento" -> "/resources/images/casillas/normal.png"; // Usamos normal como base si no hay imagen propia
-                    default -> "/resources/images/casillas/normal.png";
-                };
+                String imagePath;
+                switch (tipo) {
+                    case "Agujero": imagePath = "/resources/images/casillas/agujero.png"; break;
+                    case "Oso": imagePath = "/resources/images/casillas/oso.png"; break;
+                    case "Trineo": imagePath = "/resources/images/casillas/trineo.png"; break;
+                    case "SueloQuebradizo": imagePath = "/resources/images/casillas/suelo_quebradizo.png"; break;
+                    case "Evento": imagePath = "/resources/images/casillas/normal.png"; break;
+                    default: imagePath = "/resources/images/casillas/normal.png"; break;
+                }
                 
                 VBox box = new VBox(2);
                 box.setUserData(TAG_CASILLA_TEXT);
@@ -297,13 +299,7 @@ public class PantallaJuego {
                 // Hacemos que la casilla ocupe todo el espacio disponible en la celda
                 box.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
                 box.setPadding(new Insets(5));
-                // Fondo semi-transparente estilo "Glassmorphism" premium con bordes redondeados
-                box.setStyle("-fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)); " +
-                             "-fx-background-radius: 15; " +
-                             "-fx-border-color: rgba(255, 255, 255, 0.7); " +
-                             "-fx-border-radius: 15; " +
-                             "-fx-border-width: 2; " +
-                             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 15, 0, 0, 8);");
+                box.getStyleClass().add("grid-tile");
 
                 try {
                     // Intento de carga de imagen (si se encontraran)
@@ -334,14 +330,15 @@ public class PantallaJuego {
                         }
                     } else {
                         // Text curt si no hi ha imatge
-                        String emojiText = switch (tipo) {
-                            case "Agujero" -> "FORAT";
-                            case "Oso" -> "OS";
-                            case "Trineo" -> "TRINEU";
-                            case "SueloQuebradizo" -> "FRÀGIL";
-                            case "Evento" -> "SORPRESA";
-                            default -> "?";
-                        };
+                        String emojiText;
+                        switch (tipo) {
+                            case "Agujero": emojiText = "FORAT"; break;
+                            case "Oso": emojiText = "OS"; break;
+                            case "Trineo": emojiText = "TRINEU"; break;
+                            case "SueloQuebradizo": emojiText = "FRÀGIL"; break;
+                            case "Evento": emojiText = "SORPRESA"; break;
+                            default: emojiText = "?"; break;
+                        }
                         Text fallback = new Text(emojiText);
                         fallback.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 5, 0, 0, 1);");
                         box.getChildren().add(fallback);
@@ -350,14 +347,15 @@ public class PantallaJuego {
                     box.getChildren().add(new Text("?"));
                 }
 
-                String displayTipo = switch (tipo) {
-                    case "Agujero" -> "FORAT";
-                    case "Oso" -> "OS";
-                    case "Trineo" -> "TRINEU";
-                    case "SueloQuebradizo" -> "TERRA FRÀGIL";
-                    case "Evento" -> "SORPRESA";
-                    default -> "NORMAL";
-                };
+                String displayTipo;
+                switch (tipo) {
+                    case "Agujero": displayTipo = "FORAT"; break;
+                    case "Oso": displayTipo = "OS"; break;
+                    case "Trineo": displayTipo = "TRINEU"; break;
+                    case "SueloQuebradizo": displayTipo = "TERRA FRÀGIL"; break;
+                    case "Evento": displayTipo = "SORPRESA"; break;
+                    default: displayTipo = "NORMAL"; break;
+                }
 
                 // Etiqueta (Label) bonita para la casilla
                 Label label = new Label(displayTipo);
@@ -373,7 +371,9 @@ public class PantallaJuego {
                 box.getChildren().add(label);
 
                 int row = i / COLUMNS;
-                int col = i % COLUMNS;
+                // Distribución en forma de serpiente (zig-zag)
+                int col = (row % 2 == 0) ? (i % COLUMNS) : (COLUMNS - 1 - (i % COLUMNS));
+                
                 GridPane.setRowIndex(box, row);
                 GridPane.setColumnIndex(box, col);
                 GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
@@ -413,8 +413,9 @@ public class PantallaJuego {
             
             // Intentar obtener la ventana desde el evento o desde el tablero
             javafx.stage.Window owner = null;
-            if (event != null && event.getSource() instanceof Node node) {
-                owner = node.getScene().getWindow();
+            if (event != null && event.getSource() instanceof Node) {
+                Node node = (Node) event.getSource();
+                stage.initOwner(node.getScene().getWindow());
             } else if (tablero != null && tablero.getScene() != null) {
                 owner = tablero.getScene().getWindow();
             }
@@ -563,11 +564,11 @@ public class PantallaJuego {
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
             String tipo = casillaActual.getClass().getSimpleName();
             switch (tipo) {
-                case "Oso" -> controlador.SoundManager.getInstance().playSound("bear");
-                case "Agujero" -> controlador.SoundManager.getInstance().playSound("hole");
-                case "Trineo" -> controlador.SoundManager.getInstance().playSound("sled");
-                case "SueloQuebradizo" -> controlador.SoundManager.getInstance().playSound("ice");
-                case "Evento" -> controlador.SoundManager.getInstance().playSound("event");
+                case "Oso": controlador.SoundManager.getInstance().playSound("bear"); break;
+                case "Agujero": controlador.SoundManager.getInstance().playSound("hole"); break;
+                case "Trineo": controlador.SoundManager.getInstance().playSound("sled"); break;
+                case "SueloQuebradizo": controlador.SoundManager.getInstance().playSound("ice"); break;
+                case "Evento": controlador.SoundManager.getInstance().playSound("event"); break;
             }
 
             // 5. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
@@ -705,7 +706,7 @@ public class PantallaJuego {
             if (pos < 0) pos = 0;
 
             int newRow = pos / COLUMNS;
-            int newCol = pos % COLUMNS;
+            int newCol = (newRow % 2 == 0) ? (pos % COLUMNS) : (COLUMNS - 1 - (pos % COLUMNS));
 
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
@@ -774,7 +775,8 @@ public class PantallaJuego {
                     token.setUserData(pulse);
                 } else {
                     token.getStyleClass().remove("current-player");
-                    if (token.getUserData() instanceof javafx.animation.ScaleTransition st) {
+                    if (token.getUserData() instanceof javafx.animation.ScaleTransition) {
+                        javafx.animation.ScaleTransition st = (javafx.animation.ScaleTransition) token.getUserData();
                         st.stop();
                         token.setScaleX(1); token.setScaleY(1);
                     }
@@ -808,10 +810,11 @@ public class PantallaJuego {
         if(gestorPartida.getPartida().isFinalizada()) return;
         
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
-        if (!(actual instanceof Pinguino p) || p.isEsIA()) {
+        if (!(actual instanceof Pinguino) || ((Pinguino) actual).isEsIA()) {
             anadirLog("No pots usar objectes si no és el teu torn.");
             return;
         }
+        Pinguino p = (Pinguino) actual;
 
         Inventario inv = p.getInv();
         if (inv == null) return;
@@ -823,7 +826,8 @@ public class PantallaJuego {
             // Por ahora, buscaremos el dado que coincida con el nombre.
             Dado dadoElegido = null;
             for (Item i : inv.getLista()) {
-                if (i instanceof Dado d) {
+                if (i instanceof Dado) {
+                    Dado d = (Dado) i;
                     if (tipo.equals("DadoRapido") && d.getNombre().toLowerCase().contains("rapido")) {
                         dadoElegido = d; break;
                     }
@@ -884,25 +888,31 @@ public class PantallaJuego {
             // Si el actual es Foca o IA, mostramos el del primer humano para que no se quede vacío, 
             // pero indicamos de quién es.
             Jugador mostrar = actual;
-            if (actual instanceof model.Foca || (actual instanceof Pinguino pin && pin.isEsIA())) {
+            if (actual instanceof model.Foca || (actual instanceof Pinguino && ((Pinguino) actual).isEsIA())) {
                 for(Jugador j : gestorPartida.getPartida().getJugadores()) {
-                    if(j instanceof Pinguino p && !p.isEsIA()) {
+                    if(j instanceof Pinguino && !((Pinguino) j).isEsIA()) {
                         mostrar = j;
                         break;
                     }
                 }
             }
             
-            if (mostrar instanceof Pinguino p) {
+            if (mostrar instanceof Pinguino) {
+                Pinguino p = (Pinguino) mostrar;
                 nomInventari.setText("PROPIETARI: " + p.getNombre().toUpperCase());
                 
-                String colorHex = switch(p.getColor().toLowerCase()) {
-                    case "azul", "blau" -> "#0072ff";
-                    case "rojo", "vermell" -> "#ff4b2b";
-                    case "verde", "verd" -> "#11998e";
-                    case "amarillo", "groc" -> "#f2c94c";
-                    default -> "#00d2ff";
-                };
+                String colorHex;
+                switch(p.getColor().toLowerCase()) {
+                    case "azul":
+                    case "blau": colorHex = "#0072ff"; break;
+                    case "rojo":
+                    case "vermell": colorHex = "#ff4b2b"; break;
+                    case "verde":
+                    case "verd": colorHex = "#11998e"; break;
+                    case "amarillo":
+                    case "groc": colorHex = "#f2c94c"; break;
+                    default: colorHex = "#00d2ff"; break;
+                }
                 nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorHex + "; -fx-font-size: 14px;");
 
                 Inventario inv = p.getInv();
@@ -1067,9 +1077,12 @@ public class PantallaJuego {
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
             for (Jugador j : gestorPartida.getPartida().getJugadores()) {
-                if (j instanceof Pinguino p && !p.isEsIA()) {
-                    p.setNombre(username);
-                    break;
+                if (j instanceof Pinguino) {
+                    Pinguino p = (Pinguino) j;
+                    if (!p.isEsIA()) {
+                        p.setNombre(username);
+                        break;
+                    }
                 }
             }
             syncVisualPositions(false);
