@@ -524,13 +524,37 @@ public class PantallaJuego {
 
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
         if (actual == null) {
-            System.out.println("Error: No hi ha jugador actual definit.");
             dado.setDisable(false);
             return;
         }
+
+        // --- LÓGICA DE SALTO DE TURNO ---
+        
+        // 1. Si el jugador actual debe perder el turno (Guerra de bolas, etc)
+        if (gestorPartida.getPartida().getJugadorPierdeTurno() != null &&
+            gestorPartida.getPartida().getJugadorPierdeTurno().equals(actual)) {
+            gestorPartida.getPartida().setJugadorPierdeTurno(null);
+            anadirLog(actual.getNombre() + " perd aquest torn.");
+            gestorPartida.getPartida().siguienteTurno();
+            finalizarTurnoComplet();
+            return;
+        }
+
+        // 2. Si es la Foca y está bloqueada por soborno
+        if (actual instanceof model.Foca) {
+            model.Foca f = (model.Foca) actual;
+            if (f.getTurnosBloqueada() > 0) {
+                f.reducirBloqueo();
+                anadirLog("La Foca continua bloquejada (" + f.getTurnosBloqueada() + " torns restants).");
+                gestorPartida.getPartida().siguienteTurno();
+                finalizarTurnoComplet();
+                return;
+            }
+        }
+
         int posAnterior = actual.getPosicion();
 
-        // 1. Acciones IA
+        // 3. Acciones IA (Peces, etc)
         if (actual.isEsIA()) {
             gestorPartida.realizarAccionesIA(actual);
         }
@@ -549,14 +573,35 @@ public class PantallaJuego {
             Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(finalPosIntermedia);
             String tipo = casilla.getClass().getSimpleName();
             
-            // Si es Trineo o Agujero, mostramos mensaje y luego movemos al destino final
-            if ("Trineo".equals(tipo) || "Agujero".equals(tipo)) {
-                String msg = "Trineo".equals(tipo) ? "HAS TROBAT UN TRINEU! AVANCES!" : "HAS CAIGUT EN UN FORAT! RETROCEDEIXES!";
-                String sound = "Trineo".equals(tipo) ? "sled" : "hole";
+            // Si es Trineo, Agujero o OSO, mostramos mensaje y movemos
+            if ("Trineo".equals(tipo) || "Agujero".equals(tipo) || "Oso".equals(tipo)) {
+                String msg;
+                String sound;
+                if (actual instanceof model.Foca) {
+                    if ("Oso".equals(tipo)) {
+                        msg = "L'OS HA ESPANTAT LA FOCA! TORNA A L'INICI!";
+                        sound = "bear";
+                    } else {
+                        msg = "Trineo".equals(tipo) ? "LA FOCA HA TROBAT UN TRINEU! AVANÇA!" : "LA FOCA HA CAIGUT AL FORAT! RETROCEDEIX!";
+                        sound = "Trineo".equals(tipo) ? "sled" : "hole";
+                    }
+                } else {
+                    if ("Oso".equals(tipo)) {
+                        msg = "L'OS T'HA ENVIAT A L'INICI!";
+                        sound = "bear";
+                    } else {
+                        msg = "Trineo".equals(tipo) ? "HAS TROBAT UN TRINEU! AVANCES!" : "HAS CAIGUT EN UN FORAT! RETROCEDEIXES!";
+                        sound = "Trineo".equals(tipo) ? "sled" : "hole";
+                    }
+                }
                 
                 showSpecialTileMessage(msg, sound, () -> {
                     int posAntEfecto = actual.getPosicion();
-                    gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                    if ("Oso".equals(tipo)) {
+                        actual.setPosicion(0);
+                    } else {
+                        gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                    }
                     gestorPartida.comprobarInteraccionesEnCasilla(actual);
                     int posFinal = actual.getPosicion();
                     
@@ -575,6 +620,9 @@ public class PantallaJuego {
 
     private void finalizarLogicaTurno(Jugador actual, Runnable onDone) {
         comprobarInteraccionesUI(actual, () -> {
+            // Avanzar turno antes de finalizar
+            gestorPartida.getPartida().siguienteTurno();
+            
             Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
             dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
             
@@ -593,6 +641,8 @@ public class PantallaJuego {
             }
 
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
+            // Si la casilla actual del jugador que acaba de mover es Evento (y no es foca), mostrar ruleta antes del siguiente turno real
+            // Nota: Aquí hay un detalle sutil, el turno YA avanzó, pero mostramos la ruleta para el jugador que se movió.
             if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
                 mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
@@ -1152,6 +1202,12 @@ public class PantallaJuego {
             return;
         }
 
+        // --- CASILLA INICIO: ZONA SEGURA ---
+        if (j.getPosicion() == 0) {
+            onDone.run();
+            return;
+        }
+
         Tablero t = gestorPartida.getPartida().getTablero();
         Casilla c = t.getCasilla(j.getPosicion());
         
@@ -1191,10 +1247,11 @@ public class PantallaJuego {
             }
         }
 
-        if (focaEnCasilla != null && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
-            Pinguino p = (Pinguino) j;
+        if (focaEnCasilla != null && j instanceof Pinguino && !((Pinguino)j).isEsIA() && !focaEnCasilla.isSobornada()) {
             final Foca finalFoca = focaEnCasilla;
+            final Pinguino p = (Pinguino) j;
             Item pez = p.getInv().getItem(Pez.class);
+            
             if (pez != null && pez.getCantidad() > 0) {
                 mostrarDecision("FOCA ROBOT!", 
                     "La foca t'ha atrapat! Vols donar-li un peix per bloquejar-la 2 torns?", 
@@ -1206,19 +1263,14 @@ public class PantallaJuego {
                         actualizarInventarioUI();
                         onDone.run();
                     }, () -> {
-                        if (!finalFoca.isSobornada()) {
-                            int ant = t.buscarAgujeroAnterior(p.getPosicion());
-                            p.setPosicion(ant);
-                            anadirLog("La foca t'envia al forat anterior!");
-                        }
-                        onDone.run();
+                        aplicarCastigoFoca(p, onDone);
                     });
                 return;
-            } else if (!finalFoca.isSobornada()) {
-                int ant = t.buscarAgujeroAnterior(p.getPosicion());
-                p.setPosicion(ant);
-                anadirLog("La foca t'envia al forat anterior!");
-                onDone.run();
+            } else {
+                // No tiene peces
+                showSpecialTileMessage("NO TENS PEIXOS! RETROCEDEIXES!", "hole", () -> {
+                    aplicarCastigoFoca(p, onDone);
+                });
                 return;
             }
         }
@@ -1307,5 +1359,15 @@ public class PantallaJuego {
             }
             actualizarInventarioUI();
         });
+    }
+
+    private void aplicarCastigoFoca(Jugador j, Runnable onDone) {
+        int posAnterior = j.getPosicion();
+        // Usamos el método que ya existe en la clase Tablero
+        int posAgujero = gestorPartida.getPartida().getTablero().buscarAgujeroAnterior(posAnterior);
+        j.setPosicion(posAgujero);
+        anadirLog(j.getNombre() + " no té peixos i retrocedeix fins a la posició " + posAgujero);
+        
+        animarMovimiento(j, posAnterior, posAgujero, onDone);
     }
 }
