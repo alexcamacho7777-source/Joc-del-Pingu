@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<StackPane fx:id="root" style="-fx-background-color: rgba(0,0,0,0.7);" 
+           xmlns="http://javafx.com/javafx/21" 
+           xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="vista.PantallaDecision">
+    
+    <VBox alignment="CENTER" spacing="30" maxWidth="600" maxHeight="400" 
+          style="-fx-background-color: linear-gradient(to bottom right, #001a33, #050f23); -fx-background-radius: 40; -fx-border-color: #00d2ff; -fx-border-radius: 40; -fx-border-width: 2; -fx-padding: 40;">
+        
+        <VBox alignment="CENTER" spacing="15">
+             <ImageView fitWidth="80" fitHeight="80" preserveRatio="true">
+                <image>
+                    <Image url="@images/casillas/oso.png" />
+                </image>
+            </ImageView>
+            <Label fx:id="lblTitulo" text="TROBADA AMB L'OS!" 
+                   style="-fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #00d2ff; -fx-text-alignment: center;" />
+        </VBox>
+
+        <Label fx:id="lblMensaje" text="L'os t'ha atrapat! Vols donar-li un peix per salvar-te?" 
+               wrapText="true" textAlignment="CENTER"
+               style="-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;" />
+
+        <HBox alignment="CENTER" spacing="25">
+            <Button fx:id="btnNo" text="NO" onAction="#handleNo"
+                    style="-fx-background-color: #334466; -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 120; -fx-padding: 12 25; -fx-cursor: hand;" />
+            <Button fx:id="btnSi" text="SÍ, USAR PEIX" onAction="#handleSi"
+                    style="-fx-background-color: linear-gradient(to right, #00c6ff, #0072ff); -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 180; -fx-padding: 12 25; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 10, 0, 0, 4);" />
+        </HBox>
+    </VBox>
+</StackPane>

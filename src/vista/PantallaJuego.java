@@ -359,7 +359,7 @@ public class PantallaJuego {
 
     private void setupTileAnimation(VBox box, int i) {
         int row = i / COLUMNS;
-        int col = (row % 2 == 0) ? (i % COLUMNS) : (COLUMNS - 1 - (i % COLUMNS));
+        int col = i % COLUMNS;
         
         GridPane.setRowIndex(box, row);
         GridPane.setColumnIndex(box, col);
@@ -435,23 +435,19 @@ public class PantallaJuego {
             Stage stage = new Stage();
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             
-            javafx.stage.Window owner = null;
-            if (event != null && event.getSource() instanceof Node node) {
-                owner = node.getScene().getWindow();
-            } else if (tablero != null && tablero.getScene() != null) {
-                owner = tablero.getScene().getWindow();
+            // Intentar obtener la ventana desde el tablero o la escena
+            if (tablero != null && tablero.getScene() != null) {
+                stage.initOwner(tablero.getScene().getWindow());
             }
-            if (owner != null) stage.initOwner(owner);
 
             Scene scene = new Scene(root);
             scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
             stage.setScene(scene);
             stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
-            stage.setAlwaysOnTop(true);
             stage.showAndWait();
         } catch (Exception e) {
-            System.err.println("ERROR carregant Guia dende Joc: " + e.getMessage());
             e.printStackTrace();
+            anadirLog("Error carregant la guia de joc: " + e.getMessage());
         }
     }
 
@@ -525,55 +521,98 @@ public class PantallaJuego {
             gestorPartida.realizarAccionesIA(actual);
         }
 
-        // 2. Lógica
-        gestorPartida.ejecutarTurnoCompleto();
-        int posNueva = actual.getPosicion();
+        // 2. Lógica dividida para detectar aterrizaje intermedio
+        int pasos = gestorPartida.tirarDadoParaJugador(actual);
+        int posIntermedia = posAnterior + pasos;
+        int maxPos = gestorPartida.getPartida().getTablero().getTotalCasillas() - 1;
+        if (posIntermedia > maxPos) posIntermedia = maxPos;
+        
+        final int finalPosIntermedia = posIntermedia;
+        actual.setPosicion(finalPosIntermedia);
 
-        // 3. Animación paso a paso
-        animarMovimiento(actual, posAnterior, posNueva, () -> {
-            comprobarInteraccionesUI(actual, () -> {
-                Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
+        // Animar primer tramo (tirada de dado)
+        animarMovimiento(actual, posAnterior, finalPosIntermedia, () -> {
+            Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(finalPosIntermedia);
+            String tipo = casilla.getClass().getSimpleName();
+            
+            // Si es Trineo o Agujero, mostramos mensaje y luego movemos al destino final
+            if ("Trineo".equals(tipo) || "Agujero".equals(tipo)) {
+                String msg = "Trineo".equals(tipo) ? "HAS TROBAT UN TRINEU! AVANCES!" : "HAS CAIGUT EN UN FORAT! RETROCEDEIXES!";
+                String sound = "Trineo".equals(tipo) ? "sled" : "hole";
+                
+                showSpecialTileMessage(msg, sound, () -> {
+                    int posAntEfecto = actual.getPosicion();
+                    gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                    gestorPartida.comprobarInteraccionesEnCasilla(actual);
+                    int posFinal = actual.getPosicion();
+                    
+                    animarMovimiento(actual, posAntEfecto, posFinal, () -> {
+                        finalizarLogicaTurno(actual, () -> {});
+                    });
+                });
+            } else {
+                // Casilla normal o evento
+                gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                gestorPartida.comprobarInteraccionesEnCasilla(actual);
+                finalizarLogicaTurno(actual, () -> {});
+            }
+        });
+    }
+
+    private void finalizarLogicaTurno(Jugador actual, Runnable onDone) {
+        comprobarInteraccionesUI(actual, () -> {
+            Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
             dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
             
             java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-            if(!logs.isEmpty()) {
-                String lastMsg = logs.get(logs.size()-1);
-                anadirLog(lastMsg);
-                showToast(lastMsg, "#00d2ff");
-            }
+            if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
             
-            syncVisualPositions(true);
+            syncVisualPositions(false);
             actualizarInventarioUI();
             gestorPartida.guardarPartida();
             actualizarGlowTurno();
             
-            // Comprobar victoria
             if (gestorPartida.getPartida().isFinalizada()) {
                 controlador.SoundManager.getInstance().playSoundOnce("win");
                 mostrarVictoria(gestorPartida.getPartida().getGanador());
                 return;
             }
 
-            // 4. Sonidos de aterrizaje
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
-            String tipo = casillaActual.getClass().getSimpleName();
-            switch (tipo) {
-                case "Oso": controlador.SoundManager.getInstance().playSound("bear"); break;
-                case "Agujero": controlador.SoundManager.getInstance().playSound("hole"); break;
-                case "Trineo": controlador.SoundManager.getInstance().playSound("sled"); break;
-                case "SueloQuebradizo": controlador.SoundManager.getInstance().playSound("ice"); break;
-                case "Evento": controlador.SoundManager.getInstance().playSound("event"); break;
-            }
-
-            // 5. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
-            if (casillaActual instanceof Evento) {
+            if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
                 mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
                 finalizarTurnoComplet();
             }
-        }); // Fin comprobarInteraccionesUI
-    }); // Fin animarMovimiento
-}
+        });
+    }
+
+    private void showSpecialTileMessage(String text, String sound, Runnable onFinished) {
+        controlador.SoundManager.getInstance().playSound(sound);
+        
+        Label label = new Label(text);
+        label.getStyleClass().add("special-tile-msg");
+        label.setStyle("-fx-font-size: 32px; -fx-text-fill: white; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #00d2ff, 15, 0.5, 0, 0);");
+        label.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        
+        StackPane container = new StackPane(label);
+        container.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 25; -fx-background-radius: 20; -fx-border-color: #00d2ff; -fx-border-width: 2; -fx-border-radius: 20;");
+        container.setMaxWidth(900);
+        container.setPrefHeight(120);
+        
+        boardStack.getChildren().add(container);
+        
+        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.seconds(1.5), container);
+        ft.setFromValue(0);
+        ft.setToValue(1);
+        ft.setAutoReverse(true);
+        ft.setCycleCount(2);
+        ft.setOnFinished(e -> {
+            boardStack.getChildren().remove(container);
+            onFinished.run();
+        });
+        ft.play();
+    }
 
     private void finalizarTurnoComplet() {
         Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
@@ -635,8 +674,8 @@ public class PantallaJuego {
         int step = (to > from) ? 1 : -1;
 
         // Si es un salto brusco (Oso, Trineo...), sincronizamos directamente al final
-        if (Math.abs(to - from) > 10) {
-            syncVisualPositions(true);
+        if (Math.abs(to - from) > 20) {
+            syncVisualPositions(false);
             onFinished.run();
             return;
         }
@@ -701,7 +740,7 @@ public class PantallaJuego {
             if (pos < 0) pos = 0;
 
             int newRow = pos / COLUMNS;
-            int newCol = (newRow % 2 == 0) ? (pos % COLUMNS) : (COLUMNS - 1 - (pos % COLUMNS));
+            int newCol = pos % COLUMNS;
 
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
@@ -1071,29 +1110,7 @@ public class PantallaJuego {
         fade.play(); move.play(); fadeOut.play();
     }
 
-    /** Permet a la PantallaMenu injectar l'usuari loguejat com Jugador 1 */
-    @FXML
-    private void handleStats(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaEstadistiques.fxml"));
-            Parent root = loader.load();
-            Stage stage = new Stage();
-            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            
-            // Intentar obtener la ventana desde el tablero o la escena
-            if (tablero != null && tablero.getScene() != null) {
-                stage.initOwner(tablero.getScene().getWindow());
-            }
 
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Estadístiques de Joc");
-            stage.showAndWait();
-        } catch (Exception e) {
-            e.printStackTrace();
-            anadirLog("Error carregant estadístiques: " + e.getMessage());
-        }
-    }
 
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
@@ -1211,19 +1228,32 @@ public class PantallaJuego {
 
     private void mostrarDecision(String titulo, String msg, Runnable onYes, Runnable onNo) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(AlertType.CONFIRMATION);
-            alert.setTitle(titulo);
-            alert.setHeaderText(null);
-            alert.setContentText(msg);
-            
-            ButtonType btnSi = new ButtonType("SÍ, USAR PEIX");
-            ButtonType btnNo = new ButtonType("NO");
-            alert.getButtonTypes().setAll(btnSi, btnNo);
+            try {
+                if (boardStack == null) {
+                    onNo.run();
+                    return;
+                }
 
-            alert.showAndWait().ifPresent(response -> {
-                if (response == btnSi) onYes.run();
-                else onNo.run();
-            });
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaDecision.fxml"));
+                Parent root = loader.load();
+                PantallaDecision controller = loader.getController();
+                
+                controller.setContent(titulo, msg, onYes, onNo);
+                
+                // Afegim l'overlay al StackPane del joc
+                boardStack.getChildren().add(root);
+                
+            } catch (Exception e) {
+                System.err.println("Error al mostrar decision: " + e.getMessage());
+                e.printStackTrace();
+                // Fallback a Alert si falla el custom UI
+                Alert alert = new Alert(AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
+                alert.setTitle(titulo);
+                alert.showAndWait().ifPresent(response -> {
+                    if (response == ButtonType.YES) onYes.run();
+                    else onNo.run();
+                });
+            }
         });
     }
 
