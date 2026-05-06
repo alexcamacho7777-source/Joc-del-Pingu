@@ -579,7 +579,21 @@ public class PantallaJuego {
             }
 
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
+<<<<<<< Updated upstream
             if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
+=======
+            String tipo = casillaActual.getClass().getSimpleName();
+            switch (tipo) {
+                case "Oso": controlador.SoundManager.getInstance().playSound("bear"); break;
+                case "Agujero": controlador.SoundManager.getInstance().playSound("hole"); break;
+                case "Trineo": controlador.SoundManager.getInstance().playSound("sled"); break;
+                case "SueloQuebradizo": controlador.SoundManager.getInstance().playSound("ice"); break;
+                case "Evento": controlador.SoundManager.getInstance().playSound("event"); break;
+            }
+
+            // 5. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
+            if (casillaActual instanceof Evento || tipo.equals("Evento")) {
+>>>>>>> Stashed changes
                 mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
                 finalizarTurnoComplet();
@@ -621,6 +635,8 @@ public class PantallaJuego {
         java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
         if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
 
+        syncVisualPositions(true); // Sincronitzar per si la ruleta ha mogut al jugador
+
         if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
             pause.setOnFinished(e -> procesarSiguienteTurno());
@@ -639,7 +655,14 @@ public class PantallaJuego {
                 return;
             }
 
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaRuleta.fxml"));
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaRuleta.fxml");
+            if (fxmlUrl == null) {
+                System.err.println("Error: No s'ha trobat PantallaRuleta.fxml");
+                onFinished.run();
+                return;
+            }
+
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
             javafx.scene.Parent ruletaRoot = loader.load();
             PantallaRuleta controller = loader.getController();
             
