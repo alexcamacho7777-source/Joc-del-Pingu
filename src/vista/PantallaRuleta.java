@@ -1,21 +1,28 @@
 package vista;
 
-import javafx.animation.RotateTransition;
+import javafx.animation.TranslateTransition;
+import javafx.animation.Interpolator;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.Group;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Rectangle2D;
 import javafx.util.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
+import javafx.scene.shape.Rectangle;
 import model.*;
 
 public class PantallaRuleta {
 
     @FXML private StackPane root;
-    @FXML private Group wheelGroup;
+    @FXML private HBox sliderHBox;
     @FXML private Label resultLabel;
     @FXML private Button spinButton;
     @FXML private Button closeButton;
@@ -26,21 +33,94 @@ public class PantallaRuleta {
     private Partida partida;
     private Jugador jugador;
 
-    // Resultados mapeados a ángulos (Norte/Oeste/Sur/Este)
-    // 0: Boles de neu (Norte)
-    // 1: Peix (Oeste)
-    // 2: Dau lent (Sur)
-    // 3: Dau ràpid (Este)
-    private final String[] results = {
-        "Boles de neu", // 0 grados (Norte)
-        "Peix",         // 270 grados (Oeste)
-        "Dau lent",     // 180 grados (Sur)
-        "Dau ràpid"     // 90 grados (Este)
+    private static final double ITEM_WIDTH = 140.0;
+    private static final int STRIP_SIZE = 60; // Total items in the strip
+    private static final int WINNING_INDEX = 50; // Index of the winning item in the strip
+
+    private final String[] possibleEvents = {
+        "Dau lent",
+        "Boles de neu",
+        "Peix",
+        "Dau ràpid",
+        "Perdre un torn",
+        "Moto de neu"
     };
+
+    // Probabilities (total 100)
+    // Dau lent: 30, Boles: 20, Peix: 15, Dau ràpid: 15, Perdre torn: 10, Moto: 10
+    private final int[] probabilities = {30, 20, 15, 15, 10, 10};
 
     @FXML
     public void initialize() {
-        System.out.println("PantallaRuleta initialized");
+        setupInitialSlider();
+    }
+
+    private void setupInitialSlider() {
+        sliderHBox.getChildren().clear();
+        for (int i = 0; i < STRIP_SIZE; i++) {
+            String event = possibleEvents[random.nextInt(possibleEvents.length)];
+            sliderHBox.getChildren().add(createItemNode(event));
+        }
+        sliderHBox.setTranslateX(0);
+    }
+
+    private String getFileNameForEvent(String eventName) {
+        return switch (eventName) {
+            case "Dau lent" -> "event_dau_lent.png";
+            case "Boles de neu" -> "event_boles.png";
+            case "Peix" -> "event_peix.png";
+            case "Dau ràpid" -> "event_dau_rapid.png";
+            case "Perdre un torn" -> "event_perdre_torn.png";
+            case "Moto de neu" -> "event_moto.png";
+            default -> null;
+        };
+    }
+
+    private VBox createItemNode(String eventName) {
+        VBox item = new VBox();
+        item.getStyleClass().add("slider-item");
+        
+        StackPane iconContainer = new StackPane();
+        iconContainer.getStyleClass().add("item-icon-container");
+        
+        try {
+            String fileName = getFileNameForEvent(eventName);
+            if (fileName != null) {
+                java.net.URL url = getClass().getResource("/resources/" + fileName);
+                if (url != null) {
+                    Image img = new Image(url.toExternalForm());
+                    
+                    // Usem la imatge com a fons per poder aplicar "cover" (omplir tot el recuadro)
+                    javafx.scene.layout.BackgroundSize backgroundSize = new javafx.scene.layout.BackgroundSize(
+                        100, 100, true, true, false, true
+                    );
+                    javafx.scene.layout.BackgroundImage backgroundImage = new javafx.scene.layout.BackgroundImage(
+                        img, 
+                        javafx.scene.layout.BackgroundRepeat.NO_REPEAT, 
+                        javafx.scene.layout.BackgroundRepeat.NO_REPEAT, 
+                        javafx.scene.layout.BackgroundPosition.CENTER, 
+                        backgroundSize
+                    );
+                    iconContainer.setBackground(new javafx.scene.layout.Background(backgroundImage));
+                }
+            }
+        } catch (Exception e) {
+            Label fallback = new Label("?");
+            fallback.setStyle("-fx-font-size: 40; -fx-text-fill: #00d2ff;");
+            iconContainer.getChildren().add(fallback);
+        }
+        
+        if (iconContainer.getChildren().isEmpty()) {
+            Label fallback = new Label("?");
+            fallback.setStyle("-fx-font-size: 40; -fx-text-fill: #00d2ff;");
+            iconContainer.getChildren().add(fallback);
+        }
+        
+        Label label = new Label(eventName.toUpperCase());
+        label.getStyleClass().add("item-label");
+        
+        item.getChildren().addAll(iconContainer, label);
+        return item;
     }
 
     public void setOnFinishedCallback(Consumer<String> callback) {
@@ -51,7 +131,6 @@ public class PantallaRuleta {
         this.partida = partida;
         this.jugador = jugador;
         
-        // Si és IA, fem que giti automàticament després de 1 segon
         if (jugador != null && jugador.isEsIA()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.seconds(1));
             pause.setOnFinished(e -> handleGirar());
@@ -68,62 +147,87 @@ public class PantallaRuleta {
         spinButton.setDisable(true);
         resultLabel.setText("Girant...!");
 
-        // Reset rotation to avoid cumulative errors
-        wheelGroup.setRotate(wheelGroup.getRotate() % 360);
-
-        // Elegir resultado (0: Boles, 1: Peix, 2: Dau lent, 3: Dau ràpid)
+        // Determine result based on probabilities
         int r = random.nextInt(100);
-        int resultIndex;
-        if (r < 40) resultIndex = 2;      // 40% Dau lent
-        else if (r < 70) resultIndex = 0; // 30% Boles de neu
-        else if (r < 85) resultIndex = 1; // 15% Peix
-        else resultIndex = 3;            // 15% Dau ràpid
-
-        // Cálculo de ángulo preciso:
-        // El puntero está arriba (0°).
-        // Si queremos que el puntero apunte a la sección en el ángulo S, 
-        // la ruleta debe rotar R = (360 - S).
-        double targetSectionAngle = 0;
-        switch(resultIndex) {
-            case 0: targetSectionAngle = 0;   break; // Boles
-            case 1: targetSectionAngle = 270; break; // Peix (Oeste)
-            case 2: targetSectionAngle = 180; break; // Dau lent (Sur)
-            case 3: targetSectionAngle = 90;  break; // Dau ràpid (Este)
+        int resultIndex = 0;
+        int sum = 0;
+        for (int i = 0; i < probabilities.length; i++) {
+            sum += probabilities[i];
+            if (r < sum) {
+                resultIndex = i;
+                break;
+            }
         }
+        String resultEvent = possibleEvents[resultIndex];
 
-        double targetRotation = 360 - targetSectionAngle;
-        // Añadimos varias vueltas completas para el efecto visual
-        double totalRotation = (360 * 10) + targetRotation; 
+        // Replace the item at WINNING_INDEX with the actual result
+        sliderHBox.getChildren().set(WINNING_INDEX, createItemNode(resultEvent));
 
-        RotateTransition rt = new RotateTransition(Duration.seconds(4), wheelGroup);
-        rt.setFromAngle(wheelGroup.getRotate());
-        rt.setToAngle(wheelGroup.getRotate() + totalRotation);
-        rt.setInterpolator(javafx.animation.Interpolator.EASE_BOTH);
-        rt.setCycleCount(1);
-        rt.setOnFinished(e -> {
+        // Calculate final translation
+        double pointerPos = 350.0;
+        double internalOffset = (random.nextDouble() * 80) - 40; // -40 to 40 per no quedar sempre exactament al mig
+        double targetX = pointerPos - (WINNING_INDEX * ITEM_WIDTH + ITEM_WIDTH / 2.0) + internalOffset;
+
+        TranslateTransition tt = new TranslateTransition(Duration.seconds(6), sliderHBox);
+        tt.setFromX(0);
+        tt.setToX(targetX);
+        tt.setInterpolator(Interpolator.SPLINE(0.1, 0, 0.1, 1)); // Custom slowdown (Starts fast, slows down very smoothly)
+        tt.setOnFinished(e -> {
             isSpinning = false;
             controlador.SoundManager.getInstance().stopSound("event");
-            String result = results[resultIndex];
-            resultLabel.setText("¡Te ha tocado: " + result + "!");
+            controlador.SoundManager.getInstance().playSound("click"); // So final
             
-            if (jugador != null) {
-                switch (result) {
-                    case "Boles de neu" -> jugador.getInv().anadirItem(new BolaDeNieve(1 + random.nextInt(2)));
-                    case "Peix" -> jugador.getInv().anadirItem(new Pez(1));
-                    case "Dau lent" -> jugador.getInv().anadirItem(new Dado("Dau Lent", 1, 1, 3));
-                    case "Dau ràpid" -> jugador.getInv().anadirItem(new Dado("Dau Ràpid", 1, 5, 6));
-                }
-                if (partida != null) {
-                    partida.anadirEvento(jugador.getNombre() + " ha obtingut: " + result);
-                }
-            }
+            // Efecte de glow per a l'ítem guanyador
+            javafx.scene.Node winningNode = sliderHBox.getChildren().get(WINNING_INDEX);
+            winningNode.setStyle("-fx-effect: dropshadow(gaussian, #00d2ff, 40, 0.5, 0, 0); -fx-background-color: rgba(0, 210, 255, 0.2);");
             
+            resultLabel.setText("¡T'ha tocat: " + resultEvent + "!");
+            applyResult(resultEvent);
             closeButton.setVisible(true);
             if (onFinishedCallback != null) {
-                onFinishedCallback.accept(result);
+                onFinishedCallback.accept(resultEvent);
             }
         });
-        rt.play();
+        tt.play();
+    }
+
+    private void applyResult(String result) {
+        if (jugador == null) return;
+        
+        String logMsg = "";
+        switch (result) {
+            case "Boles de neu" -> {
+                int qty = 1 + random.nextInt(2);
+                jugador.getInv().anadirItem(new BolaDeNieve(qty));
+                logMsg = jugador.getNombre() + " ha obtingut " + qty + " boles de neu!";
+            }
+            case "Peix" -> {
+                jugador.getInv().anadirItem(new Pez(1));
+                logMsg = jugador.getNombre() + " ha obtingut un peix!";
+            }
+            case "Dau lent" -> {
+                jugador.getInv().anadirItem(new Dado("Dau Lent", 1, 1, 3));
+                logMsg = jugador.getNombre() + " ha obtingut un Dau Lent!";
+            }
+            case "Dau ràpid" -> {
+                jugador.getInv().anadirItem(new Dado("Dau Ràpid", 1, 5, 6));
+                logMsg = jugador.getNombre() + " ha obtingut un Dau Ràpid!";
+            }
+            case "Perdre un torn" -> {
+                if (partida != null) {
+                    partida.setJugadorPierdeTurno(jugador);
+                    logMsg = jugador.getNombre() + " ha perdut el següent torn!";
+                }
+            }
+            case "Moto de neu" -> {
+                jugador.moverPosicion(5);
+                logMsg = jugador.getNombre() + " ha agafat una moto de neu i avança 5 caselles!";
+            }
+        }
+        
+        if (partida != null && !logMsg.isEmpty()) {
+            partida.anadirEvento(logMsg);
+        }
     }
 
     @FXML

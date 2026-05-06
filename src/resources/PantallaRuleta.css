@@ -1,0 +1,99 @@
+.roulette-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.85);
+}
+
+.roulette-container {
+    -fx-background-color: linear-gradient(to bottom, rgba(15, 32, 60, 0.95), rgba(5, 15, 30, 0.98));
+    -fx-background-radius: 40;
+    -fx-border-color: rgba(0, 210, 255, 0.3);
+    -fx-border-width: 3;
+    -fx-border-radius: 40;
+    -fx-padding: 40;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.2), 50, 0, 0, 0);
+}
+
+.roulette-title {
+    -fx-font-size: 48px;
+    -fx-font-weight: 900;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, #00d2ff, 15, 0.5, 0, 0);
+}
+
+.slider-window {
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-radius: 20;
+    -fx-border-color: #00d2ff;
+    -fx-border-width: 2;
+    -fx-border-radius: 20;
+    -fx-min-width: 700;
+    -fx-min-height: 180;
+    -fx-max-width: 700;
+    -fx-max-height: 180;
+}
+
+.slider-item {
+    -fx-min-width: 140;
+    -fx-max-width: 140;
+    -fx-min-height: 160;
+    -fx-alignment: center;
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+}
+
+.item-icon-container {
+    -fx-min-width: 140;
+    -fx-min-height: 160;
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+    -fx-background-radius: 15;
+}
+
+.item-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e0f7ff;
+    -fx-text-alignment: center;
+}
+
+.pointer-container {
+    -fx-alignment: center;
+}
+
+.pointer-line {
+    -fx-stroke: #ffcc00;
+    -fx-stroke-width: 4;
+    -fx-effect: dropshadow(gaussian, rgba(255, 204, 0, 0.8), 10, 0, 0, 0);
+}
+
+.roulette-result {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00d2ff;
+}
+
+.spin-button {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-background-radius: 25;
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-font-size: 20px;
+    -fx-padding: 15 50;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 15, 0, 0, 5);
+}
+
+.spin-button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-background-color: linear-gradient(to right, #0072ff, #00c6ff);
+}
+
+.spin-button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
