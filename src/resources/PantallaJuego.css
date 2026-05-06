@@ -3,6 +3,55 @@
     -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #0d1b2a, #010409);
 }
 
+/* MENU BAR & DROPDOWN */
+.menu-bar {
+    -fx-background-color: #0d1b2a;
+    -fx-border-color: rgba(0, 210, 255, 0.3);
+    -fx-border-width: 0 0 1 0;
+}
+
+.menu-bar .label {
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+}
+
+.menu-bar .menu:hover, .menu-bar .menu:showing {
+    -fx-background-color: #0072ff;
+}
+
+.context-menu {
+    -fx-background-color: #0d1b2a;
+    -fx-border-color: #00d2ff;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 15, 0, 0, 10);
+}
+
+.menu-item {
+    -fx-padding: 8 20;
+    -fx-background-radius: 5;
+}
+
+.menu-item .label {
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+}
+
+.menu-item:focused {
+    -fx-background-color: #0072ff;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: white;
+}
+
+.separator-menu-item .line {
+    -fx-border-color: rgba(0, 210, 255, 0.2);
+    -fx-border-width: 0.5 0 0 0;
+}
+
+
 /* OVERLAYS */
 .overlay {
     -fx-background-color: rgba(1, 4, 9, 0.9);
@@ -117,7 +166,7 @@
 .big-text {
     -fx-font-size: 30px;
     -fx-font-weight: 900;
-    -fx-text-fill: white;
+    -fx-fill: white;
 }
 
 .stat {

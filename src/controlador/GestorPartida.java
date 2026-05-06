@@ -113,9 +113,9 @@ public class GestorPartida {
         // Reduir bloqueig de foca si és el seu torn
         if (jugadorTurno instanceof Foca) {
             Foca foca = (Foca) jugadorTurno;
-            foca.reducirBloqueo();
-            if (foca.isSobornada()) {
-                partida.anadirEvento("La foca continua bloquejada.");
+            if (foca.getTurnosBloqueada() > 0) {
+                foca.reducirBloqueo();
+                partida.anadirEvento("La foca continua bloquejada (" + foca.getTurnosBloqueada() + " torns restants).");
                 partida.siguienteTurno();
                 return;
             }
@@ -167,7 +167,7 @@ public class GestorPartida {
      * Si el jugador es IA, decide qué dado usar.
      * Si es Humano, usa el dado que se le indique (por defecto normal si no hay elección).
      */
-    private int tirarDadoParaJugador(Jugador j) {
+    public int tirarDadoParaJugador(Jugador j) {
         if (j instanceof Pinguino p) {
             // Lógica de elección de dado para IA
             if (p.isEsIA()) {
@@ -211,7 +211,7 @@ public class GestorPartida {
      * Comprueba si el pingüino coincide en casilla con otro jugador o la foca
      * y aplica las reglas correspondientes.
      */
-    private void comprobarInteraccionesEnCasilla(Jugador p) {
+    public void comprobarInteraccionesEnCasilla(Jugador p) {
         // 1. Interaccions al FINAL de moure
         for (Jugador otro : partida.getJugadores()) {
             if (otro == p) continue;
