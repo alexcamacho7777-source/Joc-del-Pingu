@@ -75,7 +75,10 @@ public class Partida {
     }
 
     public Jugador getJugadorActualObj() {
-        if (jugadores.isEmpty()) return null;
+        if (jugadores == null || jugadores.isEmpty()) return null;
+        if (jugadorActual < 0 || jugadorActual >= jugadores.size()) {
+            jugadorActual = 0; // Reset a 0 per seguretat
+        }
         return jugadores.get(jugadorActual);
     }
 
