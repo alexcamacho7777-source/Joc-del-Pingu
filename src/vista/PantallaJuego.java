@@ -130,11 +130,7 @@ public class PantallaJuego {
                 if (pIndex < pTokens.length) {
                     pTokens[pIndex].setVisible(true);
                     tokenMap.put(j, pTokens[pIndex]);
-                    
-                    // Aplicar color visual al token (opcional, pero mejora la experiencia)
-                    // Como el Pinguino tiene un color String, podríamos mapearlo a colores de JavaFX si quisiéramos.
-                    // Por ahora mantendremos los tokens originales P1, P2...
-                    
+                    aplicarColorAToken(pTokens[pIndex], j.getColor());
                     pIndex++;
                 }
             } else if (j instanceof Foca) {
@@ -1148,13 +1144,18 @@ public class PantallaJuego {
             if (!sp.getChildren().isEmpty() && sp.getChildren().get(0) instanceof javafx.scene.Group) {
                 javafx.scene.Group g = (javafx.scene.Group) sp.getChildren().get(0);
                 for (javafx.scene.Node child : g.getChildren()) {
-                    if (child instanceof javafx.scene.shape.Ellipse) {
-                        javafx.scene.shape.Ellipse e = (javafx.scene.shape.Ellipse) child;
-                        // Cambiamos solo la elipse que representa el color principal (la que no es blanca ni naranja)
-                        if (e.getFill().equals(javafx.scene.paint.Color.BLACK) || e.getFill().equals(javafx.scene.paint.Color.web("#eeeeee"))) {
-                             // El cuerpo negro se queda negro, el centro blanco se queda blanco.
-                        } else if (e.getFill().equals(javafx.scene.paint.Color.DEEPSKYBLUE) || e.getFill() instanceof javafx.scene.paint.LinearGradient) {
-                             e.setFill(color);
+                    if (child instanceof javafx.scene.shape.Shape) {
+                        javafx.scene.shape.Shape s = (javafx.scene.shape.Shape) child;
+                        // El gorro suele estar compuesto por rectángulos o polígonos de color azul
+                        if (s.getFill() instanceof javafx.scene.paint.Color) {
+                            javafx.scene.paint.Color fill = (javafx.scene.paint.Color) s.getFill();
+                            // Si es el azul original del gorro, lo cambiamos
+                            if (fill.equals(javafx.scene.paint.Color.DEEPSKYBLUE) || 
+                                fill.equals(javafx.scene.paint.Color.BLUE) ||
+                                fill.toString().contains("0x00bfff") || // DeepSkyBlue
+                                (child instanceof javafx.scene.shape.Rectangle)) { // El gorro es principalmente rectángulos
+                                s.setFill(color);
+                            }
                         }
                     }
                 }
