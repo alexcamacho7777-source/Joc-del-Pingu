@@ -332,21 +332,7 @@ public class PantallaJuego {
                         iv.setFitWidth(75); iv.setFitHeight(75);
                         iv.setPreserveRatio(true);
                         
-                        if ("Evento".equals(tipo)) {
-                            StackPane stack = new StackPane();
-                            stack.getChildren().add(iv);
-                            Text icon = new Text("?");
-                            icon.setStyle("-fx-font-size: 18px; -fx-fill: gold;");
-                            stack.getChildren().add(icon);
-                            box.getChildren().add(stack);
-                        } else if ("Oso".equals(tipo)) {
-                            StackPane stack = new StackPane();
-                            iv.setStyle("-fx-effect: innershadow(gaussian, red, 10, 0.5, 0, 0);");
-                            stack.getChildren().add(iv);
-                            box.getChildren().add(stack);
-                        } else {
-                            box.getChildren().add(iv);
-                        }
+                        box.getChildren().add(iv);
                     } else {
                         String emojiText;
                         switch (tipo) {
@@ -640,6 +626,7 @@ public class PantallaJuego {
                 return;
             }
 
+            // 4. Sonidos de aterrizaje y lógica de casillas
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
             // Si la casilla actual del jugador que acaba de mover es Evento (y no es foca), mostrar ruleta antes del siguiente turno real
             // Nota: Aquí hay un detalle sutil, el turno YA avanzó, pero mostramos la ruleta para el jugador que se movió.
@@ -685,6 +672,8 @@ public class PantallaJuego {
         java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
         if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
 
+        syncVisualPositions(true); // Sincronitzar per si la ruleta ha mogut al jugador
+
         if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
             pause.setOnFinished(e -> procesarSiguienteTurno());
@@ -703,7 +692,14 @@ public class PantallaJuego {
                 return;
             }
 
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaRuleta.fxml"));
+            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaRuleta.fxml");
+            if (fxmlUrl == null) {
+                System.err.println("Error: No s'ha trobat PantallaRuleta.fxml");
+                onFinished.run();
+                return;
+            }
+
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
             javafx.scene.Parent ruletaRoot = loader.load();
             PantallaRuleta controller = loader.getController();
             
