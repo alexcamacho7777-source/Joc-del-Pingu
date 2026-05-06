@@ -332,21 +332,7 @@ public class PantallaJuego {
                         iv.setFitWidth(75); iv.setFitHeight(75);
                         iv.setPreserveRatio(true);
                         
-                        if ("Evento".equals(tipo)) {
-                            StackPane stack = new StackPane();
-                            stack.getChildren().add(iv);
-                            Text icon = new Text("?");
-                            icon.setStyle("-fx-font-size: 18px; -fx-fill: gold;");
-                            stack.getChildren().add(icon);
-                            box.getChildren().add(stack);
-                        } else if ("Oso".equals(tipo)) {
-                            StackPane stack = new StackPane();
-                            iv.setStyle("-fx-effect: innershadow(gaussian, red, 10, 0.5, 0, 0);");
-                            stack.getChildren().add(iv);
-                            box.getChildren().add(stack);
-                        } else {
-                            box.getChildren().add(iv);
-                        }
+                        box.getChildren().add(iv);
                     } else {
                         String emojiText;
                         switch (tipo) {
