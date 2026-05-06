@@ -399,7 +399,11 @@ public class GestorBBDD {
             j.setColor(col);
             p.anadirJugador(j);
         }
-        p.setJugadorActual(ordreActual - 1);
+        int index = ordreActual - 1;
+        if (index < 0 || index >= p.getJugadores().size()) {
+            index = 0;
+        }
+        p.setJugadorActual(index);
 
         // Carregar el Taulell
         int idTaulell = resP.get(0).get("ID_TAULELL") != null ? Integer.parseInt(resP.get(0).get("ID_TAULELL")) : 1;
