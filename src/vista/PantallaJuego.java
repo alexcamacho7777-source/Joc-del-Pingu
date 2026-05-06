@@ -578,11 +578,10 @@ public class PantallaJuego {
                 return;
             }
 
+            // 4. Sonidos de aterrizaje y lógica de casillas
             Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
-<<<<<<< Updated upstream
-            if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
-=======
             String tipo = casillaActual.getClass().getSimpleName();
+            
             switch (tipo) {
                 case "Oso": controlador.SoundManager.getInstance().playSound("bear"); break;
                 case "Agujero": controlador.SoundManager.getInstance().playSound("hole"); break;
@@ -592,8 +591,7 @@ public class PantallaJuego {
             }
 
             // 5. Comprovar si ha caigut en casella sorpresa per mostrar la ruleta
-            if (casillaActual instanceof Evento || tipo.equals("Evento")) {
->>>>>>> Stashed changes
+            if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
                 mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
                 finalizarTurnoComplet();
