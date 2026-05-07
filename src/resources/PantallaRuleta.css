@@ -34,10 +34,11 @@
 .slider-item {
     -fx-min-width: 140;
     -fx-max-width: 140;
-    -fx-min-height: 160;
+    -fx-min-height: 180;
+    -fx-max-height: 180;
     -fx-alignment: center;
-    -fx-spacing: 0;
-    -fx-padding: 0;
+    -fx-spacing: 5;
+    -fx-padding: 10;
     -fx-background-color: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
     -fx-background-radius: 15;
     -fx-border-color: rgba(255, 255, 255, 0.1);
@@ -46,11 +47,12 @@
 }
 
 .item-icon-container {
-    -fx-min-width: 140;
-    -fx-min-height: 160;
+    -fx-min-width: 120;
+    -fx-max-width: 120;
+    -fx-min-height: 120;
+    -fx-max-height: 120;
     -fx-background-color: transparent;
     -fx-alignment: center;
-    -fx-background-radius: 15;
 }
 
 .item-label {

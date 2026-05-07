@@ -43,12 +43,12 @@ public class PantallaRuleta {
         "Peix",
         "Dau ràpid",
         "Perdre un torn",
-        "Moto de neu"
+        "Moto de neu",
+        "Perdre objecte"
     };
 
     // Probabilities (total 100)
-    // Dau lent: 30, Boles: 20, Peix: 15, Dau ràpid: 15, Perdre torn: 10, Moto: 10
-    private final int[] probabilities = {30, 20, 15, 15, 10, 10};
+    private final int[] probabilities = {25, 20, 15, 15, 10, 10, 5};
 
     @FXML
     public void initialize() {
@@ -72,16 +72,23 @@ public class PantallaRuleta {
             case "Dau ràpid" -> "event_dau_rapid.png";
             case "Perdre un torn" -> "event_perdre_torn.png";
             case "Moto de neu" -> "event_moto.png";
+            case "Perdre objecte" -> "event_perdre_objecte.png";
             default -> null;
         };
     }
 
     private VBox createItemNode(String eventName) {
-        VBox item = new VBox();
+        VBox item = new VBox(5); // Spacing de 5 entre icona i text
         item.getStyleClass().add("slider-item");
+        item.setPrefWidth(ITEM_WIDTH);
+        item.setMinWidth(ITEM_WIDTH);
+        item.setMaxWidth(ITEM_WIDTH);
         
         StackPane iconContainer = new StackPane();
         iconContainer.getStyleClass().add("item-icon-container");
+        iconContainer.setPrefSize(120, 120);
+        iconContainer.setMinSize(120, 120);
+        iconContainer.setMaxSize(120, 120);
         
         try {
             String fileName = getFileNameForEvent(eventName);
@@ -89,19 +96,24 @@ public class PantallaRuleta {
                 java.net.URL url = getClass().getResource("/resources/" + fileName);
                 if (url != null) {
                     Image img = new Image(url.toExternalForm());
+                    ImageView iv = new ImageView(img);
                     
-                    // Usem la imatge com a fons per poder aplicar "cover" (omplir tot el recuadro)
-                    javafx.scene.layout.BackgroundSize backgroundSize = new javafx.scene.layout.BackgroundSize(
-                        100, 100, true, true, false, true
-                    );
-                    javafx.scene.layout.BackgroundImage backgroundImage = new javafx.scene.layout.BackgroundImage(
-                        img, 
-                        javafx.scene.layout.BackgroundRepeat.NO_REPEAT, 
-                        javafx.scene.layout.BackgroundRepeat.NO_REPEAT, 
-                        javafx.scene.layout.BackgroundPosition.CENTER, 
-                        backgroundSize
-                    );
-                    iconContainer.setBackground(new javafx.scene.layout.Background(backgroundImage));
+                    // LÒGICA DE RECORTE INTEL·LIGENT (CROP)
+                    // Busquem el quadrat central de la imatge per evitar que es vegi "estirada" o "en vertical"
+                    double w = img.getWidth();
+                    double h = img.getHeight();
+                    double side = Math.min(w, h);
+                    double x = (w - side) / 2;
+                    double y = (h - side) / 2;
+                    
+                    iv.setViewport(new javafx.geometry.Rectangle2D(x, y, side, side));
+                    
+                    iv.setFitWidth(120);
+                    iv.setFitHeight(120);
+                    iv.setPreserveRatio(true);
+                    iv.setSmooth(true);
+                    
+                    iconContainer.getChildren().add(iv);
                 }
             }
         } catch (Exception e) {
@@ -236,11 +248,19 @@ public class PantallaRuleta {
                     jugador.setPosicion(nextSled);
                     logMsg = jugador.getNombre() + " ha agafat una moto de neu fins al següent trineu (casella " + nextSled + ")!";
                 } else {
-                    // Fallback si no hi ha més trineus: 10 caselles cap endavant o fins al final
                     int max = partida.getTablero().getTotalCasillas() - 1;
                     int novaPos = Math.min(pos + 10, max);
                     jugador.setPosicion(novaPos);
                     logMsg = jugador.getNombre() + " ha agafat una moto de neu i avança 10 caselles!";
+                }
+            }
+            case "Perdre objecte" -> {
+                Inventario inv = jugador.getInv();
+                Item eliminado = inv.quitarUnidadAleatoria(random);
+                if (eliminado != null) {
+                    logMsg = jugador.getNombre() + " ha perdut una unitat de: " + eliminado.getNombre() + "!";
+                } else {
+                    logMsg = jugador.getNombre() + " no tenia objectes per perdre. Quina sort!";
                 }
             }
         }
