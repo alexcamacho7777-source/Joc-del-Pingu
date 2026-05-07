@@ -82,10 +82,11 @@ public class Inventario {
         return total;
     }
 
-    public void quitarItemAleatorio(java.util.Random r) {
+    public Item quitarItemAleatorio(java.util.Random r) {
         if (!lista.isEmpty()) {
-            lista.remove(r.nextInt(lista.size()));
+            return lista.remove(r.nextInt(lista.size()));
         }
+        return null;
     }
 
     @Override

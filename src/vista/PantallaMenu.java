@@ -12,6 +12,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.animation.RotateTransition;
 import javafx.util.Duration;
+import javafx.scene.layout.StackPane;
 
 public class PantallaMenu {
 
@@ -19,6 +20,7 @@ public class PantallaMenu {
     @FXML private Button btnUsuari;
     @FXML private Button btnAjustes;
     @FXML private Label lblSessio;
+    @FXML private javafx.scene.layout.StackPane rootPane;
 
     private static String loggedInUser = null;
 
@@ -160,10 +162,6 @@ public class PantallaMenu {
     }
 
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
-        Alert alert = new Alert(tipus);
-        alert.setTitle(titol);
-        alert.setHeaderText(null);
-        alert.setContentText(missatge);
-        alert.showAndWait();
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 }

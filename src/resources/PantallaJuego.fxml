@@ -25,12 +25,8 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.Group?>
 
-<BorderPane
-    xmlns="http://javafx.com/javafx/21.0.10"
-    xmlns:fx="http://javafx.com/fxml/1"
-    fx:controller="vista.PantallaJuego"
-    stylesheets="@PantallaJuego.css"
-    styleClass="root">
+<StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx/21.0.10" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vista.PantallaJuego">
+    <BorderPane stylesheets="@PantallaJuego.css" styleClass="root">
 
     <top>
         <MenuBar>
@@ -257,4 +253,5 @@
         </VBox>
     </left>
 
-</BorderPane>
+    </BorderPane>
+</StackPane>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<StackPane fx:id="root" style="-fx-background-color: rgba(0,0,0,0.75);" 
+           xmlns="http://javafx.com/javafx/21" 
+           xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="vista.PantallaAlerta">
+    
+    <VBox alignment="CENTER" spacing="30" maxWidth="500" maxHeight="350" 
+          style="-fx-background-color: linear-gradient(to bottom right, #051937, #004d7a); -fx-background-radius: 30; -fx-border-color: #00d2ff; -fx-border-radius: 30; -fx-border-width: 2; -fx-padding: 40; -fx-effect: dropshadow(gaussian, rgba(0,210,255,0.3), 30, 0, 0, 0);">
+        
+        <VBox alignment="CENTER" spacing="15">
+             <ImageView fitWidth="60" fitHeight="60" preserveRatio="true">
+                <image>
+                    <Image url="@images/casillas/foca.png" />
+                </image>
+            </ImageView>
+            <Label fx:id="lblTitulo" text="ALERTA!" 
+                   style="-fx-font-size: 26px; -fx-font-weight: 900; -fx-text-fill: #00d2ff; -fx-text-alignment: center; -fx-letter-spacing: 2;" />
+        </VBox>
+
+        <Label fx:id="lblMensaje" text="Missatge de prova per a l'alerta personalizada." 
+               wrapText="true" textAlignment="CENTER"
+               style="-fx-font-size: 16px; -fx-text-fill: white; -fx-font-weight: bold;" />
+
+        <Button fx:id="btnAceptar" text="D'ACORD" onAction="#handleAceptar"
+                style="-fx-background-color: linear-gradient(to right, #00c6ff, #0072ff); -fx-background-radius: 15; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 150; -fx-padding: 12 30; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.4), 10, 0, 0, 4);" />
+    </VBox>
+</StackPane>

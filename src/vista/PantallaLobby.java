@@ -2,6 +2,7 @@ package vista;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -14,6 +15,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.animation.RotateTransition;
 import javafx.util.Duration;
+import javafx.scene.layout.StackPane;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,6 +26,7 @@ public class PantallaLobby {
     @FXML private Text welcomeText;
     @FXML private Button btnCargarPartida;
     @FXML private Button btnAjustes;
+    @FXML private StackPane rootPane;
 
 
     @FXML private TableView<Map<String, String>> tablaPartidas;
@@ -105,8 +108,9 @@ public class PantallaLobby {
     @FXML
     private void handleNuevaPartida(ActionEvent event) {
         if (PantallaMenu.getLoggedInUser() == null) {
-            mostrarAlert(Alert.AlertType.WARNING, "Sessió no iniciada", "Has d'iniciar sessió per crear una nova partida.");
-            redirigirALogin(event);
+            PantallaAlerta.mostrar(rootPane, "Sessió no iniciada", "Has d'iniciar sessió per crear una nova partida.", () -> {
+                redirigirALogin(event);
+            });
             return;
         }
         try {
@@ -125,8 +129,9 @@ public class PantallaLobby {
     @FXML
     private void handleCargarPartida(ActionEvent event) {
         if (PantallaMenu.getLoggedInUser() == null) {
-            mostrarAlert(Alert.AlertType.WARNING, "Sessió no iniciada", "Has d'iniciar sessió per carregar una partida.");
-            redirigirALogin(event);
+            PantallaAlerta.mostrar(rootPane, "Sessió no iniciada", "Has d'iniciar sessió per carregar una partida.", () -> {
+                redirigirALogin(event);
+            });
             return;
         }
         Map<String, String> seleccionada = tablaPartidas.getSelectionModel().getSelectedItem();
@@ -179,11 +184,7 @@ public class PantallaLobby {
     }
 
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
-        Alert alert = new Alert(tipus);
-        alert.setTitle(titol);
-        alert.setHeaderText(null);
-        alert.setContentText(missatge);
-        alert.showAndWait();
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 
     public void setUsuarioLogueado(String username) {

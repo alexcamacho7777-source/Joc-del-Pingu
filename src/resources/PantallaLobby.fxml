@@ -5,7 +5,7 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.control.cell.MapValueFactory?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml/1"
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="vista.PantallaLobby"
            prefWidth="1280" prefHeight="720"
            stylesheets="@PantallaMenu.css">

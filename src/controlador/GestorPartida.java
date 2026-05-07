@@ -256,33 +256,45 @@ public class GestorPartida {
     /**
      * Lògica extra per quan la Foca es mou: comprova si passa per sobre de jugadors.
      */
-    private void procesarPasoDeFoca(Foca foca, int posAnterior, int posNueva) {
-        if (foca.isSobornada()) return;
+    public java.util.Map<Pinguino, java.util.List<String>> procesarPasoDeFoca(Foca foca, int posAnterior, int posNueva) {
+        java.util.Map<Pinguino, java.util.List<String>> robos = new java.util.HashMap<>();
+        if (foca.isSobornada()) return robos;
         
+        int start = Math.min(posAnterior, posNueva);
+        int end = Math.max(posAnterior, posNueva);
+
         for (Jugador j : partida.getJugadores()) {
             if (j instanceof Pinguino) {
                 Pinguino p = (Pinguino) j;
-                if (!p.isEsIA()) {
-                    // Si la foca ha passat per la posició del jugador (entre posAnterior i posNueva)
-                    if (p.getPosicion() > posAnterior && p.getPosicion() <= posNueva) {
-                        perderMitadInventario(p);
-                        partida.anadirEvento("La foca ha passat volant per sobre de " + p.getNombre() + " i li ha robat la meitat de l'inventari!");
+                // Si el pinguí NO està a l'inici i la foca ha passat per sobre d'ell
+                if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() <= end) {
+                    java.util.List<String> perdidos = perderMitadInventario(p);
+                    if (!perdidos.isEmpty()) {
+                        robos.put(p, perdidos);
+                        partida.anadirEvento("La foca ha robat a " + p.getNombre() + ": " + String.join(", ", perdidos));
                     }
                 }
             }
         }
+        return robos;
     }
 
     /**
      * Hace perder la mitad de los ítems del inventario al pingüino.
+     * @return Lista de nombres de ítems perdidos.
      */
-    private void perderMitadInventario(Jugador p) {
-        if (p.getInv() == null) return;
+    private java.util.List<String> perderMitadInventario(Jugador p) {
+        java.util.List<String> perdidos = new java.util.ArrayList<>();
+        if (p.getInv() == null) return perdidos;
         int total = p.getInv().totalItems();
         int perder = total / 2;
         for (int i = 0; i < perder; i++) {
-            p.getInv().quitarItemAleatorio(random);
+            Item robado = p.getInv().quitarItemAleatorio(random);
+            if (robado != null) {
+                perdidos.add(robado.getNombre());
+            }
         }
+        return perdidos;
     }
 
     /**
@@ -321,7 +333,6 @@ public class GestorPartida {
     public void guardarPartida() {
         if (gestorBBDD != null && partida != null) {
             gestorBBDD.guardarBBDD(partida);
-            partida.anadirEvento("Partida guardada.");
         }
     }
 

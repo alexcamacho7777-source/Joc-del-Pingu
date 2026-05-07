@@ -3,6 +3,7 @@ package vista;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.StackPane;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -21,6 +22,7 @@ public class PantallaLogin {
     @FXML private TextField regUser;
     @FXML private PasswordField regPass;
     @FXML private PasswordField regPassConf;
+    @FXML private StackPane rootPane;
 
     @FXML
     private void initialize() {
@@ -111,10 +113,6 @@ public class PantallaLogin {
     }
 
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
-        Alert alert = new Alert(tipus);
-        alert.setTitle(titol);
-        alert.setHeaderText(null);
-        alert.setContentText(missatge);
-        alert.showAndWait();
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 }

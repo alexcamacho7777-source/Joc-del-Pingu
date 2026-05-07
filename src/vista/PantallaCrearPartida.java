@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import model.Foca;
 import model.Jugador;
@@ -24,6 +25,7 @@ public class PantallaCrearPartida {
     @FXML private TextField txtNomPartida;
     @FXML private FlowPane flowJugadores;
     @FXML private Button btnAddPlayer;
+    @FXML private StackPane rootPane;
 
     private List<PlayerCard> activeCards = new ArrayList<>();
     private static final int MAX_JUGADORES = 4;
@@ -151,11 +153,7 @@ public class PantallaCrearPartida {
     }
 
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
-        Alert alert = new Alert(tipus);
-        alert.setTitle(titol);
-        alert.setHeaderText(null);
-        alert.setContentText(missatge);
-        alert.showAndWait();
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 
     // Inner class to handle each player UI card

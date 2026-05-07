@@ -1,7 +1,10 @@
 package vista;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import model.*;
+import controlador.*;
 
 import javafx.animation.TranslateTransition;
 import javafx.animation.RotateTransition;
@@ -101,6 +104,7 @@ public class PantallaJuego {
 
     // Containers
     @FXML private StackPane boardStack;
+    @FXML private StackPane rootPane;
 
     private GestorPartida gestorPartida = new GestorPartida();
     private int p1Position = 0;
@@ -388,7 +392,7 @@ public class PantallaJuego {
     // Menu actions
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
-        anadirLog("Partida guardada a la BBDD.");
+        anadirLog(">>> PROGRÉS GUARDAT CORRECTAMENT.");
     }
 
     @FXML
@@ -552,6 +556,21 @@ public class PantallaJuego {
 
         // Animar primer tramo (tirada de dado)
         animarMovimiento(actual, posAnterior, finalPosIntermedia, () -> {
+            // Lògica específica Foca si passa per sobre de jugadors
+            if (actual instanceof Foca foca) {
+                java.util.Map<Pinguino, List<String>> robos = gestorPartida.procesarPasoDeFoca(foca, posAnterior, finalPosIntermedia);
+                if (!robos.isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    for (java.util.Map.Entry<Pinguino, List<String>> entry : robos.entrySet()) {
+                        String itemsStr = String.join(", ", entry.getValue());
+                        sb.append("La Foca ha robat a ").append(entry.getKey().getNombre())
+                          .append(":\n").append(itemsStr).append("\n\n");
+                    }
+                    PantallaAlerta.mostrar(rootPane, "¡LA FOCA T'HA ROBAT!", sb.toString().trim(), null);
+                    actualizarInventarioUI();
+                }
+            }
+
             Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(finalPosIntermedia);
             String tipo = casilla.getClass().getSimpleName();
             
@@ -1004,6 +1023,8 @@ public class PantallaJuego {
                     case "verd": colorHex = "#11998e"; break;
                     case "amarillo":
                     case "groc": colorHex = "#f2c94c"; break;
+                    case "rosa": colorHex = "#ff69b4"; break;
+                    case "cian": colorHex = "#00ffff"; break;
                     default: colorHex = "#00d2ff"; break;
                 }
                 nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorHex + "; -fx-font-size: 14px;");
@@ -1139,23 +1160,32 @@ public class PantallaJuego {
         // El azul original tiene un hue de aprox 0.6. Ajustamos el hue para llegar al color deseado.
         // Forma más simple: usar un DropShadow de color muy fuerte o cambiar el relleno de las partes si fuera SVG.
         // Como es un Group de formas, buscamos la forma principal (cuerpo) y le cambiamos el color.
-        if (token instanceof StackPane) {
+        javafx.scene.Group targetGroup = null;
+        if (token instanceof javafx.scene.Group) {
+            targetGroup = (javafx.scene.Group) token;
+        } else if (token instanceof StackPane) {
             StackPane sp = (StackPane) token;
             if (!sp.getChildren().isEmpty() && sp.getChildren().get(0) instanceof javafx.scene.Group) {
-                javafx.scene.Group g = (javafx.scene.Group) sp.getChildren().get(0);
-                for (javafx.scene.Node child : g.getChildren()) {
-                    if (child instanceof javafx.scene.shape.Shape) {
-                        javafx.scene.shape.Shape s = (javafx.scene.shape.Shape) child;
-                        // El gorro suele estar compuesto por rectángulos o polígonos de color azul
-                        if (s.getFill() instanceof javafx.scene.paint.Color) {
-                            javafx.scene.paint.Color fill = (javafx.scene.paint.Color) s.getFill();
-                            // Si es el azul original del gorro, lo cambiamos
-                            if (fill.equals(javafx.scene.paint.Color.DEEPSKYBLUE) || 
-                                fill.equals(javafx.scene.paint.Color.BLUE) ||
-                                fill.toString().contains("0x00bfff") || // DeepSkyBlue
-                                (child instanceof javafx.scene.shape.Rectangle)) { // El gorro es principalmente rectángulos
-                                s.setFill(color);
-                            }
+                targetGroup = (javafx.scene.Group) sp.getChildren().get(0);
+            }
+        }
+
+        if (targetGroup != null) {
+            for (javafx.scene.Node child : targetGroup.getChildren()) {
+                if (child instanceof javafx.scene.shape.Shape) {
+                    javafx.scene.shape.Shape s = (javafx.scene.shape.Shape) child;
+                    // El gorro suele estar compuesto por rectángulos o polígonos de color azul
+                    if (s.getFill() instanceof javafx.scene.paint.Color) {
+                        javafx.scene.paint.Color fill = (javafx.scene.paint.Color) s.getFill();
+                        // Si es el azul original del gorro, lo cambiamos
+                        if (fill.equals(javafx.scene.paint.Color.DEEPSKYBLUE) || 
+                            fill.equals(javafx.scene.paint.Color.BLUE) ||
+                            fill.toString().contains("0x00bfff") || // DeepSkyBlue
+                            fill.toString().contains("0xff4b2b") || // Rojo P2
+                            fill.toString().contains("0x11998e") || // Verde P3
+                            fill.toString().contains("0xf2c94c") || // Amarillo P4
+                            (child instanceof javafx.scene.shape.Rectangle)) { 
+                            s.setFill(color);
                         }
                     }
                 }
@@ -1373,32 +1403,28 @@ public class PantallaJuego {
         String msg = "GUERRA DE BOLES DE NEU!\n" + p1.getNombre() + " (" + b1 + ") vs " + p2.getNombre() + " (" + b2 + ")";
         
         Platform.runLater(() -> {
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setTitle("ESDEVENIMENT!");
-            alert.setHeaderText(null);
-            alert.setContentText(msg);
-            alert.showAndWait();
+            PantallaAlerta.mostrar(rootPane, "GUERRA DE BOLES!", msg, () -> {
+                // Ambos gastan sus bolas
+                if (b1it != null) p1.getInv().quitarItem(b1it);
+                if (b2it != null) p2.getInv().quitarItem(b2it);
 
-            // Ambos gastan sus bolas
-            if (b1it != null) p1.getInv().quitarItem(b1it);
-            if (b2it != null) p2.getInv().quitarItem(b2it);
-
-            int diff = b1 - b2;
-            if (diff > 0) {
-                anadirLog(p1.getNombre() + " guanya la guerra i avança " + diff + "!");
-                int posAnt = p1.getPosicion();
-                p1.moverPosicion(diff);
-                animarMovimiento(p1, posAnt, p1.getPosicion(), onDone);
-            } else if (diff < 0) {
-                anadirLog(p2.getNombre() + " guanya la guerra i avança " + (-diff) + "!");
-                int posAnt = p2.getPosicion();
-                p2.moverPosicion(-diff);
-                animarMovimiento(p2, posAnt, p2.getPosicion(), onDone);
-            } else {
-                anadirLog("Empat! Cap jugador es mou.");
-                onDone.run();
-            }
-            actualizarInventarioUI();
+                int diff = b1 - b2;
+                if (diff > 0) {
+                    anadirLog(p1.getNombre() + " guanya la guerra i avança " + diff + "!");
+                    int posAnt = p1.getPosicion();
+                    p1.moverPosicion(diff);
+                    animarMovimiento(p1, posAnt, p1.getPosicion(), onDone);
+                } else if (diff < 0) {
+                    anadirLog(p2.getNombre() + " guanya la guerra i avança " + (-diff) + "!");
+                    int posAnt = p2.getPosicion();
+                    p2.moverPosicion(-diff);
+                    animarMovimiento(p2, posAnt, p2.getPosicion(), onDone);
+                } else {
+                    anadirLog("Empat! Cap jugador es mou.");
+                    onDone.run();
+                }
+                actualizarInventarioUI();
+            });
         });
     }
 
