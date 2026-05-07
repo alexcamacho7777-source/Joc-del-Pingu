@@ -24,7 +24,7 @@
                 <!-- Objectiu -->
                 <VBox spacing="5">
                     <Label text="OBJECTIU" style="-fx-text-fill: #00d2ff; -fx-font-weight: bold; -fx-font-size: 18px;" />
-                    <Label text="Arriba a la meta abans que els altres pingüins i la foca robot!" 
+                    <Label text="Arriba a la meta abans que els altres pingüins i la foca!" 
                            wrapText="true" style="-fx-text-fill: white; -fx-font-size: 14px;" />
                 </VBox>
 
@@ -49,11 +49,11 @@
                     <HBox spacing="15" alignment="CENTER_LEFT">
                         <StackPane style="-fx-min-width: 60; -fx-min-height: 60;">
                             <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                                <Image url="@images/casillas/foca_robot.png"/>
+                                <Image url="@images/casillas/foca.png"/>
                             </ImageView>
                         </StackPane>
                         <VBox>
-                            <Label text="FOCA ROBOT" style="-fx-text-fill: #11998e; -fx-font-weight: bold;" />
+                            <Label text="FOCA" style="-fx-text-fill: #11998e; -fx-font-weight: bold;" />
                             <Label text="La foca es mou sola cada torn. No deixis que t'avança!" 
                                    wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                         </VBox>
@@ -113,7 +113,7 @@
                         <Label text="Assegura un llançament baix (1, 2 o 3) per evitar perills." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                         
                         <Label text="• Peixos:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
-                        <Label text="Serveixen per subornar a l'Os o a la Foca Robot. Si els fas servir, evitaràs ser enviat a l'inici o al forat!" wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        <Label text="Serveixen per subornar a l'Os o a la Foca. Si els fas servir, evitaràs ser enviat a l'inici o al forat!" wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                         
                         <Label text="• Bola de Neu:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
                         <Label text="S'activen en una 'Guerra de Boles' quan dos pingüins cauen a la mateixa casella. El guanyador avança la diferència de boles entre els dos!" wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />

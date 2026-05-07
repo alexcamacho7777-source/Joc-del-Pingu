@@ -31,17 +31,29 @@ public class Tablero {
 
 
     private void generarTablero(Random r) {
+        int targetOsoCount = r.nextInt(5) + 1; // 1 a 5 osos
+        List<Integer> possibleIndices = new ArrayList<>();
+        for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
+            possibleIndices.add(i);
+        }
+        java.util.Collections.shuffle(possibleIndices, r);
+        List<Integer> osoIndices = possibleIndices.subList(0, targetOsoCount);
+
         casillas.add(new Normal(0)); // inicio
         for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
-            casillas.add(crearCasillaAleatoria(i, r));
+            if (osoIndices.contains(i)) {
+                casillas.add(new Oso(i));
+            } else {
+                casillas.add(crearCasillaAleatoriaSinOso(i, r));
+            }
         }
         casillas.add(new Normal(TOTAL_CASILLAS - 1)); // meta
     }
 
-    private Casilla crearCasillaAleatoria(int pos, Random r) {
-        int tipo = r.nextInt(12); 
+    private Casilla crearCasillaAleatoriaSinOso(int pos, Random r) {
+        // Probabilidades originales pero sin el Oso (que era el caso 0)
+        int tipo = r.nextInt(11) + 1; // 1 a 11
         switch (tipo) {
-            case 0: return new Oso(pos);
             case 1: return new Agujero(pos);
             case 2: return new Trineo(pos);
             case 3:
