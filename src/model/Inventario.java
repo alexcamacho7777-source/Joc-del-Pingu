@@ -89,6 +89,22 @@ public class Inventario {
         return null;
     }
 
+    /**
+     * Quita UNA unidad de un ítem aleatorio.
+     * Si la cantidad llega a 0, elimina el ítem de la lista.
+     */
+    public Item quitarUnidadAleatoria(java.util.Random r) {
+        if (lista.isEmpty()) return null;
+        
+        Item stack = lista.get(r.nextInt(lista.size()));
+        stack.setCantidad(stack.getCantidad() - 1);
+        
+        if (stack.getCantidad() <= 0) {
+            lista.remove(stack);
+        }
+        return stack;
+    }
+
     @Override
     public String toString() {
         return lista.toString();

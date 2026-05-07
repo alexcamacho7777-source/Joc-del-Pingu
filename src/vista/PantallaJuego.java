@@ -1310,39 +1310,25 @@ public class PantallaJuego {
         }
 
         // 2. INTERACCIÓN CON FOCA
-        Foca focaEnCasilla = null;
-        for(Jugador otro : gestorPartida.getPartida().getJugadores()) {
-            if (otro instanceof Foca && otro.getPosicion() == j.getPosicion()) {
-                focaEnCasilla = (Foca) otro;
-                break;
+        if (j instanceof Pinguino) {
+            Pinguino p = (Pinguino) j;
+            if (!p.isEsIA()) {
+                Foca f = findFocaEnPosicion(p.getPosicion());
+                if (f != null && !f.isSobornada()) {
+                    interactuarConFoca(p, f, onDone);
+                    return;
+                }
             }
-        }
-
-        if (focaEnCasilla != null && j instanceof Pinguino && !((Pinguino)j).isEsIA() && !focaEnCasilla.isSobornada()) {
-            final Foca finalFoca = focaEnCasilla;
-            final Pinguino p = (Pinguino) j;
-            Item pez = p.getInv().getItem(Pez.class);
-            
-            if (pez != null && pez.getCantidad() > 0) {
-                mostrarDecision("FOCA ROBOT!", 
-                    "La foca t'ha atrapat! Vols donar-li un peix per bloquejar-la 2 torns?", 
-                    () -> {
-                        pez.setCantidad(pez.getCantidad() - 1);
-                        if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
-                        finalFoca.activarSoborno();
-                        anadirLog(p.getNombre() + " ha sobornat la foca!");
-                        actualizarInventarioUI();
-                        onDone.run();
-                    }, () -> {
-                        aplicarCastigoFoca(p, onDone);
-                    });
-                return;
-            } else {
-                // No tiene peces
-                showSpecialTileMessage("NO TENS PEIXOS! RETROCEDEIXES!", "hole", () -> {
-                    aplicarCastigoFoca(p, onDone);
-                });
-                return;
+        } else if (j instanceof Foca) {
+            Foca f = (Foca) j;
+            if (!f.isSobornada()) {
+                // Busquem si hi ha algun pingüí humà en aquesta casella
+                for (Jugador otro : gestorPartida.getPartida().getJugadores()) {
+                    if (otro instanceof Pinguino && !((Pinguino) otro).isEsIA() && otro.getPosicion() == f.getPosicion()) {
+                        interactuarConFoca((Pinguino) otro, f, onDone);
+                        return;
+                    }
+                }
             }
         }
 
@@ -1431,6 +1417,36 @@ public class PantallaJuego {
                 actualizarInventarioUI();
             });
         });
+    }
+
+    private Foca findFocaEnPosicion(int pos) {
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            if (j instanceof Foca && j.getPosicion() == pos) return (Foca) j;
+        }
+        return null;
+    }
+
+    private void interactuarConFoca(Pinguino p, Foca f, Runnable onDone) {
+        Item pez = p.getInv().getItem(Pez.class);
+        if (pez != null && pez.getCantidad() > 0) {
+            mostrarDecision("FOCA ROBOT!", 
+                "La foca t'ha atrapat! Vols donar-li un peix per bloquejar-la 2 torns?", 
+                () -> {
+                    pez.setCantidad(pez.getCantidad() - 1);
+                    if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
+                    f.activarSoborno();
+                    anadirLog(p.getNombre() + " ha sobornat la foca!");
+                    actualizarInventarioUI();
+                    onDone.run();
+                }, () -> {
+                    aplicarCastigoFoca(p, onDone);
+                });
+        } else {
+            // No tiene peces
+            showSpecialTileMessage("NO TENS PEIXOS! RETROCEDEIXES!", "hole", () -> {
+                aplicarCastigoFoca(p, onDone);
+            });
+        }
     }
 
     private void aplicarCastigoFoca(Jugador j, Runnable onDone) {

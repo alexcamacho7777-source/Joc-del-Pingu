@@ -266,8 +266,8 @@ public class GestorPartida {
         for (Jugador j : partida.getJugadores()) {
             if (j instanceof Pinguino) {
                 Pinguino p = (Pinguino) j;
-                // Si el pinguí NO està a l'inici i la foca ha passat per sobre d'ell
-                if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() <= end) {
+                // Si el pinguí NO està a l'inici i la foca ha passat PER SOBRE (no si cau a la mateixa casilla)
+                if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() < end) {
                     java.util.List<String> perdidos = perderMitadInventario(p);
                     if (!perdidos.isEmpty()) {
                         robos.put(p, perdidos);
@@ -286,12 +286,15 @@ public class GestorPartida {
     private java.util.List<String> perderMitadInventario(Jugador p) {
         java.util.List<String> perdidos = new java.util.ArrayList<>();
         if (p.getInv() == null) return perdidos;
+        
         int total = p.getInv().totalItems();
         int perder = total / 2;
+        
         for (int i = 0; i < perder; i++) {
-            Item robado = p.getInv().quitarItemAleatorio(random);
-            if (robado != null) {
-                perdidos.add(robado.getNombre());
+            // Buscamos un item aleatorio que tenga cantidad > 0
+            Item stack = p.getInv().quitarUnidadAleatoria(random);
+            if (stack != null) {
+                perdidos.add(stack.getNombre());
             }
         }
         return perdidos;
