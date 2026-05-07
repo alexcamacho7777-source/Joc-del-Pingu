@@ -113,10 +113,10 @@
                         <Label text="Assegura un llançament baix (1, 2 o 3) per evitar perills." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                         
                         <Label text="• Peixos:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
-                        <Label text="Et donen energia extra per jugar millor." style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        <Label text="Serveixen per subornar a l'Os o a la Foca Robot. Si els fas servir, evitaràs ser enviat a l'inici o al forat!" wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                         
                         <Label text="• Bola de Neu:" style="-fx-text-fill: white; -fx-font-weight: bold;" />
-                        <Label text="Llança-la per fer que un rival perdi el seu torn!" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
+                        <Label text="S'activen en una 'Guerra de Boles' quan dos pingüins cauen a la mateixa casella. El guanyador avança la diferència de boles entre els dos!" wrapText="true" style="-fx-text-fill: #cccccc; -fx-font-size: 13px;" />
                     </VBox>
                 </VBox>
 
