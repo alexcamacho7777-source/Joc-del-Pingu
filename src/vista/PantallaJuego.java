@@ -1347,6 +1347,11 @@ public class PantallaJuego {
         }
 
         // 3. GUERRA DE BOLAS DE NIEVE
+        if (!(j instanceof Pinguino)) {
+            onDone.run();
+            return;
+        }
+
         Jugador oponente = null;
         for(Jugador otro : gestorPartida.getPartida().getJugadores()) {
             if (otro != j && otro instanceof Pinguino && otro.getPosicion() == j.getPosicion()) {

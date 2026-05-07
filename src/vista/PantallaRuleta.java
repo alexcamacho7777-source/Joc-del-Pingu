@@ -220,8 +220,28 @@ public class PantallaRuleta {
                 }
             }
             case "Moto de neu" -> {
-                jugador.moverPosicion(5);
-                logMsg = jugador.getNombre() + " ha agafat una moto de neu i avança 5 caselles!";
+                int pos = jugador.getPosicion();
+                int nextSled = -1;
+                if (partida != null && partida.getTablero() != null) {
+                    java.util.List<Casilla> casillas = partida.getTablero().getCasillas();
+                    for (int i = pos + 1; i < casillas.size(); i++) {
+                        if (casillas.get(i) instanceof Trineo) {
+                            nextSled = i;
+                            break;
+                        }
+                    }
+                }
+                
+                if (nextSled != -1) {
+                    jugador.setPosicion(nextSled);
+                    logMsg = jugador.getNombre() + " ha agafat una moto de neu fins al següent trineu (casella " + nextSled + ")!";
+                } else {
+                    // Fallback si no hi ha més trineus: 10 caselles cap endavant o fins al final
+                    int max = partida.getTablero().getTotalCasillas() - 1;
+                    int novaPos = Math.min(pos + 10, max);
+                    jugador.setPosicion(novaPos);
+                    logMsg = jugador.getNombre() + " ha agafat una moto de neu i avança 10 caselles!";
+                }
             }
         }
         
