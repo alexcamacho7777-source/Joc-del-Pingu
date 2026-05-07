@@ -42,6 +42,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.stage.Window;
 
 
 import controlador.GestorPartida;
@@ -393,6 +394,14 @@ public class PantallaJuego {
     @FXML private void handleSaveGame() { 
         gestorPartida.guardarPartida();
         anadirLog(">>> PROGRÉS GUARDAT CORRECTAMENT.");
+        boolean ok = gestorPartida.guardarPartida();
+        if (ok) {
+            anadirLog("Partida guardada a la BBDD.");
+            mostrarAlert(AlertType.INFORMATION, "Èxit", "La partida s'ha guardat correctament a la base de dades.");
+        } else {
+            anadirLog("ERROR: No s'ha pogut guardar la partida.");
+            mostrarAlert(AlertType.ERROR, "Error!", "No s'ha pogut guardar la partida. Verifica la connexió o possibles límits a la BBDD.");
+        }
     }
 
     @FXML
@@ -1457,5 +1466,15 @@ public class PantallaJuego {
         anadirLog(j.getNombre() + " no té peixos i retrocedeix fins a la posició " + posAgujero);
         
         animarMovimiento(j, posAnterior, posAgujero, onDone);
+    }
+
+    private void mostrarAlert(AlertType tipus, String titol, String missatge) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(tipus);
+            alert.setTitle(titol);
+            alert.setHeaderText(null);
+            alert.setContentText(missatge);
+            alert.showAndWait();
+        });
     }
 }

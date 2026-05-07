@@ -332,11 +332,18 @@ public class GestorPartida {
 
     /**
      * Guarda la partida en base de dades.
+     * @return true si s'ha guardat correctament
      */
-    public void guardarPartida() {
+    public boolean guardarPartida() {
         if (gestorBBDD != null && partida != null) {
             gestorBBDD.guardarBBDD(partida);
+            boolean ok = gestorBBDD.guardarBBDD(partida);
+            if (ok) {
+                partida.anadirEvento("Partida guardada.");
+            }
+            return ok;
         }
+        return false;
     }
 
     /**

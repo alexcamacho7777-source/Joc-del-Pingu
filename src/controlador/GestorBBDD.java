@@ -131,17 +131,17 @@ public class GestorBBDD {
         
         // 1. Tipus de casella
         System.out.println("Verificant taules mestres...");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (1, 'Normal', 'Sense efecte')");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (2, 'Os', 'Retorna a l''inici')");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (3, 'Forat', 'Retrocedeix')");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (4, 'Trineu', 'Avanca')");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (5, 'Interrogant', 'Event aleatori')");
-        ejecutar(conexion, "INSERT INTO tipus_casella VALUES (6, 'SueloQuebradizo', 'Es trenca al passar')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (1, 'Normal', 'Sense efecte')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (2, 'Os', 'Retorna a l''inici')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (3, 'Forat', 'Retrocedeix')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (4, 'Trineu', 'Avanca')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (5, 'Interrogant', 'Event aleatori')");
+        ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (6, 'SueloQuebradizo', 'Es trenca al passar')");
 
         // 2. Taulell 1
         ArrayList<LinkedHashMap<String, String>> resTau = select(conexion, "SELECT COUNT(*) as TOTAL FROM taulell WHERE id_taulell = 1");
         if (resTau.isEmpty() || Integer.parseInt(resTau.get(0).get("TOTAL")) == 0) {
-            ejecutar(conexion, "INSERT INTO taulell VALUES (1, 50)");
+            ejecutar(conexion, "INSERT INTO taulell (id_taulell, mida_taulell) VALUES (1, 50)");
         }
 
         // 3. Caselles per defecte
@@ -219,13 +219,17 @@ public class GestorBBDD {
         // 3. Verificació TAULELL
         ArrayList<LinkedHashMap<String, String>> tabsT = select(conexion, "SELECT table_name FROM user_tables WHERE table_name='TAULELL'");
         if (tabsT.isEmpty()) {
-            ejecutar(conexion, "CREATE TABLE taulell (id_taulell NUMBER PRIMARY KEY, mida NUMBER DEFAULT 50)");
+            ejecutar(conexion, "CREATE TABLE taulell (id_taulell NUMBER PRIMARY KEY, mida_taulell NUMBER DEFAULT 50)");
         } else {
-            ArrayList<LinkedHashMap<String, String>> colsT = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='TAULELL' AND column_name='MIDA'");
+            // Verifiquem si existeix mida o mida_taulell
+            ArrayList<LinkedHashMap<String, String>> colsT = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='TAULELL' AND column_name IN ('MIDA','MIDA_TAULELL')");
             if (colsT.isEmpty()) {
-                ejecutar(conexion, "ALTER TABLE taulell ADD (mida NUMBER DEFAULT 50)");
+                ejecutar(conexion, "ALTER TABLE taulell ADD (mida_taulell NUMBER DEFAULT 50)");
             }
         }
+        
+        // 4. Ampliar ID_CASELLA si cal per evitar el límit de 10 partides (si era NUMBER(3))
+        ejecutar(conexion, "ALTER TABLE casella MODIFY (id_casella NUMBER(10))");
 
         System.out.println("Estructura de taules verificada.");
         commit(conexion);
@@ -265,8 +269,8 @@ public class GestorBBDD {
                 + nextId + ", '" + username + "', 'Gris', 0)", "RegistreIA");
     }
 
-    public void guardarBBDD(Partida p) {
-        if (conexion == null) return;
+    public boolean guardarBBDD(Partida p) {
+        if (conexion == null) return false;
         try {
             java.util.List<Jugador> jugadores = p.getJugadores();
             for (Jugador j : jugadores) {
@@ -275,9 +279,16 @@ public class GestorBBDD {
 
             int idPartida = p.getId();
             if (idPartida <= 0) {
-                ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_partida) as MAX_ID FROM partida");
-                idPartida = 1;
-                if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) idPartida = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+                // Utilitzem la seqüència definida al script SQL
+                ArrayList<LinkedHashMap<String, String>> resSeq = select(conexion, "SELECT SEC_ID_PARTIDA.NEXTVAL AS NEXT_ID FROM dual");
+                if (!resSeq.isEmpty() && resSeq.get(0).get("NEXT_ID") != null) {
+                    idPartida = Integer.parseInt(resSeq.get(0).get("NEXT_ID"));
+                } else {
+                    // Fallback si la seqüència no existeix
+                    ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_partida) as MAX_ID FROM partida");
+                    idPartida = 1;
+                    if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) idPartida = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
+                }
                 p.setId(idPartida);
             }
 
@@ -285,8 +296,14 @@ public class GestorBBDD {
             
             // 1. Guardar el taulell primer (per evitar error de clau forana ORA-02291 a PARTIDA)
             if (p.getTablero() != null) {
-                ejecutar(conexion, "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t FROM dual) src ON (dst.id_taulell = src.id_t) " +
-                        "WHEN NOT MATCHED THEN INSERT VALUES (" + idPartida + ", " + p.getTablero().getTotalCasillas() + ")");
+                int mida = p.getTablero().getTotalCasillas();
+                if (mida <= 0) mida = 50; // Valor per defecte segur
+                
+                String sqlMergeTau = "MERGE INTO taulell dst USING (SELECT " + idPartida + " AS id_t, " + mida + " AS v_mida FROM dual) src " +
+                                     "ON (dst.id_taulell = src.id_t) " +
+                                     "WHEN NOT MATCHED THEN INSERT (id_taulell, mida_taulell) VALUES (src.id_t, src.v_mida) " +
+                                     "WHEN MATCHED THEN UPDATE SET mida_taulell = src.v_mida";
+                ejecutar(conexion, sqlMergeTau);
             }
 
             int idGuanyador = (p.isFinalizada() && p.getGanador() != null) ? getIDJugador(p.getGanador().getNombre()) : -1;
@@ -301,9 +318,6 @@ public class GestorBBDD {
                     "VALUES (" + idPartida + ", " + idPartida + ", '" + p.getNombre() + "', SYSDATE, " + numTorn + ", " + valFinalitzada + ", " + valGuanyador + ")";
             ejecutar(conexion, sqlP);
             
-            // Guardem la SEED al taulell per simplificar (si no existeix la columna, el mètode 'ejecutar' fallarà silenciosament o mostrarà error)
-            ejecutar(conexion, "UPDATE taulell SET mida = " + p.getTablero().getTotalCasillas() + " WHERE id_taulell = " + idPartida);
-            
             // 3. Guardar les caselles
             if (p.getTablero() != null) {
                 ArrayList<Casilla> casillas = p.getTablero().getCasillas();
@@ -316,10 +330,14 @@ public class GestorBBDD {
                     else if (c instanceof Evento) tipus = 5;
                     else if (c instanceof SueloQuebradizo) tipus = 6;
 
-                    ejecutar(conexion, "MERGE INTO casella dst USING (SELECT " + idPartida + " AS id_t, " + i + " AS num_c FROM dual) src " +
+                    boolean ok = ejecutar(conexion, "MERGE INTO casella dst USING (SELECT " + idPartida + " AS id_t, " + i + " AS num_c FROM dual) src " +
                             "ON (dst.id_taulell = src.id_t AND dst.numero_casella = src.num_c) " +
                             "WHEN NOT MATCHED THEN INSERT (id_casella, id_taulell, id_tipus, numero_casella) " +
                             "VALUES (" + (idPartida * 100 + i) + ", " + idPartida + ", " + tipus + ", " + i + ")");
+                    if (!ok) {
+                        System.err.println("Error guardant casella " + i + " de la partida " + idPartida);
+                        return false;
+                    }
                 }
             }
 
@@ -351,9 +369,12 @@ public class GestorBBDD {
                         "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, ordre) VALUES (" + idJ + ", " + idPartida + ", " + (i + 1) + ")");
             }
             commit(conexion);
-            System.out.println("Desat correctament.");
+            System.out.println("Desat correctament idPartida=" + idPartida);
+            return true;
         } catch (Exception ex) {
-            System.out.println("Error al desar: " + ex.getMessage());
+            System.err.println("Error al desar: " + ex.getMessage());
+            ex.printStackTrace();
+            return false;
         }
     }
 
