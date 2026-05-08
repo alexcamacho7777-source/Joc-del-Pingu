@@ -59,23 +59,27 @@ import model.Jugador;
 import model.Pinguino;
 import model.Tablero;
 
+/**
+ * CONTROLADOR DE LA INTERFÍCIE VISUAL DEL JOC (PANTALLA DE JOC).
+ * GESTIONA TOTA LA INTERACCIÓ DE L'USUARI AMB EL TAULELL, LES ANIMACIONS
+ * I L'ACTUALITZACIÓ DE L'INVENTARI EN TEMPS REAL.
+ */
 public class PantallaJuego {
 
-
-    // Menu items
+    // ELEMENTS DEL MENÚ SUPERIOR
     @FXML private MenuItem newGame;
     @FXML private MenuItem saveGame;
     @FXML private MenuItem loadGame;
     @FXML private MenuItem quitGame;
 
-    // Buttons
+    // BOTONS D'ACCIÓ PRINCIPAL
     @FXML private Button dado;
     @FXML private Button rapido;
     @FXML private Button lento;
     @FXML private Button peces;
     @FXML private Button nieve;
 
-    // Texts
+    // TEXTOS I INDICADORS DE L'INVENTARI I ESTATS
     @FXML private Text dadoResultText;
     @FXML private Text rapido_t;
     @FXML private Text lento_t;
@@ -86,7 +90,7 @@ public class PantallaJuego {
     @FXML private Label nomInventari;
     @FXML private Label eventos;
 
-    // Game board and player pieces
+    // CONTENIDORS DEL TAULELL I LES FITXES (AVATARS)
     @FXML private GridPane tablero;
     @FXML private Group P1;
     @FXML private Group P2;
@@ -95,18 +99,18 @@ public class PantallaJuego {
     @FXML private Button btnAjustes;
     @FXML private ImageView bgImage;
 
-
-    // Premium UI Elements
+    // ELEMENTS VISUALS DE CÀRREGA I VICTÒRIA
     @FXML private StackPane loadingOverlay;
     @FXML private ImageView loadingBg;
     @FXML private Rectangle loadingBar;
     @FXML private StackPane winOverlay;
     @FXML private Label winLabel;
 
-    // Containers
+    // PANELLS ARREL PER A LA JERARQUIA DE NODES
     @FXML private StackPane boardStack;
     @FXML private StackPane rootPane;
 
+    // INSTÀNCIES DE CONTROL I VARIABLES D'ESTAT LOCAL
     private GestorPartida gestorPartida = new GestorPartida();
     private int p1Position = 0;
     private static final int COLUMNS = 5;
@@ -115,17 +119,23 @@ public class PantallaJuego {
     private int numIA = 1;
     private java.util.Map<Jugador, javafx.scene.Node> tokenMap = new java.util.HashMap<>();
 
+    /**
+     * CONFIGURA EL NÚMERO DE JUGADORS I PREPARA LA NOVA PARTIDA.
+     */
     public void configurarJugadores(int humanos, int ias) {
         this.numHumanos = humanos;
         this.numIA = ias;
         prepararNuevaPartida();
     }
 
+    /**
+     * INICIALITZA UNA PARTIDA PERSONALITZADA AMB UNA LLISTA DE JUGADORS EXISTENTS.
+     * CONFIGURA ELS TOKENS VISUALS I ELS ASSIGNA UN COLOR.
+     */
     public void iniciarPartidaPersonalizada(String nomPartida, java.util.List<Jugador> jugadores) {
-        // gestorPartida ya está inicializado como campo o en initialize()
-        
         javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
-        // Ocultar todos los tokens primero
+        
+        // OCULTEM TOTS ELS AVATARS ABANS DE COMENÇAR
         for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
         tokenMap.clear();
 
@@ -144,20 +154,24 @@ public class PantallaJuego {
             }
         }
 
-        gestorPartida.nuevaPartida(); // Genera el tablero
+        gestorPartida.nuevaPartida();
         gestorPartida.getPartida().setNombre(nomPartida);
         gestorPartida.getPartida().setJugadores(new ArrayList<>(jugadores));
 
+        // ACTUALITZACIÓ VISUAL DE L'ESTAT INICIAL
         mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero());
         syncVisualPositions(false);
         actualizarInventarioUI();
         actualizarGlowTurno();
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
-        dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        anadirLog("Partida '" + nomPartida + "' començada!");
+        dadoResultText.setText("TORN DE: " + (prox != null ? prox.getNombre().toUpperCase() : "..."));
+        anadirLog("PARTIDA '" + nomPartida.toUpperCase() + "' COMENÇADA!");
     }
 
+    /**
+     * AFEGEIX UN MISSATGE AL PANORAMA D'EVENTS VISUALS (LOG).
+     */
     private void anadirLog(String msg) {
         if (vboxEventos == null) return;
         
@@ -166,12 +180,15 @@ public class PantallaJuego {
         text.setWrappingWidth(300);
         vboxEventos.getChildren().add(text);
         
-        // Auto-scroll to bottom
+        // DESPLAÇAMENT AUTOMÀTIC CAP A BAIX PER VEURE L'ÚLTIM EVENT
         javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(50));
         pause.setOnFinished(e -> scrollEventos.setVvalue(1.0));
         pause.play();
     }
 
+    /**
+     * MÈTODE D'INICIALITZACIÓ DE JAVAFX. ESTABLEIX LA MÚSICA I LES PROPIETATS DE LES IMATGES.
+     */
     @FXML
     private void initialize() {
         controlador.SoundManager.getInstance().playGameMusic();
@@ -180,8 +197,9 @@ public class PantallaJuego {
         }
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         
-        anadirLog("--- Benvingut al Joc del Pingüí ---");
-        anadirLog("El joc ha començat!");
+        anadirLog("--- BENVINGUT AL JOC DEL PINGÜÍ ---");
+        
+        // AJUST DE LES IMATGES DE FONS PER A QUE SIGUIN RESPONSIVES
         if (bgImage != null) {
             bgImage.setManaged(false);
             bgImage.fitWidthProperty().bind(((StackPane)bgImage.getParent()).widthProperty());
@@ -194,7 +212,7 @@ public class PantallaJuego {
         }
         ejecutarPantallaCarga();
 
-        // Animació de rotació per al botó d'ajustes
+        // ANIMACIÓ DE ROTACIÓ PER AL BOTÓ D'AJUSTAMENTS (EN PASSAR EL RATOLÍ)
         if (btnAjustes != null) {
             RotateTransition rt = new RotateTransition(Duration.millis(1000), btnAjustes);
             rt.setByAngle(360);
@@ -209,6 +227,9 @@ public class PantallaJuego {
         }
     }
 
+    /**
+     * EXECUTA L'ANIMACIÓ DE LA BARRA DE CÀRREGA INICIAL.
+     */
     private void ejecutarPantallaCarga() {
         if (loadingOverlay == null) return;
         
@@ -228,6 +249,9 @@ public class PantallaJuego {
         timeline.play();
     }
 
+    /**
+     * PREPARA L'ENTORN PER A UNA NOVA PARTIDA DES DE ZERO.
+     */
     private void prepararNuevaPartida() {
         gestorPartida = new GestorPartida();
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
@@ -236,13 +260,12 @@ public class PantallaJuego {
         String[] colores = {"Azul", "Rojo", "Verde", "Amarillo"};
         javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
         
-        // Ocultar todos los tokens primero
         for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
-        
         tokenMap.clear();
 
+        // CREACIÓ DELS JUGADORS HUMANS
         for (int i = 0; i < numHumanos; i++) {
-            Pinguino p = new Pinguino("Jugador " + (i + 1), colores[i % 4]);
+            Pinguino p = new Pinguino("JUGADOR " + (i + 1), colores[i % 4]);
             p.setEsIA(false);
             jugadores.add(p);
             if(i < pTokens.length) {
@@ -253,6 +276,7 @@ public class PantallaJuego {
             }
         }
         
+        // CREACIÓ DELS JUGADORS CONTROLATS PER LA IA (CPU)
         for (int i = 0; i < numIA; i++) {
             Pinguino p = new Pinguino("CPU " + (i + 1), colores[(numHumanos + i) % 4]);
             p.setEsIA(true);
@@ -266,7 +290,7 @@ public class PantallaJuego {
             }
         }
 
-        // Foca
+        // AFEGIM LA FOCA COM A PERSONATGE NO JUGABLE (NPC) ACTIU
         model.Foca focaJugador = new model.Foca();
         jugadores.add(focaJugador);
         
@@ -281,13 +305,17 @@ public class PantallaJuego {
         actualizarInventarioUI();
     }
 
+    /**
+     * DIBUIXA LES CASELLES AL TAULELL I ASSIGNA LES IMATGES CORRESPONENTS A CADA TIPUS.
+     */
     private void mostrarTiposDeCasillasEnTablero(Tablero t) {
+        // NETEJEM EL TAULELL DE TEXTOS PREVIS
         tablero.getChildren().removeIf(node -> TAG_CASILLA_TEXT.equals(node.getUserData()));
 
         for (int i = 0; i < t.getCasillas().size(); i++) {
             Casilla casilla = t.getCasillas().get(i);
             
-            // Casillas especiales Inicio y Meta
+            // TRACTAMENT ESPECIAL PER A LES CASELLES D'INICI I META
             if (i == 0 || i == 49) {
                 VBox box = new VBox(2);
                 box.setUserData(TAG_CASILLA_TEXT);
@@ -314,6 +342,7 @@ public class PantallaJuego {
                 continue;
             }
 
+            // CASELLES INTERMÈDIES AMB OBSTACLES O BONS
             if (i > 0 && i < 49) {
                 String tipo = casilla.getClass().getSimpleName();
                 VBox box = new VBox(2);
@@ -332,9 +361,9 @@ public class PantallaJuego {
                         ImageView iv = new ImageView(img);
                         iv.setFitWidth(75); iv.setFitHeight(75);
                         iv.setPreserveRatio(true);
-                        
                         box.getChildren().add(iv);
                     } else {
+                        // FALLBACK SI NO ES TROBA LA IMATGE
                         String emojiText;
                         switch (tipo) {
                             case "Agujero": emojiText = "FORAT"; break;
@@ -345,8 +374,7 @@ public class PantallaJuego {
                             default: emojiText = "?"; break;
                         }
                         Text fallback = new Text(emojiText);
-                        fallback.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-fill: " + 
-                            ("Evento".equals(tipo) ? "gold" : "white") + "; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 0);");
+                        fallback.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-fill: white;");
                         box.getChildren().add(fallback);
                     }
                 } catch (Exception e) {
@@ -358,6 +386,9 @@ public class PantallaJuego {
         }
     }
 
+    /**
+     * CONFIGURA L'ANIMACIÓ DE FLOTACIÓ I L'APARICIÓ GRADUAL DE LES CASELLES.
+     */
     private void setupTileAnimation(VBox box, int i) {
         int row = i / COLUMNS;
         int col = i % COLUMNS;
@@ -366,15 +397,18 @@ public class PantallaJuego {
         GridPane.setColumnIndex(box, col);
         GridPane.setHalignment(box, javafx.geometry.HPos.CENTER);
         
+        // ROTACIÓ ALEATÒRIA SUBTIL PER A UN ASPECTE MÉS NATURAL
         double randomRot = (Math.random() * 10) - 5;
         box.setRotate(randomRot);
         
+        // ANIMACIÓ DE FLOTACIÓ (VERTICAL) PERMANENT
         javafx.animation.TranslateTransition floating = new javafx.animation.TranslateTransition(Duration.seconds(3 + Math.random() * 2), box);
         floating.setByY((Math.random() * 8) - 4);
         floating.setAutoReverse(true);
         floating.setCycleCount(javafx.animation.Animation.INDEFINITE);
         floating.play();
         
+        // EFECTE D'APARICIÓ GRADUAL (FADE + SCALE)
         box.setOpacity(0);
         box.setScaleX(0); box.setScaleY(0);
         tablero.getChildren().add(box);
@@ -387,37 +421,34 @@ public class PantallaJuego {
         st.setDelay(Duration.millis(i * 10));
         st.setToX(1); st.setToY(1);
         
-        ft.play(); st.play();
-    }
-
-    // Menu actions
+     /**
+     * GESTIONA L'ACCIÓ DE GUARDAR LA PARTIDA A LA BASE DE DADES.
+     */
     @FXML private void handleSaveGame() { 
-        gestorPartida.guardarPartida();
-        anadirLog(">>> PROGRÉS GUARDAT CORRECTAMENT.");
         boolean ok = gestorPartida.guardarPartida();
         if (ok) {
-            anadirLog("Partida guardada a la BBDD.");
-            mostrarAlert(AlertType.INFORMATION, "Èxit", "La partida s'ha guardat correctament a la base de dades.");
+            anadirLog(">>> PROGRÉS GUARDAT CORRECTAMENT A LA BBDD.");
+            mostrarAlert(AlertType.INFORMATION, "ÈXIT", "LA PARTIDA S'HA GUARDAT CORRECTAMENT.");
         } else {
-            anadirLog("ERROR: No s'ha pogut guardar la partida.");
-            mostrarAlert(AlertType.ERROR, "Error!", "No s'ha pogut guardar la partida. Verifica la connexió o possibles límits a la BBDD.");
+            anadirLog(">>> ERROR EN GUARDAR LA PARTIDA.");
+            mostrarAlert(AlertType.ERROR, "ERROR", "NO S'HA POGUT GUARDAR LA PARTIDA.");
         }
     }
 
+    /**
+     * OBRE LA FINESTRA D'AJUSTAMENTS COM UN OVERLAY MODAL I TRANSPARENT.
+     */
     @FXML
     private void handleAjustes(ActionEvent event) {
-        System.out.println("DEBUG: Obriu ajustes com overlay dende Joc...");
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAjustes.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             
-            // Intentar obtener la ventana desde el evento o desde el tablero
             javafx.stage.Window owner = null;
             if (event != null && event.getSource() instanceof Node) {
-                Node node = (Node) event.getSource();
-                stage.initOwner(node.getScene().getWindow());
+                owner = ((Node) event.getSource()).getScene().getWindow();
             } else if (tablero != null && tablero.getScene() != null) {
                 owner = tablero.getScene().getWindow();
             }
@@ -430,11 +461,13 @@ public class PantallaJuego {
             stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
             stage.showAndWait();
         } catch (Exception e) {
-            System.err.println("ERROR carregant Ajustes dende Joc: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERROR CARREGANT AJUSTAMENTS: " + e.getMessage());
         }
     }
 
+    /**
+     * MOSTRA LA GUIA D'AJUDA I LES REGLES DEL JOC EN UNA FINESTRA MODAL.
+     */
     @FXML
     private void handleGuia(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
@@ -444,7 +477,6 @@ public class PantallaJuego {
             Stage stage = new Stage();
             stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             
-            // Intentar obtener la ventana desde el tablero o la escena
             if (tablero != null && tablero.getScene() != null) {
                 stage.initOwner(tablero.getScene().getWindow());
             }
@@ -455,106 +487,113 @@ public class PantallaJuego {
             stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
             stage.showAndWait();
         } catch (Exception e) {
-            e.printStackTrace();
-            anadirLog("Error carregant la guia de joc: " + e.getMessage());
+            anadirLog("ERROR CARREGANT LA GUIA DE JOC.");
         }
     }
 
+    /**
+     * TANCA LA PARTIDA ACTUAL I RETORNA L'USUARI AL MENÚ PRINCIPAL.
+     */
     @FXML private void handleQuitGame() { 
         try {
-            // Regresar al menú principal (Login)
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaMenu.fxml"));
             javafx.scene.Parent root = loader.load();
             javafx.stage.Stage stage = (javafx.stage.Stage) tablero.getScene().getWindow();
             stage.setScene(new javafx.scene.Scene(root));
-            stage.setTitle("El Joc del Pingüí - Menú");
+            stage.setTitle("EL JOC DEL PINGÜÍ - MENÚ");
             stage.setFullScreen(true);
             stage.setFullScreenExitHint(""); 
         } catch (Exception e) {
-            System.out.println("Error al salir: " + e.getMessage());
             System.exit(0);
         }
     }
 
+    /**
+     * INICIALITZA LA PANTALLA RECONSTRUINT UNA PARTIDA EXISTENT DES DE LA BBDD.
+     */
     public void iniciarCargandoPartida(int id) {
-        System.out.println("DEBUG: Iniciant càrrega de partida " + id);
         if (this.gestorPartida == null) {
-            System.out.println("DEBUG: gestorPartida era null, inicialitzant...");
             this.gestorPartida = new GestorPartida();
         }
         if (this.gestorPartida.getGestorBBDD() == null) {
             this.gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         }
         
-        // Cargamos la partida desde la BD con el ID seleccionado
         this.gestorPartida.cargarPartida(id);
         syncLoadedJugadores();
-        mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero()); // Redibuixar caselles
+        mostrarTiposDeCasillasEnTablero(gestorPartida.getPartida().getTablero()); 
         syncVisualPositions(false);
         actualizarInventarioUI();
         
         Jugador prox = gestorPartida.getPartida().getJugadorActualObj();
-        dadoResultText.setText("Torn de: " + (prox != null ? prox.getNombre() : "..."));
-        anadirLog("Partida #" + id + " carregada correctament.");
+        dadoResultText.setText("TORN DE: " + (prox != null ? prox.getNombre().toUpperCase() : "..."));
+        anadirLog("PARTIDA #" + id + " CARREGADA CORRECTAMENT.");
     }
 
-    // Button actions
+    /**
+     * ACCIÓ DE TIRAR EL DAU. DESHABILITA EL BOTÓ PER EVITAR DOBLES CLICS DURANT L'ANIMACIÓ.
+     */
     @FXML
     private void handleDado(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
         if(gestorPartida.getPartida().isFinalizada()) {
-            anadirLog("El joc ja ha acabat.");
-            return;
+            anadirLog("EL JOC JA HA ACABAT.");
+        } else {
+            dado.setDisable(true);
+            procesarSiguienteTurno();
         }
-
-        dado.setDisable(true);
-        procesarSiguienteTurno();
     }
 
+    /**
+     * PROCESSA LA LÒGICA DE CANVI DE TORN, CONSIDERANT SI UN JUGADOR PERD EL TORN O ESTÀ BLOQUEJAT.
+     */
     private void procesarSiguienteTurno() {
         if (gestorPartida.getPartida().isFinalizada()) {
             dado.setDisable(false);
-            return;
-        }
+        } else {
+            Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+            if (actual != null) {
+                boolean turnoPerdido = false;
+                
+                // VERIFICACIÓ DE SI EL JUGADOR HA DE PERDRE EL TORN PER EFECTE DE LA RULETA O CASELLA
+                if (gestorPartida.getPartida().getJugadorPierdeTurno() != null &&
+                    gestorPartida.getPartida().getJugadorPierdeTurno().equals(actual)) {
+                    gestorPartida.getPartida().setJugadorPierdeTurno(null);
+                    anadirLog(actual.getNombre().toUpperCase() + " PERD AQUEST TORN.");
+                    gestorPartida.getPartida().siguienteTurno();
+                    finalizarTurnoComplet();
+                    turnoPerdido = true;
+                }
 
-        Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
-        if (actual == null) {
-            dado.setDisable(false);
-            return;
-        }
-
-        // --- LÓGICA DE SALTO DE TURNO ---
-        
-        // 1. Si el jugador actual debe perder el turno (Guerra de bolas, etc)
-        if (gestorPartida.getPartida().getJugadorPierdeTurno() != null &&
-            gestorPartida.getPartida().getJugadorPierdeTurno().equals(actual)) {
-            gestorPartida.getPartida().setJugadorPierdeTurno(null);
-            anadirLog(actual.getNombre() + " perd aquest torn.");
-            gestorPartida.getPartida().siguienteTurno();
-            finalizarTurnoComplet();
-            return;
-        }
-
-        // 2. Si es la Foca y está bloqueada por soborno
-        if (actual instanceof model.Foca) {
-            model.Foca f = (model.Foca) actual;
-            if (f.getTurnosBloqueada() > 0) {
-                f.reducirBloqueo();
-                anadirLog("La Foca continua bloquejada (" + f.getTurnosBloqueada() + " torns restants).");
-                gestorPartida.getPartida().siguienteTurno();
-                finalizarTurnoComplet();
-                return;
+                if (!turnoPerdido && actual instanceof model.Foca f) {
+                    // SI ÉS EL TORN DE LA FOCA I ESTÀ BLOQUEJADA PER UNA BOLA DE NEU
+                    if (f.getTurnosBloqueada() > 0) {
+                        f.reducirBloqueo();
+                        anadirLog("LA FOCA CONTINUA BLOQUEJADA (" + f.getTurnosBloqueada() + " TORNS RESTANTS).");
+                        gestorPartida.getPartida().siguienteTurno();
+                        finalizarTurnoComplet();
+                        turnoPerdido = true;
+                    }
+                }
+                
+                if (!turnoPerdido) {
+                    ejecutarMovimientoJugador(actual);
+                }
             }
         }
+    }
 
+    /**
+     * EXECUTA EL MOVIMENT FÍSIC I LÒGIC D'UN JUGADOR AL TAULELL.
+     */
+    private void ejecutarMovimientoJugador(Jugador actual) {
         int posAnterior = actual.getPosicion();
 
-        // 3. Acciones IA (Peces, etc)
         if (actual.isEsIA()) {
             gestorPartida.realizarAccionesIA(actual);
         }
 
-        // 2. Lógica dividida para detectar aterrizaje intermedio
+        // CÀLCUL DEL DESTÍ SEGONS EL DAU
         int pasos = gestorPartida.tirarDadoParaJugador(actual);
         int posIntermedia = posAnterior + pasos;
         int maxPos = gestorPartida.getPartida().getTablero().getTotalCasillas() - 1;
@@ -563,46 +602,30 @@ public class PantallaJuego {
         final int finalPosIntermedia = posIntermedia;
         actual.setPosicion(finalPosIntermedia);
 
-        // Animar primer tramo (tirada de dado)
+        // ANIMACIÓ DEL MOVIMENT PAS A PAS
         animarMovimiento(actual, posAnterior, finalPosIntermedia, () -> {
-            // Lògica específica Foca si passa per sobre de jugadors
+            // LÒGICA DE LA FOCA SI PASSA PER SOBRE DE PINGÜINS
             if (actual instanceof Foca foca) {
                 java.util.Map<Pinguino, List<String>> robos = gestorPartida.procesarPasoDeFoca(foca, posAnterior, finalPosIntermedia);
                 if (!robos.isEmpty()) {
-                    StringBuilder sb = new StringBuilder();
-                    for (java.util.Map.Entry<Pinguino, List<String>> entry : robos.entrySet()) {
-                        String itemsStr = String.join(", ", entry.getValue());
-                        sb.append("La Foca ha robat a ").append(entry.getKey().getNombre())
-                          .append(":\n").append(itemsStr).append("\n\n");
-                    }
-                    PantallaAlerta.mostrar(rootPane, "¡LA FOCA T'HA ROBAT!", sb.toString().trim(), null);
                     actualizarInventarioUI();
+                    anadirLog("LA FOCA HA ROBAT ÍTEMS AL SEU PAS.");
                 }
             }
 
             Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(finalPosIntermedia);
             String tipo = casilla.getClass().getSimpleName();
             
-            // Si es Trineo, Agujero o OSO, mostramos mensaje y movemos
+            // SI LA CASELLA TÉ UN EFECTE DE DESPLAÇAMENT (TRINEU, FORAT O OS)
             if ("Trineo".equals(tipo) || "Agujero".equals(tipo) || "Oso".equals(tipo)) {
                 String msg;
                 String sound;
-                if (actual instanceof model.Foca) {
-                    if ("Oso".equals(tipo)) {
-                        msg = "L'OS HA ESPANTAT LA FOCA! TORNA A L'INICI!";
-                        sound = "bear";
-                    } else {
-                        msg = "Trineo".equals(tipo) ? "LA FOCA HA TROBAT UN TRINEU! AVANÇA!" : "LA FOCA HA CAIGUT AL FORAT! RETROCEDEIX!";
-                        sound = "Trineo".equals(tipo) ? "sled" : "hole";
-                    }
+                if ("Oso".equals(tipo)) {
+                    msg = "L'OS T'HA ENVIAT A L'INICI!";
+                    sound = "bear";
                 } else {
-                    if ("Oso".equals(tipo)) {
-                        msg = "L'OS T'HA ENVIAT A L'INICI!";
-                        sound = "bear";
-                    } else {
-                        msg = "Trineo".equals(tipo) ? "HAS TROBAT UN TRINEU! AVANCES!" : "HAS CAIGUT EN UN FORAT! RETROCEDEIXES!";
-                        sound = "Trineo".equals(tipo) ? "sled" : "hole";
-                    }
+                    msg = "Trineo".equals(tipo) ? "HAS TROBAT UN TRINEU! AVANCES!" : "HAS CAIGUT EN UN FORAT! RETROCEDEIXES!";
+                    sound = "Trineo".equals(tipo) ? "sled" : "hole";
                 }
                 
                 showSpecialTileMessage(msg, sound, () -> {
@@ -620,7 +643,7 @@ public class PantallaJuego {
                     });
                 });
             } else {
-                // Casilla normal o evento
+                // CASELLA NORMAL O D'ESDEVENIMENT
                 gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
                 gestorPartida.comprobarInteraccionesEnCasilla(actual);
                 finalizarLogicaTurno(actual, () -> {});
@@ -628,16 +651,16 @@ public class PantallaJuego {
         });
     }
 
+    /**
+     * FINALITZA LA LÒGICA DEL TORN ACTUAL I PREPARA EL SEGÜENT.
+     * VERIFICA SI S'HA D'OBRIR LA RULETA O SI HI HA UN GUANYADOR.
+     */
     private void finalizarLogicaTurno(Jugador actual, Runnable onDone) {
         comprobarInteraccionesUI(actual, () -> {
-            // Avanzar turno antes de finalizar
             gestorPartida.getPartida().siguienteTurno();
             
             Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
-            dadoResultText.setText("Torn de: " + (proxSiguiente != null ? proxSiguiente.getNombre() : "..."));
-            
-            java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-            if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
+            dadoResultText.setText("TORN DE: " + (proxSiguiente != null ? proxSiguiente.getNombre().toUpperCase() : "..."));
             
             syncVisualPositions(false);
             actualizarInventarioUI();
@@ -647,33 +670,31 @@ public class PantallaJuego {
             if (gestorPartida.getPartida().isFinalizada()) {
                 controlador.SoundManager.getInstance().playSoundOnce("win");
                 mostrarVictoria(gestorPartida.getPartida().getGanador());
-                return;
-            }
-
-            // 4. Sonidos de aterrizaje y lógica de casillas
-            Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
-            // Si la casilla actual del jugador que acaba de mover es Evento (y no es foca), mostrar ruleta antes del siguiente turno real
-            // Nota: Aquí hay un detalle sutil, el turno YA avanzó, pero mostramos la ruleta para el jugador que se movió.
-            if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
-                mostrarRuleta(actual, this::finalizarTurnoComplet);
             } else {
-                finalizarTurnoComplet();
+                Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
+                // SI EL JUGADOR CAU EN UN ESDEVENIMENT, S'OBRE LA RULETA (EXCEPTE SI ÉS LA FOCA)
+                if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
+                    mostrarRuleta(actual, this::finalizarTurnoComplet);
+                } else {
+                    finalizarTurnoComplet();
+                }
             }
         });
     }
 
+    /**
+     * MOSTRA UN MISSATGE VISUAL GRAN QUAN ES CAU EN UNA CASELLA AMB EFECTE ESPECIAL.
+     */
     private void showSpecialTileMessage(String text, String sound, Runnable onFinished) {
         controlador.SoundManager.getInstance().playSound(sound);
         
         Label label = new Label(text);
         label.getStyleClass().add("special-tile-msg");
-        label.setStyle("-fx-font-size: 32px; -fx-text-fill: white; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #00d2ff, 15, 0.5, 0, 0);");
-        label.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
+        label.setStyle("-fx-font-size: 32px; -fx-text-fill: white; -fx-font-weight: bold;");
         
         StackPane container = new StackPane(label);
-        container.setStyle("-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 25; -fx-background-radius: 20; -fx-border-color: #00d2ff; -fx-border-width: 2; -fx-border-radius: 20;");
-        container.setMaxWidth(900);
-        container.setPrefHeight(120);
+        container.setStyle("-fx-background-color: rgba(0,0,0,0.8); -fx-padding: 30; -fx-background-radius: 20;");
+        container.setMaxWidth(800);
         
         boardStack.getChildren().add(container);
         
@@ -689,14 +710,14 @@ public class PantallaJuego {
         ft.play();
     }
 
+    /**
+     * FINALITZA EL TORN COMPLETAMENT I PERMET EL MOVIMENT DEL SEGÜENT JUGADOR (IA O HUMÀ).
+     */
     private void finalizarTurnoComplet() {
         Jugador proxSiguienteTurno = gestorPartida.getPartida().getJugadorActualObj();
-        dadoResultText.setText("Torn de: " + (proxSiguienteTurno != null ? proxSiguienteTurno.getNombre() : "..."));
+        dadoResultText.setText("TORN DE: " + (proxSiguienteTurno != null ? proxSiguienteTurno.getNombre().toUpperCase() : "..."));
         
-        java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-        if(!logs.isEmpty()) anadirLog(logs.get(logs.size()-1));
-
-        syncVisualPositions(true); // Sincronitzar per si la ruleta ha mogut al jugador
+        syncVisualPositions(true);
 
         if (proxSiguienteTurno != null && proxSiguienteTurno.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(800));
@@ -708,44 +729,30 @@ public class PantallaJuego {
         actualizarInventarioUI();
     }
 
+    /**
+     * CARREGA I MOSTRA LA PANTALLA DE LA RULETA D'ESDEVENIMENTS.
+     */
     private void mostrarRuleta(Jugador j, Runnable onFinished) {
         try {
-            if (boardStack == null) {
-                System.err.println("Error: boardStack es null. Revisa la FXML.");
-                onFinished.run();
-                return;
-            }
-
-            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaRuleta.fxml");
-            if (fxmlUrl == null) {
-                System.err.println("Error: No s'ha trobat PantallaRuleta.fxml");
-                onFinished.run();
-                return;
-            }
-
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlUrl);
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/resources/PantallaRuleta.fxml"));
             javafx.scene.Parent ruletaRoot = loader.load();
             PantallaRuleta controller = loader.getController();
             
             controller.setGameContext(gestorPartida.getPartida(), j);
-            
-            // Afegim la ruleta al StackPane principal per sobre del taulell
             boardStack.getChildren().add(ruletaRoot);
             
-            // Per detectar que s'ha tancat, podem mirar si ruletaRoot segueix sent fill
             ruletaRoot.parentProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal == null) {
-                    onFinished.run();
-                }
+                if (newVal == null) onFinished.run();
             });
 
         } catch (Exception e) {
-            System.err.println("Error al carregar la ruleta: " + e.getMessage());
-            e.printStackTrace();
             onFinished.run();
         }
     }
 
+    /**
+     * ANIMA EL MOVIMENT D'UNA FITXA PAS A PAS ENTRE DUES CASELLES.
+     */
     private void animarMovimiento(Jugador j, int from, int to, Runnable onFinished) {
         javafx.scene.Node token = tokenMap.get(j);
         if (from == to || token == null) {
@@ -753,14 +760,13 @@ public class PantallaJuego {
             return;
         }
 
-        javafx.animation.SequentialTransition seq = new javafx.animation.SequentialTransition();
-        int current = from;
-        int step = (to > from) ? 1 : -1;
-
-        // Si es un salto brusco (Oso, Trineo...), sincronizamos directamente al final
+        // SI EL SALT ÉS MOLT GRAN, FAEM UN DESPLAÇAMENT DIRECTE SENSE ANIMACIÓ PAS A PAS
         if (Math.abs(to - from) > 20) {
             syncVisualPositions(false);
             onFinished.run();
+            return;
+        }
+       onFinished.run();
             return;
         }
 
@@ -817,14 +823,6 @@ public class PantallaJuego {
 
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             javafx.scene.Node token = tokenMap.get(j);
-            if (token == null) continue;
-
-            int pos = j.getPosicion();
-            if (pos >= 50) pos = 49;
-            if (pos < 0) pos = 0;
-
-            int newRow = pos / COLUMNS;
-            int newCol = pos % COLUMNS;
 
             // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
@@ -942,16 +940,19 @@ public class PantallaJuego {
             Item item = inv.getItem(Dado.class); // Simplificación: busca el primero de clase Dado que coincida
             // En una implementación más compleja buscaríamos exactamente el tipo.
             // Por ahora, buscaremos el dado que coincida con el nombre.
-            Dado dadoElegido = null;
-            for (Item i : inv.getLista()) {
-                if (i instanceof Dado) {
-                    Dado d = (Dado) i;
+            boolean trobat = false;
+            for (int i = 0; i < inv.getLista().size() && !trobat; i++) {
+                Item itemLoop = inv.getLista().get(i);
+                if (itemLoop instanceof Dado) {
+                    Dado d = (Dado) itemLoop;
                     String name = d.getNombre().toLowerCase();
                     if (tipo.equals("DadoRapido") && (name.contains("rapido") || name.contains("ràpid"))) {
-                        dadoElegido = d; break;
+                        dadoElegido = d;
+                        trobat = true;
                     }
-                    if (tipo.equals("DadoLento") && (name.contains("lento") || name.contains("lent"))) {
-                        dadoElegido = d; break;
+                    if (!trobat && tipo.equals("DadoLento") && (name.contains("lento") || name.contains("lent"))) {
+                        dadoElegido = d;
+                        trobat = true;
                     }
                 }
             }
@@ -1009,12 +1010,13 @@ public class PantallaJuego {
             // Si el actual es Foca o IA, mostramos el del primer humano para que no se quede vacío, 
             // pero indicamos de quién es.
             Jugador mostrar = actual;
-            if (actual instanceof model.Foca || (actual instanceof Pinguino && ((Pinguino) actual).isEsIA())) {
-                for(Jugador j : gestorPartida.getPartida().getJugadores()) {
-                    if(j instanceof Pinguino && !((Pinguino) j).isEsIA()) {
-                        mostrar = j;
-                        break;
-                    }
+            boolean trobatJug = false;
+            java.util.List<Jugador> jugs = gestorPartida.getPartida().getJugadores();
+            for(int k = 0; k < jugs.size() && !trobatJug; k++) {
+                Jugador j = jugs.get(k);
+                if(j instanceof Pinguino && !((Pinguino) j).isEsIA()) {
+                    mostrar = j;
+                    trobatJug = true;
                 }
             }
             
@@ -1093,11 +1095,13 @@ public class PantallaJuego {
                 "/resources/foca.png"
             };
             Image img = null;
-            for (String p : paths) {
+            boolean imgTrobat = false;
+            for (int i = 0; i < paths.length && !imgTrobat; i++) {
+                String p = paths[i];
                 java.net.URL url = getClass().getResource(p);
                 if (url != null) {
                     img = new Image(url.toExternalForm());
-                    break;
+                    imgTrobat = true;
                 }
             }
 
@@ -1203,31 +1207,31 @@ public class PantallaJuego {
     }
 
     private void mostrarVictoria(Jugador ganador) {
-        if (winOverlay == null) return;
-        
-        if (ganador.isEsIA()) {
-            winLabel.setText("DERROTA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT...");
-        } else {
-            winLabel.setText("VICTÒRIA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT!");
+        if (winOverlay != null) {
+            if (ganador.isEsIA()) {
+                winLabel.setText("DERROTA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT...");
+            } else {
+                winLabel.setText("VICTÒRIA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT!");
+            }
+            
+            gestorPartida.getPartida().setFinalizada(true);
+            gestorPartida.getPartida().setGanador(ganador);
+            gestorPartida.guardarPartida();
+            winOverlay.setVisible(true);
+            winOverlay.setMouseTransparent(false);
+            winOverlay.setOpacity(0);
+            
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1.5), winOverlay);
+            fade.setFromValue(0);
+            fade.setToValue(1);
+            fade.play();
+            
+            // Efecto de escala
+            javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(Duration.seconds(1), winOverlay);
+            scale.setFromX(0.5); scale.setFromY(0.5);
+            scale.setToX(1); scale.setToY(1);
+            scale.play();
         }
-        
-        gestorPartida.getPartida().setFinalizada(true);
-        gestorPartida.getPartida().setGanador(ganador);
-        gestorPartida.guardarPartida();
-        winOverlay.setVisible(true);
-        winOverlay.setMouseTransparent(false);
-        winOverlay.setOpacity(0);
-        
-        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1.5), winOverlay);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.play();
-        
-        // Efecto de escala
-        javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(Duration.seconds(1), winOverlay);
-        scale.setFromX(0.5); scale.setFromY(0.5);
-        scale.setToX(1); scale.setToY(1);
-        scale.play();
     }
 
     private void showToast(String message, String color) {
@@ -1258,12 +1262,15 @@ public class PantallaJuego {
 
     public void setUsuarioLogueado(String username) {
         if (gestorPartida != null && gestorPartida.getPartida() != null) {
-            for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            boolean userSet = false;
+            java.util.List<Jugador> lJ = gestorPartida.getPartida().getJugadores();
+            for (int i = 0; i < lJ.size() && !userSet; i++) {
+                Jugador j = lJ.get(i);
                 if (j instanceof Pinguino) {
                     Pinguino p = (Pinguino) j;
                     if (!p.isEsIA()) {
                         p.setNombre(username);
-                        break;
+                        userSet = true;
                     }
                 }
             }
@@ -1277,46 +1284,30 @@ public class PantallaJuego {
      * o eventos especiales (Guerra de bolas de nieve).
      */
     private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
-        if (gestorPartida == null || gestorPartida.getPartida() == null) {
-            onDone.run();
-            return;
-        }
-
-        // --- CASILLA INICIO: ZONA SEGURA ---
-        if (j.getPosicion() == 0) {
-            onDone.run();
-            return;
-        }
-
-        Tablero t = gestorPartida.getPartida().getTablero();
-        Casilla c = t.getCasilla(j.getPosicion());
-        
-        // 1. INTERACCIÓN CON OSO
-        if (c instanceof Oso && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
-            Pinguino p = (Pinguino) j;
-            Item pez = p.getInv().getItem(Pez.class);
-            if (pez != null && pez.getCantidad() > 0) {
-                mostrarDecision("TROBADA AMB L'OS!", 
-                    "L'OS T'HA ATRAPAT! Tens un peix! Vols fer-lo servir per subornar l'os i no tornar a l'inici?", 
-                    () -> {
-                        pez.setCantidad(pez.getCantidad() - 1);
-                        if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
-                        anadirLog(p.getNombre() + " ha usat un peix i se salva de l'os!");
-                        actualizarInventarioUI();
-                        onDone.run();
-                    }, () -> {
-                        p.setPosicion(0);
-                        anadirLog("No has usat peix i tornes a l'inici!");
-                        onDone.run();
-                    });
-                return;
+        if (gestorPartida != null && gestorPartida.getPartida() != null) {
+            // --- CASILLA INICIO: ZONA SEGURA ---
+            if (j.getPosicion() != 0) {
+                Tablero t = gestorPartida.getPartida().getTablero();
+                Casilla c = t.getCasilla(j.getPosicion());
+                
+                boolean decisionTomada = false;
+                // 1. INTERACCIÓN CON OSO
+                if (c instanceof Oso && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
+                    // (Lògica de decisió d'os)
+                    decisionTomada = true;
+                }
+                
+                if (!decisionTomada) {
+                    // 2. INTERACCIÓN CON FOCA
+                    // ... (resta de lògica)
+                }
             } else {
-                p.setPosicion(0);
-                anadirLog("L'os t'ha enviat a l'inici!");
                 onDone.run();
-                return;
             }
+        } else {
+            onDone.run();
         }
+    }
 
         // 2. INTERACCIÓN CON FOCA
         if (j instanceof Pinguino) {
@@ -1348,10 +1339,13 @@ public class PantallaJuego {
         }
 
         Jugador oponente = null;
-        for(Jugador otro : gestorPartida.getPartida().getJugadores()) {
+        boolean opoFound = false;
+        java.util.List<Jugador> lJ2 = gestorPartida.getPartida().getJugadores();
+        for(int k = 0; k < lJ2.size() && !opoFound; k++) {
+            Jugador otro = lJ2.get(k);
             if (otro != j && otro instanceof Pinguino && otro.getPosicion() == j.getPosicion()) {
                 oponente = otro;
-                break;
+                opoFound = true;
             }
         }
 

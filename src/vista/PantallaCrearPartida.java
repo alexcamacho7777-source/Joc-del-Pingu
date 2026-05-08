@@ -49,15 +49,14 @@ public class PantallaCrearPartida {
     private void handleAddPlayer() {
         if (activeCards.size() >= MAX_JUGADORES) {
             mostrarAlert(Alert.AlertType.WARNING, "Límit de jugadors", "El màxim de jugadors és " + MAX_JUGADORES + ".");
-            return;
-        }
+        } else {
+            PlayerCard card = new PlayerCard();
+            activeCards.add(card);
+            flowJugadores.getChildren().add(card.getPane());
 
-        PlayerCard card = new PlayerCard();
-        activeCards.add(card);
-        flowJugadores.getChildren().add(card.getPane());
-
-        if (activeCards.size() >= MAX_JUGADORES) {
-            btnAddPlayer.setDisable(true);
+            if (activeCards.size() >= MAX_JUGADORES) {
+                btnAddPlayer.setDisable(true);
+            }
         }
     }
 
@@ -80,55 +79,52 @@ public class PantallaCrearPartida {
         String nomPartida = txtNomPartida.getText().trim();
         if (nomPartida.isEmpty()) {
             mostrarAlert(Alert.AlertType.WARNING, "Dades incompletes", "Si us plau, posa un nom a la partida.");
-            return;
-        }
-
-        if (activeCards.size() < 2) {
+        } else if (activeCards.size() < 2) {
             mostrarAlert(Alert.AlertType.WARNING, "Pocs jugadors", "Has d'afegir almenys 2 jugadors per poder jugar.");
-            return;
-        }
+        } else {
+            List<Jugador> jugadoresFinales = new ArrayList<>();
+            GestorBBDD db = new GestorBBDD();
+            boolean errorValidacion = false;
 
-        List<Jugador> jugadoresFinales = new ArrayList<>();
-        GestorBBDD db = new GestorBBDD();
+            for (int i = 0; i < activeCards.size() && !errorValidacion; i++) {
+                PlayerCard card = activeCards.get(i);
+                String tipo = card.comboTipo.getValue();
+                if (tipo.equals("Pinguí")) {
+                    String user = card.txtUsername.getText().trim();
+                    String pass = card.txtPassword.getText();
+                    
+                    if (user.isEmpty()) {
+                        mostrarAlert(Alert.AlertType.ERROR, "Error Jugador", "El pinguí ha de tenir un nom d'usuari.");
+                        errorValidacion = true;
+                    } else {
+                        boolean esIA = user.toLowerCase().contains("cpu");
+                        if (!esIA) {
+                            if (db.getIDJugador(user) == -1) {
+                                mostrarAlert(Alert.AlertType.ERROR, "Usuari no trobat", "L'usuari '" + user + "' no està registrat.");
+                                errorValidacion = true;
+                            } else if (!db.loginUsuario(user, pass)) {
+                                mostrarAlert(Alert.AlertType.ERROR, "Contrasenya incorrecta", "La contrasenya per a l'usuari '" + user + "' no és correcta.");
+                                errorValidacion = true;
+                            }
+                        }
 
-        for (PlayerCard card : activeCards) {
-            String tipo = card.comboTipo.getValue();
-            if (tipo.equals("Pinguí")) {
-                String user = card.txtUsername.getText().trim();
-                String color = card.comboColor.getValue();
-                String pass = card.txtPassword.getText();
-                
-                if (user.isEmpty()) {
-                    mostrarAlert(Alert.AlertType.ERROR, "Error Jugador", "El pinguí ha de tenir un nom d'usuari.");
-                    return;
-                }
-
-                // Si es CPU no comprobamos contraseña (usamos el convenio de nombre)
-                boolean esIA = user.toLowerCase().contains("cpu");
-                
-                if (!esIA) {
-                    if (db.getIDJugador(user) == -1) {
-                        mostrarAlert(Alert.AlertType.ERROR, "Usuari no trobat", "L'usuari '" + user + "' no està registrat.");
-                        return;
+                        if (!errorValidacion) {
+                            Pinguino p = new Pinguino(user, card.comboColor.getValue(), 0, new model.Inventario());
+                            p.setEsIA(esIA);
+                            jugadoresFinales.add(p);
+                        }
                     }
-
-                    if (!db.loginUsuario(user, pass)) {
-                        mostrarAlert(Alert.AlertType.ERROR, "Contrasenya incorrecta", "La contrasenya per a l'usuari '" + user + "' no és correcta.");
-                        return;
-                    }
+                } else {
+                    Foca f = new Foca();
+                    f.setColor("Gris");
+                    jugadoresFinales.add(f);
                 }
+            }
 
-                Pinguino p = new Pinguino(user, card.comboColor.getValue(), 0, new model.Inventario());
-                p.setEsIA(esIA);
-                jugadoresFinales.add(p);
-            } else {
-                Foca f = new Foca();
-                f.setColor("Gris");
-                jugadoresFinales.add(f);
+            if (!errorValidacion) {
+                lanzarJuego(event, nomPartida, jugadoresFinales);
             }
         }
-
-        lanzarJuego(event, nomPartida, jugadoresFinales);
     }
 
     private void lanzarJuego(ActionEvent event, String nomPartida, List<Jugador> jugadores) {

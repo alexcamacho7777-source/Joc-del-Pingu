@@ -152,22 +152,21 @@ public class PantallaRuleta {
 
     @FXML
     private void handleGirar() {
-        if (isSpinning) return;
-        controlador.SoundManager.getInstance().playSound("click");
-        controlador.SoundManager.getInstance().playSound("event");
-        isSpinning = true;
-        spinButton.setDisable(true);
-        resultLabel.setText("Girant...!");
+        if (!isSpinning) {
+            controlador.SoundManager.getInstance().playSound("click");
+            controlador.SoundManager.getInstance().playSound("event");
+            isSpinning = true;
+            spinButton.setDisable(true);
+            resultLabel.setText("Girant...!");
 
         // Determine result based on probabilities
         int r = random.nextInt(100);
-        int resultIndex = 0;
-        int sum = 0;
-        for (int i = 0; i < probabilities.length; i++) {
+        boolean foundR = false;
+        for (int i = 0; i < probabilities.length && !foundR; i++) {
             sum += probabilities[i];
             if (r < sum) {
                 resultIndex = i;
-                break;
+                foundR = true;
             }
         }
         String resultEvent = possibleEvents[resultIndex];
@@ -201,12 +200,12 @@ public class PantallaRuleta {
             }
         });
         tt.play();
+        }
     }
 
     private void applyResult(String result) {
-        if (jugador == null) return;
-        
-        String logMsg = "";
+        if (jugador != null) {
+            String logMsg = "";
         switch (result) {
             case "Boles de neu" -> {
                 int qty = 1 + random.nextInt(2);
@@ -233,13 +232,13 @@ public class PantallaRuleta {
             }
             case "Moto de neu" -> {
                 int pos = jugador.getPosicion();
-                int nextSled = -1;
+                boolean sledFound = false;
                 if (partida != null && partida.getTablero() != null) {
                     java.util.List<Casilla> casillas = partida.getTablero().getCasillas();
-                    for (int i = pos + 1; i < casillas.size(); i++) {
+                    for (int i = pos + 1; i < casillas.size() && !sledFound; i++) {
                         if (casillas.get(i) instanceof Trineo) {
                             nextSled = i;
-                            break;
+                            sledFound = true;
                         }
                     }
                 }
@@ -265,8 +264,9 @@ public class PantallaRuleta {
             }
         }
         
-        if (partida != null && !logMsg.isEmpty()) {
-            partida.anadirEvento(logMsg);
+            if (partida != null && !logMsg.isEmpty()) {
+                partida.anadirEvento(logMsg);
+            }
         }
     }
 

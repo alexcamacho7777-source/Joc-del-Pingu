@@ -5,28 +5,29 @@ import model.*;
 import java.util.Random;
 
 /**
- * Controlador principal de la partida.
- * Coordina los turnos, movimientos, eventos y persistencia.
+ * CONTROLADOR CENTRAL DE LA PARTIDA.
+ * GESTIONA L'ORDRE DES TORNS, EL MOVIMENT DELS JUGADORS, ELS EVENTS ALEATORIS
+ * I LA SINCRONITZACIÓ AMB LA BASE DE DADES.
  */
 public class GestorPartida {
 
-    /** Partida actualmente en curso. */
+    // PARTIDA EN EXECUCIÓ ACTUALMENT
     private Partida partida;
 
-    /** Controlador del tablero. */
+    // CONTROLADOR DE LA LÒGICA DEL TAULELL I LES CASELLES
     private GestorTablero gestorTablero;
 
-    /** Controlador de jugadores. */
+    // CONTROLADOR DE LES ACCIONS ESPECÍFIQUES DELS JUGADORS
     private GestorJugador gestorJugador;
 
-    /** Controlador de base de datos. */
+    // CONTROLADOR PER A LA PERSISTÈNCIA DE DADES A ORACLE
     private GestorBBDD gestorBBDD;
 
-    /** Generador de números aleatorios. */
+    // GENERADOR DE NÚMEROS ALEATORIS PER A DAUS I EVENTS
     private Random random;
 
     /**
-     * Constructor de GestorPartida.
+     * CONSTRUCTOR QUE INICIALITZA ELS GESTORS DE LÒGICA AUXILIARS.
      */
     public GestorPartida() {
         this.gestorTablero = new GestorTablero();
@@ -34,7 +35,7 @@ public class GestorPartida {
         this.random = new Random();
     }
 
-    // --- Getters y Setters ---
+    // ── MÈTODES D'ACCÉS (GETTERS I SETTERS) ──────────────────────────────────
 
     public Partida getPartida() { return partida; }
     public void setPartida(Partida partida) { this.partida = partida; }
@@ -45,34 +46,20 @@ public class GestorPartida {
     public void setGestorBBDD(GestorBBDD gestorBBDD) { this.gestorBBDD = gestorBBDD; }
     public Random getRandom() { return random; }
 
-    // --- Métodos de ciclo de vida ---
+    // ── GESTIÓ DEL CICLE DE VIDA DE LA PARTIDA ───────────────────────────────
 
     /**
-     * Inicia una nueva partida con los jugadores indicados.
-     * Si datosOpcional es null se usa configuración por defecto.
-     * @param datosOpcional datos de inicialización opcionales (puede ser null)
+     * CREA UNA NOVA PARTIDA BUIDA I REGISTRA L'INICI AL LOG D'EVENTS.
      */
     public void nuevaPartida() {
         partida = new Partida();
         partida.setRandom(random);
-        partida.anadirEvento("Partida començada.");
+        partida.anadirEvento("PARTIDA COMENÇADA.");
     }
 
     /**
-     * Inicia los dados de turno para el jugador indicado.
-     * @param jugador jugador que inicia dados
-     */
-    public void initTirarDado(Jugador jugador) {
-        // Reservado para integración con la vista
-    }
-
-    /**
-     * Tira el dau donat, mou el jugador i retorna el resultat.
-     * Usat per PantallaJuego per moure la fitxa P1.
-     *
-     * @param j    Jugador que tira
-     * @param dado Dau que s'utilitza
-     * @return Resultat del dau
+     * GESTIONA LA TIRADA D'UN DAU ESPECÍFIC PER A UN JUGADOR.
+     * ACTUALITZA LA POSICIÓ I ASSEGURA QUE NO SE SUPERI EL FINAL DEL TAULELL.
      */
     public int tirarDado(Jugador j, Dado dado) {
         int resultado = dado.tirar(random);
@@ -83,112 +70,103 @@ public class GestorPartida {
     }
 
     /**
-     * Ejecuta el turno completo del jugador actual:
-     * tira el dado, mueve al jugador y aplica la acción de la casilla.
+     * EXECUTA EL TORN COMPLET DEL JUGADOR ACTUAL (DINS DEL FLUX DE LÒGICA PURA).
      */
     public void ejecutarTurnoCompleto() {
-        if (partida == null || partida.isFinalizada()) return;
-
-        Jugador jugadorActual = partida.getJugadorActualObj();
-        if (jugadorActual == null) return;
-
-        procesarTurnoJugador(jugadorActual, jugadorActual);
-    }
-
-    /**
-     * Procesa el turno de un jugador concreto.
-     * @param jugadorTurno  jugador al que le toca
-     * @param jugadorActivo jugador que actúa (para la CPU puede diferir)
-     */
-    public void procesarTurnoJugador(Jugador jugadorTurno, Jugador jugadorActivo) {
-        // Comprovar si perd el torn
-        if (partida.getJugadorPierdeTurno() != null &&
-            partida.getJugadorPierdeTurno().equals(jugadorTurno)) {
-            partida.setJugadorPierdeTurno(null);
-            partida.anadirEvento(jugadorTurno.getNombre() + " perd aquest torn.");
-            partida.siguienteTurno();
-            return;
-        }
-
-        // Reduir bloqueig de foca si és el seu torn
-        if (jugadorTurno instanceof Foca) {
-            Foca foca = (Foca) jugadorTurno;
-            if (foca.getTurnosBloqueada() > 0) {
-                foca.reducirBloqueo();
-                partida.anadirEvento("La foca continua bloquejada (" + foca.getTurnosBloqueada() + " torns restants).");
-                partida.siguienteTurno();
-                return;
+        if (partida != null && !partida.isFinalizada()) {
+            Jugador jugadorActual = partida.getJugadorActualObj();
+            if (jugadorActual != null) {
+                procesarTurnoJugador(jugadorActual, jugadorActual);
             }
         }
-
-        // Tirar dau
-        int pasos = tirarDadoParaJugador(jugadorTurno);
-        int posAnterior = jugadorTurno.getPosicion();
-        jugadorTurno.moverPosicion(pasos);
-
-        // Limitar a l'última casella
-        int maxPos = partida.getTablero().getTotalCasillas() - 1;
-        if (jugadorTurno.getPosicion() > maxPos) {
-            jugadorTurno.setPosicion(maxPos);
-        }
-        int posNueva = jugadorTurno.getPosicion();
-
-        partida.anadirEvento(jugadorTurno.getNombre() + " avança " + pasos + " caselles. Posició: " + jugadorTurno.getPosicion());
-
-        // Lògica específica Foca si passa per sobre de jugadors
-        if (jugadorTurno instanceof Foca) {
-            Foca foca = (Foca) jugadorTurno;
-            procesarPasoDeFoca(foca, posAnterior, posNueva);
-        }
-
-        // Aplicar acció de casella
-        Casilla casilla = partida.getTablero().getCasilla(jugadorTurno.getPosicion());
-        gestorTablero.ejecutarCasilla(partida, jugadorTurno, casilla);
-
-        // Comprovar interaccions entre jugadors a la mateixa casella
-        if (jugadorTurno instanceof Pinguino) {
-            Pinguino p = (Pinguino) jugadorTurno;
-            comprobarInteraccionesEnCasilla(p);
-        } else if (jugadorTurno instanceof Foca) {
-            Foca foca = (Foca) jugadorTurno;
-            // Re-utilitzem la lògica d'interacció si la foca cau sobre algú
-            comprobarInteraccionesEnCasilla(foca); 
-        }
-
-        // Comprovar victòria
-        actualizarEstadoTablero();
-
-        // Següent torn
-        partida.siguienteTurno();
     }
 
     /**
-     * Tira el dado correspondiente al jugador.
-     * Si el jugador es IA, decide qué dado usar.
-     * Si es Humano, usa el dado que se le indique (por defecto normal si no hay elección).
+     * LÒGICA CENTRAL DEL TORN D'UN JUGADOR.
+     * CONTROLA EL BLOQUEIG, EL MOVIMENT, LES ACCIONS DE CASELLA I LES INTERACCIONS.
+     */
+    public void procesarTurnoJugador(Jugador jugadorTurno, Jugador jugadorActivo) {
+        // 1. VERIFICACIÓ DE SI EL JUGADOR HA DE PERDRE EL TORN
+        if (partida.getJugadorPierdeTurno() != null && partida.getJugadorPierdeTurno().equals(jugadorTurno)) {
+            partida.setJugadorPierdeTurno(null);
+            partida.anadirEvento(jugadorTurno.getNombre() + " PERD AQUEST TORN.");
+            partida.siguienteTurno();
+        } else {
+            boolean bloqueado = false;
+            // 2. GESTIÓ DEL BLOQUEIG ESPECÍFIC DE LA FOCA
+            if (jugadorTurno instanceof Foca foca) {
+                if (foca.getTurnosBloqueada() > 0) {
+                    foca.reducirBloqueo();
+                    partida.anadirEvento("LA FOCA CONTINUA BLOQUEJADA (" + foca.getTurnosBloqueada() + " TORNS RESTANTS).");
+                    partida.siguienteTurno();
+                    bloqueado = true;
+                }
+            }
+
+            if (!bloqueado) {
+                // 3. MOVIMENT: TIRADA DE DAU (CONSIDERANT IA SI CAL)
+                int pasos = tirarDadoParaJugador(jugadorTurno);
+                int posAnterior = jugadorTurno.getPosicion();
+                jugadorTurno.moverPosicion(pasos);
+
+                // LIMITACIÓ A L'ÚLTIMA CASELLA DEL TAULELL
+                int maxPos = partida.getTablero().getTotalCasillas() - 1;
+                if (jugadorTurno.getPosicion() > maxPos) {
+                    jugadorTurno.setPosicion(maxPos);
+                }
+                int posNueva = jugadorTurno.getPosicion();
+
+                partida.anadirEvento(jugadorTurno.getNombre() + " AVANÇA " + pasos + " CASELLES.");
+
+                // 4. LÒGICA DE LA FOCA: ROBA ÍTEMS SI PASSA PER SOBRE D'UN JUGADOR
+                if (jugadorTurno instanceof Foca foca) {
+                    procesarPasoDeFoca(foca, posAnterior, posNueva);
+                }
+
+                // 5. EXECUCIÓ DE L'EFECTE DE LA CASELLA D'ATERRIZATGE
+                Casilla casilla = partida.getTablero().getCasilla(jugadorTurno.getPosicion());
+                gestorTablero.ejecutarCasilla(partida, jugadorTurno, casilla);
+
+                // 6. COMPROVACIÓ D'INTERACCIONS (ATERRIZAR SOBRE UN ALTRE JUGADOR)
+                comprobarInteraccionesEnCasilla(jugadorTurno);
+
+                // 7. ACTUALITZACIÓ DE L'ESTAT I CANVI DE TORN
+                actualizarEstadoTablero();
+                partida.siguienteTurno();
+            }
+        }
+    }
+
+    /**
+     * DETERMINA EL NÚMERO DE CASELLES A MOURE.
+     * SI ÉS IA, DECIDEIX SI UTILITZA UN DAU ESPECIAL DE L'INVENTARI.
      */
     public int tirarDadoParaJugador(Jugador j) {
         if (j instanceof Pinguino p) {
-            // Lógica de elección de dado para IA
             if (p.isEsIA()) {
                 Item it = decidirDadoIA(p);
                 if (it instanceof Dado d) {
                     return usarDadoEspecial(p, d);
                 }
             }
-            // Si es humano o no eligió dado especial, dado normal
         }
         return 1 + random.nextInt(6);
     }
 
+    /**
+     * LÒGICA DE DECISIÓ PER A LA INTEL·LIGÈNCIA ARTIFICIAL.
+     */
     private Item decidirDadoIA(Pinguino p) {
         int r = random.nextInt(100);
-        if (r < 40) { // 40% de probabilidad de que la IA use un dado especial si tiene
+        if (r < 40) { // 40% DE PROBABILITAT D'USAR DAU ESPECIAL
             return p.getInv().getItem(Dado.class);
         }
         return null;
     }
 
+    /**
+     * UTILITZA UN DAU ESPECIAL I EN REDUEIX LA QUANTITAT DE L'INVENTARI.
+     */
     public int usarDadoEspecial(Pinguino p, Dado d) {
         int resultado = d.tirar(random);
         d.setCantidad(d.getCantidad() - 1);
@@ -197,64 +175,50 @@ public class GestorPartida {
     }
 
     /**
-     * Permite a la IA usar ítems antes de tirar (ej: peces).
+     * PERMET A LA IA REALITZAR ACCIONS PROACTIVES AVANS DE MOURE'S.
      */
     public void realizarAccionesIA(Jugador j) {
         if (!(j instanceof Pinguino p) || !p.isEsIA()) return;
-
-        // Si está cerca de la foca y tiene peces, se los guarda para el encuentro 
-        // o los usa proactivamente si implementamos soborno remoto.
-        // Por ahora, el encuentro con foca ya comprueba el inventario.
+        // (LÒGICA AMPLIABLE PER A ESTRATÈGIES DE LA IA)
     }
 
     /**
-     * Comprueba si el pingüino coincide en casilla con otro jugador o la foca
-     * y aplica las reglas correspondientes.
+     * GESTIONA ELS ENCONTRES DINS D'UNA MATEIXA CASELLA.
+     * INCLOU LA LÒGICA DE SUBORN DE LA FOCA I LA GUERRA DE BOLES DE NEU.
      */
     public void comprobarInteraccionesEnCasilla(Jugador p) {
-        // 1. Interaccions al FINAL de moure
         for (Jugador otro : partida.getJugadores()) {
-            if (otro == p) continue;
-            if (otro.getPosicion() == p.getPosicion()) {
+            if (otro != p && otro.getPosicion() == p.getPosicion()) {
                 if (otro instanceof Foca foca) {
-                    // Si el jugador cau on hi ha la foca
-                    if (p instanceof Pinguino pin) {
-                        // Solo automático para IA
-                        if (pin.isEsIA()) {
-                            gestorJugador.focaInteraccion(pin, foca);
-                            if (!foca.isSobornada()) {
-                                int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
-                                p.setPosicion(anteriorAgujero);
-                                partida.anadirEvento("La foca colpeja a " + p.getNombre() + " (IA) i l'envia al forat anterior.");
-                            }
+                    if (p instanceof Pinguino pin && pin.isEsIA()) {
+                        gestorJugador.focaInteraccion(pin, foca);
+                        if (!foca.isSobornada()) {
+                            int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
+                            p.setPosicion(anteriorAgujero);
+                            partida.anadirEvento("LA FOCA COLPEJA A " + p.getNombre() + " I L'ENVIA AL FORAT ANTERIOR.");
                         }
                     }
                 } else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
-                    // Solo automático si AL MENOS UNO es IA
                     if (p1.isEsIA() || p2.isEsIA()) {
                         gestorJugador.pinguinoGuerraQuema(p1, p2);
                     }
                 }
             }
             
-            // 2. Si la foca és qui s'ha mogut i cau sobre el jugador
+            // SI LA FOCA ACABA EL SEU MOVIMENT SOBRE UN JUGADOR
             if (p instanceof Foca foca && !foca.isSobornada()) {
-                if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2) {
-                    // Si p2 es IA, automático. Si es humano, el UI lo detectará en su turno o al mover la foca.
-                    // Para simplificar, si la foca cae sobre un humano, lo mandamos al agujero (o podríamos preguntar, pero suele ser automático).
-                    // El usuario pidió pantalla para "si tienes un pez", así que preguntaremos.
-                    if (p2.isEsIA()) {
-                        int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
-                        p2.setPosicion(anteriorAgujero);
-                        partida.anadirEvento("La foca cau sobre " + p2.getNombre() + " (IA) i el colpeja al forat anterior!");
-                    }
+                if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2 && p2.isEsIA()) {
+                    int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
+                    p2.setPosicion(anteriorAgujero);
+                    partida.anadirEvento("LA FOCA CAU SOBRE " + p2.getNombre() + " I EL COLPEJA AL FORAT ANTERIOR.");
                 }
             }
         }
     }
 
     /**
-     * Lògica extra per quan la Foca es mou: comprova si passa per sobre de jugadors.
+     * PROCESSA EL ROBATORI D'ÍTEMS QUAN LA FOCA PASSA PER SOBRE D'UN JUGADOR.
+     * EL JUGADOR PERD LA MEITAT DEL SEU INVENTARI SI NO ESTÀ A LA CASELLA D'INICI.
      */
     public java.util.Map<Pinguino, java.util.List<String>> procesarPasoDeFoca(Foca foca, int posAnterior, int posNueva) {
         java.util.Map<Pinguino, java.util.List<String>> robos = new java.util.HashMap<>();
@@ -264,14 +228,12 @@ public class GestorPartida {
         int end = Math.max(posAnterior, posNueva);
 
         for (Jugador j : partida.getJugadores()) {
-            if (j instanceof Pinguino) {
-                Pinguino p = (Pinguino) j;
-                // Si el pinguí NO està a l'inici i la foca ha passat PER SOBRE (no si cau a la mateixa casilla)
+            if (j instanceof Pinguino p) {
                 if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() < end) {
                     java.util.List<String> perdidos = perderMitadInventario(p);
                     if (!perdidos.isEmpty()) {
                         robos.put(p, perdidos);
-                        partida.anadirEvento("La foca ha robat a " + p.getNombre() + ": " + String.join(", ", perdidos));
+                        partida.anadirEvento("LA FOCA HA ROBAT A " + p.getNombre() + ".");
                     }
                 }
             }
@@ -280,8 +242,7 @@ public class GestorPartida {
     }
 
     /**
-     * Hace perder la mitad de los ítems del inventario al pingüino.
-     * @return Lista de nombres de ítems perdidos.
+     * ELIMINA LA MEITAT DELS ÍTEMS DE L'INVENTARI D'UN JUGADOR DE FORMA ALEATÒRIA.
      */
     private java.util.List<String> perderMitadInventario(Jugador p) {
         java.util.List<String> perdidos = new java.util.ArrayList<>();
@@ -291,17 +252,14 @@ public class GestorPartida {
         int perder = total / 2;
         
         for (int i = 0; i < perder; i++) {
-            // Buscamos un item aleatorio que tenga cantidad > 0
             Item stack = p.getInv().quitarUnidadAleatoria(random);
-            if (stack != null) {
-                perdidos.add(stack.getNombre());
-            }
+            if (stack != null) perdidos.add(stack.getNombre());
         }
         return perdidos;
     }
 
     /**
-     * Actualiza el estado del tablero y comprueba si hay un ganador.
+     * VERIFICA SI ALGUN JUGADOR HA ARRIBAT A LA CASELLA FINAL I DETERMINA EL GUANYADOR.
      */
     public void actualizarEstadoTablero() {
         int meta = partida.getTablero().getTotalCasillas() - 1;
@@ -309,51 +267,44 @@ public class GestorPartida {
             if (j.getPosicion() >= meta && !(j instanceof Foca)) {
                 partida.setGanador(j);
                 partida.setFinalizada(true);
-                partida.anadirEvento("¡" + j.getNombre() + " ha guanyat la partida!");
-                return;
+                partida.anadirEvento("¡" + j.getNombre() + " HA GUANYAT LA PARTIDA!");
             }
         }
     }
 
     /**
-     * Avanza al siguiente turno.
+     * AVANÇA EL TORN AL SEGÜENT JUGADOR SEGONS L'ORDRE ESTABLERT.
      */
     public void siguienteTurno() {
         partida.siguienteTurno();
     }
 
     /**
-     * Devuelve la partida actual.
-     * @return partida
+     * RETORNA L'OBJECTE DE PARTIDA ACTUAL.
      */
     public Partida getPartidaActual() {
         return partida;
     }
 
     /**
-     * Guarda la partida en base de dades.
-     * @return true si s'ha guardat correctament
+     * GUARDA L'ESTAT ACTUAL DE LA PARTIDA A LA BASE DE DADES ORACLE.
      */
     public boolean guardarPartida() {
         if (gestorBBDD != null && partida != null) {
-            gestorBBDD.guardarBBDD(partida);
             boolean ok = gestorBBDD.guardarBBDD(partida);
-            if (ok) {
-                partida.anadirEvento("Partida guardada.");
-            }
+            if (ok) partida.anadirEvento("PARTIDA GUARDADA CORRECTAMENT.");
             return ok;
         }
         return false;
     }
 
     /**
-     * Carrega una partida des de la base de dades per ID.
-     * @param id identificador de la partida
+     * CARREGA UNA PARTIDA EXISTENT DES DE LA BASE DE DADES UTILITZANT EL SEU IDENTIFICADOR.
      */
     public void cargarPartida(int id) {
         if (gestorBBDD != null) {
             partida = gestorBBDD.cargarBBDD(id);
-            partida.anadirEvento("Partida carregada (id=" + id + ").");
+            partida.anadirEvento("PARTIDA CARREGADA (ID=" + id + ").");
         }
     }
 }

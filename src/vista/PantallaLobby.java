@@ -111,18 +111,18 @@ public class PantallaLobby {
             PantallaAlerta.mostrar(rootPane, "Sessió no iniciada", "Has d'iniciar sessió per crear una nova partida.", () -> {
                 redirigirALogin(event);
             });
-            return;
-        }
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaCrearPartida.fxml"));
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
-            stage.setFullScreen(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut obrir el menú de creació.");
+        } else {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaCrearPartida.fxml"));
+                Parent root = loader.load();
+                Scene scene = new Scene(root);
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                stage.setScene(scene);
+                stage.setFullScreen(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut obrir el menú de creació.");
+            }
         }
     }
 
@@ -132,15 +132,15 @@ public class PantallaLobby {
             PantallaAlerta.mostrar(rootPane, "Sessió no iniciada", "Has d'iniciar sessió per carregar una partida.", () -> {
                 redirigirALogin(event);
             });
-            return;
+        } else {
+            Map<String, String> seleccionada = tablaPartidas.getSelectionModel().getSelectedItem();
+            if (seleccionada == null) {
+                mostrarAlert(Alert.AlertType.WARNING, "Cap partida seleccionada", "Si us plau, selecciona una partida de la taula per carregar.");
+            } else {
+                Integer gameId = Integer.parseInt(seleccionada.get("ID_PARTIDA"));
+                lanzarJuego(event, gameId);
+            }
         }
-        Map<String, String> seleccionada = tablaPartidas.getSelectionModel().getSelectedItem();
-        if (seleccionada == null) {
-            mostrarAlert(Alert.AlertType.WARNING, "Cap partida seleccionada", "Si us plau, selecciona una partida de la taula per carregar.");
-            return;
-        }
-        Integer gameId = Integer.parseInt(seleccionada.get("ID_PARTIDA"));
-        lanzarJuego(event, gameId);
     }
 
     @FXML

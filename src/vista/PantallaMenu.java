@@ -115,24 +115,23 @@ public class PantallaMenu {
             loggedInUser = null;
             initialize();
             mostrarAlert(Alert.AlertType.INFORMATION, "Sessió tancada", "Has tancat la sessió correctament.");
-            return;
-        }
-
-        try {
-            java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLogin.fxml");
-            if (fxmlUrl == null) {
-                throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLogin.fxml");
+        } else {
+            try {
+                java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLogin.fxml");
+                if (fxmlUrl == null) {
+                    throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLogin.fxml");
+                }
+                FXMLLoader loader = new FXMLLoader(fxmlUrl);
+                Parent root = loader.load();
+                Scene scene = new Scene(root);
+                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                stage.setScene(scene);
+                stage.setFullScreen(true);
+                stage.setFullScreenExitHint("");
+            } catch (Exception e) {
+                e.printStackTrace();
+                mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de login: " + e.getMessage());
             }
-            FXMLLoader loader = new FXMLLoader(fxmlUrl);
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
-            stage.setFullScreen(true);
-            stage.setFullScreenExitHint("");
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de login: " + e.getMessage());
         }
     }
 

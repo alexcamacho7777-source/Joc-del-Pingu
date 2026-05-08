@@ -103,25 +103,27 @@ public class SoundManager {
     }
 
     public void playMenuMusic() {
-        if (!musicEnabled || menuMusic == null) return;
-        if (currentMusic == menuMusic) return; // Ya está sonando
-        
-        if (currentMusic != null) {
-            currentMusic.stop();
+        if (musicEnabled && menuMusic != null) {
+            if (currentMusic != menuMusic) { // No està sonant ja
+                if (currentMusic != null) {
+                    currentMusic.stop();
+                }
+                currentMusic = menuMusic;
+                currentMusic.play();
+            }
         }
-        currentMusic = menuMusic;
-        currentMusic.play();
     }
 
     public void playGameMusic() {
-        if (!musicEnabled || gameMusic == null) return;
-        if (currentMusic == gameMusic) return; // Ya está sonando
-        
-        if (currentMusic != null) {
-            currentMusic.stop();
+        if (musicEnabled && gameMusic != null) {
+            if (currentMusic != gameMusic) { // No està sonant ja
+                if (currentMusic != null) {
+                    currentMusic.stop();
+                }
+                currentMusic = gameMusic;
+                currentMusic.play();
+            }
         }
-        currentMusic = gameMusic;
-        currentMusic.play();
     }
 
     public void stopBackgroundMusic() {

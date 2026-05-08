@@ -51,17 +51,16 @@ public class PantallaLogin {
         String u = logUser.getText().trim();
         String p = logPass.getText();
 
-        if (u.isEmpty() || p.isEmpty()) {
-            mostrarAlert(Alert.AlertType.WARNING, "Camps buits", "Introdueix usuari i contrasenya.");
-            return;
-        }
-
-        controlador.GestorBBDD bd = new controlador.GestorBBDD();
-        if (bd.loginUsuario(u, p)) {
-            PantallaMenu.setLoggedInUser(u);
-            handleTornar(event);
+        if (!u.isEmpty() && !p.isEmpty()) {
+            controlador.GestorBBDD bd = new controlador.GestorBBDD();
+            if (bd.loginUsuario(u, p)) {
+                PantallaMenu.setLoggedInUser(u);
+                handleTornar(event);
+            } else {
+                mostrarAlert(Alert.AlertType.ERROR, "Credencials incorrectes", "Usuari o contrasenya no vàlids.");
+            }
         } else {
-            mostrarAlert(Alert.AlertType.ERROR, "Credencials incorrectes", "Usuari o contrasenya no vàlids.");
+            mostrarAlert(Alert.AlertType.WARNING, "Camps buits", "Introdueix usuari i contrasenya.");
         }
     }
 
@@ -73,27 +72,20 @@ public class PantallaLogin {
 
         if (u.isEmpty() || p.isEmpty() || p2.isEmpty()) {
             mostrarAlert(Alert.AlertType.WARNING, "Camps buits", "Tots els camps són obligatoris.");
-            return;
-        }
-
-        if (!p.equals(p2)) {
+        } else if (!p.equals(p2)) {
             mostrarAlert(Alert.AlertType.WARNING, "Error de contrasenya", "Les contrasenyes no coincideixen.");
-            return;
-        }
-
-        if (p.length() < 4) {
+        } else if (p.length() < 4) {
             mostrarAlert(Alert.AlertType.WARNING, "Contrasenya massa curta", "Mínim 4 caràcters.");
-            return;
-        }
-
-        controlador.GestorBBDD bd = new controlador.GestorBBDD();
-        if (bd.registrarUsuario(u, p)) {
-            mostrarAlert(Alert.AlertType.INFORMATION, "Registre complet", "Usuari creat. Ara pots iniciar sessió.");
-            showLogin();
-            logUser.setText(u);
-            logPass.setText("");
         } else {
-            mostrarAlert(Alert.AlertType.ERROR, "Error de registre", "No s'ha pogut registrar. Potser l'usuari ja existeix.");
+            controlador.GestorBBDD bd = new controlador.GestorBBDD();
+            if (bd.registrarUsuario(u, p)) {
+                mostrarAlert(Alert.AlertType.INFORMATION, "Registre complet", "Usuari creat. Ara pots iniciar sessió.");
+                showLogin();
+                logUser.setText(u);
+                logPass.setText("");
+            } else {
+                mostrarAlert(Alert.AlertType.ERROR, "Error de registre", "No s'ha pogut registrar. Potser l'usuari ja existeix.");
+            }
         }
     }
 
