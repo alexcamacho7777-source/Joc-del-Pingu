@@ -777,12 +777,13 @@ public class PantallaJuego {
             // Animación de "Salto": sube, cambia la celda, y vuelve a bajar
             javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(Duration.millis(120), token);
             scaleUp.setToX(1.3); scaleUp.setToY(1.3);
-            
+            // ANIMACIÓ DE SALT (PUJADA)
             javafx.animation.TranslateTransition moveYUp = new javafx.animation.TranslateTransition(Duration.millis(120), token);
             moveYUp.setByY(-15);
             
             javafx.animation.ParallelTransition hopUp = new javafx.animation.ParallelTransition(scaleUp, moveYUp);
             
+            // ACTUALITZACIÓ DEL CONTENIDOR GRID (LAYOUT) EN EL MOMENT DEL SALT
             javafx.animation.PauseTransition pauseLayout = new javafx.animation.PauseTransition(Duration.millis(10));
             pauseLayout.setOnFinished(e -> {
                 int f = finalCurrent;
@@ -792,6 +793,7 @@ public class PantallaJuego {
                 token.toFront();
             });
 
+            // ANIMACIÓ DE SALT (BAIXADA)
             javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(Duration.millis(120), token);
             scaleDown.setToX(1.0); scaleDown.setToY(1.0);
             
@@ -807,12 +809,11 @@ public class PantallaJuego {
         seq.play();
     }
     
-
     /**
-     * Sincroniza todas las fichas en la vista con sus posiciones lógicas.
+     * SINCRONITZA VISUALMENT LA POSICIÓ DE TOTES LES FITXES AMB EL MODEL LÒGIC.
+     * DISTRIBUEIX ELS JUGADORS DINS DE LA MATEIXA CASELLA PER EVITAR QUE ES TAPIN.
      */
     private void syncVisualPositions(boolean animar) {
-        // Agrupar jugadores por posición para distribuirlos correctamente
         java.util.Map<Integer, java.util.List<Jugador>> enCasilla = new java.util.HashMap<>();
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             int pos = j.getPosicion();
@@ -823,15 +824,18 @@ public class PantallaJuego {
 
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             javafx.scene.Node token = tokenMap.get(j);
+            if (token == null) continue;
 
-            // Asegurar que la ficha se dibuje por encima de las casillas en el GridPane
             token.toFront();
+            int pos = j.getPosicion();
+            if (pos >= 50) pos = 49;
+            if (pos < 0) pos = 0;
 
             java.util.List<Jugador> listaEnPos = enCasilla.get(pos);
             int indexInCell = listaEnPos.indexOf(j);
             int countInCell = listaEnPos.size();
 
-            // Calculamos un pequeño offset para que los jugadores en la misma casilla no se tapen, manteniendo el centro
+            // CÀLCUL DEL DESPLAÇAMENT (OFFSET) SEGONS EL NÚMERO DE JUGADORS A LA CASELLA
             double offsetX = 0;
             double offsetY = 0;
 
@@ -841,18 +845,15 @@ public class PantallaJuego {
                 if (indexInCell == 0) { offsetX = -15; offsetY = -10; }
                 else if (indexInCell == 1) { offsetX = 15; offsetY = -10; }
                 else { offsetX = 0; offsetY = 15; }
-            } else if (countInCell == 4) {
+            } else if (countInCell >= 4) {
                 if (indexInCell == 0) { offsetX = -15; offsetY = -15; }
                 else if (indexInCell == 1) { offsetX = 15; offsetY = -15; }
                 else if (indexInCell == 2) { offsetX = -15; offsetY = 15; }
                 else { offsetX = 15; offsetY = 15; }
-            } else if (countInCell > 4) {
-                if (indexInCell == 0) { offsetX = -20; offsetY = -20; }
-                else if (indexInCell == 1) { offsetX = 20; offsetY = -20; }
-                else if (indexInCell == 2) { offsetX = -20; offsetY = 20; }
-                else if (indexInCell == 3) { offsetX = 20; offsetY = 20; }
-                else { offsetX = 0; offsetY = 0; }
             }
+
+            int newRow = pos / COLUMNS;
+            int newCol = pos % COLUMNS;
 
             if (animar) {
                 javafx.animation.TranslateTransition slide = new javafx.animation.TranslateTransition(Duration.millis(350), token);
@@ -860,20 +861,19 @@ public class PantallaJuego {
                 slide.setToY(offsetY);
                 GridPane.setRowIndex(token, newRow);
                 GridPane.setColumnIndex(token, newCol);
-                GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
-                GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
                 slide.play();
             } else {
                 GridPane.setRowIndex(token, newRow);
                 GridPane.setColumnIndex(token, newCol);
-                GridPane.setHalignment(token, javafx.geometry.HPos.CENTER);
-                GridPane.setValignment(token, javafx.geometry.VPos.CENTER);
                 token.setTranslateX(offsetX);
                 token.setTranslateY(offsetY);
             }
         }
     }
 
+    /**
+     * ACTUALITZA L'EFECTE DE RESPLENDOR (GLOW) I PULSACIÓ PER INDICAR EL JUGADOR ACTUAL.
+     */
     private void actualizarGlowTurno() {
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
@@ -881,7 +881,6 @@ public class PantallaJuego {
             if (token != null) {
                 if (j.equals(actual)) {
                     token.getStyleClass().add("current-player");
-                    // Efecto de pulso
                     javafx.animation.ScaleTransition pulse = new javafx.animation.ScaleTransition(Duration.seconds(0.8), token);
                     pulse.setFromX(1); pulse.setFromY(1);
                     pulse.setToX(1.15); pulse.setToY(1.15);
@@ -892,8 +891,7 @@ public class PantallaJuego {
                 } else {
                     token.getStyleClass().remove("current-player");
                     if (token.getUserData() instanceof javafx.animation.ScaleTransition) {
-                        javafx.animation.ScaleTransition st = (javafx.animation.ScaleTransition) token.getUserData();
-                        st.stop();
+                        ((javafx.animation.ScaleTransition) token.getUserData()).stop();
                         token.setScaleX(1); token.setScaleY(1);
                     }
                 }
@@ -901,59 +899,48 @@ public class PantallaJuego {
         }
     }
 
+    // ── ACCIONS DELS BOTONS D'INVENTARI (USAR OBJECTES) ──────────────────────
+
     @FXML private void handleRapido() { 
         controlador.SoundManager.getInstance().playSound("click");
-        anadirLog("Has fet servir Dau ràpid."); 
         usarObjetoYActualizar("DadoRapido");
     }
     @FXML private void handleLento()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        anadirLog("Has fet servir Dau lent."); 
         usarObjetoYActualizar("DadoLento");
     }
     @FXML private void handlePeces()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        anadirLog("Has menjat Peixos (+ vida o energia)."); 
         usarObjetoYActualizar("Peces");
     }
     @FXML private void handleNieve()  { 
         controlador.SoundManager.getInstance().playSound("click");
-        anadirLog("Has llançat una Bola de neu."); 
         usarObjetoYActualizar("BolaNieve");
     }
 
+    /**
+     * LÒGICA PER UTILITZAR UN OBJECTE DE L'INVENTARI I ACTUALITZAR LA PARTIDA.
+     */
     private void usarObjetoYActualizar(String tipo) {
         if(gestorPartida.getPartida().isFinalizada()) return;
         
         Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
-        if (!(actual instanceof Pinguino) || ((Pinguino) actual).isEsIA()) {
-            anadirLog("No pots usar objectes si no és el teu torn.");
+        if (!(actual instanceof Pinguino p) || p.isEsIA()) {
+            anadirLog("NOMÉS POTS USAR OBJECTES EN EL TEU TORN.");
             return;
         }
-        Pinguino p = (Pinguino) actual;
 
         Inventario inv = p.getInv();
         if (inv == null) return;
 
-        // Caso Dados: Usar e iniciar turno
+        // TRACTAMENT DE DAUS ESPECIALS
         if (tipo.equals("DadoRapido") || tipo.equals("DadoLento")) {
-            Item item = inv.getItem(Dado.class); // Simplificación: busca el primero de clase Dado que coincida
-            // En una implementación más compleja buscaríamos exactamente el tipo.
-            // Por ahora, buscaremos el dado que coincida con el nombre.
-            boolean trobat = false;
-            for (int i = 0; i < inv.getLista().size() && !trobat; i++) {
-                Item itemLoop = inv.getLista().get(i);
-                if (itemLoop instanceof Dado) {
-                    Dado d = (Dado) itemLoop;
+            Dado dadoElegido = null;
+            for (Item itemLoop : inv.getLista()) {
+                if (itemLoop instanceof Dado d) {
                     String name = d.getNombre().toLowerCase();
-                    if (tipo.equals("DadoRapido") && (name.contains("rapido") || name.contains("ràpid"))) {
-                        dadoElegido = d;
-                        trobat = true;
-                    }
-                    if (!trobat && tipo.equals("DadoLento") && (name.contains("lento") || name.contains("lent"))) {
-                        dadoElegido = d;
-                        trobat = true;
-                    }
+                    if (tipo.equals("DadoRapido") && name.contains("rapid")) dadoElegido = d;
+                    if (tipo.equals("DadoLento") && name.contains("lent")) dadoElegido = d;
                 }
             }
 
@@ -962,10 +949,9 @@ public class PantallaJuego {
                 int resultado = gestorPartida.usarDadoEspecial(p, dadoElegido);
                 p.moverPosicion(resultado);
                 
-                // Procesar resto del turno (casilla, etc)
                 Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(p.getPosicion());
                 gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), p, casilla);
-                gestorPartida.getPartida().anadirEvento(p.getNombre() + " usa " + tipo + " i treu un " + resultado);
+                anadirLog(p.getNombre().toUpperCase() + " USA " + tipo.toUpperCase() + ".");
                 
                 animarMovimiento(p, posAnterior, p.getPosicion(), () -> {
                     comprobarInteraccionesUI(p, () -> {
@@ -974,28 +960,24 @@ public class PantallaJuego {
                     });
                 });
             } else {
-                anadirLog("No tens aquest objecte!");
+                anadirLog("NO TENS AQUEST OBJECTE!");
             }
         } 
-        // Caso Otros: Usar y no pasar turno inmediatamente? (Depende de la regla, usualmente Peces se usa proactivamente)
+        // TRACTAMENT D'ALTRES ÍTEMS (MENJAR O ATAC)
         else {
             if (tipo.equals("Peces")) {
                 Item it = inv.getItem(model.Pez.class);
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    anadirLog(p.getNombre() + " ha menjat peixos!");
-                } else {
-                    anadirLog("No tens peixos!");
+                    anadirLog(p.getNombre().toUpperCase() + " HA MENJAT PEIXOS.");
                 }
             } else if (tipo.equals("BolaNieve")) {
                 Item it = inv.getItem(model.BolaDeNieve.class);
                 if (it != null && it.getCantidad() > 0) {
                     it.setCantidad(it.getCantidad() - 1);
                     if (it.getCantidad() <= 0) inv.quitarItem(it);
-                    anadirLog(p.getNombre() + " ha llançat una bola de neu!");
-                } else {
-                    anadirLog("No tens boles de neu!");
+                    anadirLog(p.getNombre().toUpperCase() + " HA LLANÇAT UNA BOLA DE NEU.");
                 }
             }
             actualizarInventarioUI();
@@ -1003,75 +985,40 @@ public class PantallaJuego {
         }
     }
 
+    /**
+     * ACTUALITZA ELS TEXTOS DE L'INVENTARI SEGONS EL JUGADOR HUMÀ ACTUAL.
+     */
     private void actualizarInventarioUI() {
         if(gestorPartida.getPartida().getJugadores().size() > 0) {
-            Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
+            Jugador mostrar = gestorPartida.getPartida().getJugadorActualObj();
             
-            // Si el actual es Foca o IA, mostramos el del primer humano para que no se quede vacío, 
-            // pero indicamos de quién es.
-            Jugador mostrar = actual;
-            boolean trobatJug = false;
-            java.util.List<Jugador> jugs = gestorPartida.getPartida().getJugadores();
-            for(int k = 0; k < jugs.size() && !trobatJug; k++) {
-                Jugador j = jugs.get(k);
-                if(j instanceof Pinguino && !((Pinguino) j).isEsIA()) {
-                    mostrar = j;
-                    trobatJug = true;
+            // SI ÉS EL TORN DE LA IA O LA FOCA, MOSTREM L'INVENTARI DEL PRIMER HUMÀ
+            if (mostrar instanceof model.Foca || (mostrar instanceof Pinguino pin && pin.isEsIA())) {
+                for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+                    if(j instanceof Pinguino p && !p.isEsIA()) {
+                        mostrar = j;
+                        break;
+                    }
                 }
             }
             
-            if (mostrar instanceof Pinguino) {
-                Pinguino p = (Pinguino) mostrar;
+            if (mostrar instanceof Pinguino p) {
                 nomInventari.setText("PROPIETARI: " + p.getNombre().toUpperCase());
-                
-                String colorHex;
-                switch(p.getColor().toLowerCase()) {
-                    case "azul":
-                    case "blau": colorHex = "#0072ff"; break;
-                    case "rojo":
-                    case "vermell": colorHex = "#ff4b2b"; break;
-                    case "verde":
-                    case "verd": colorHex = "#11998e"; break;
-                    case "amarillo":
-                    case "groc": colorHex = "#f2c94c"; break;
-                    case "rosa": colorHex = "#ff69b4"; break;
-                    case "cian": colorHex = "#00ffff"; break;
-                    default: colorHex = "#00d2ff"; break;
-                }
-                nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: " + colorHex + "; -fx-font-size: 14px;");
-
                 Inventario inv = p.getInv();
                 if(inv != null) {
-                    rapido_t.setText("Dau ràpid: " + inv.contarItems("DadoRapido"));
-                    lento_t.setText("Dau lent: " + inv.contarItems("DadoLento"));
-                    peces_t.setText("Peixos: " + inv.contarItems("Peces"));
-                    nieve_t.setText("Boles neu: " + inv.contarItems("BolaNieve"));
+                    rapido_t.setText("DAU RÀPID: " + inv.contarItems("DadoRapido"));
+                    lento_t.setText("DAU LENT: " + inv.contarItems("DadoLento"));
+                    peces_t.setText("PEIXOS: " + inv.contarItems("Peces"));
+                    nieve_t.setText("BOLES NEU: " + inv.contarItems("BolaNieve"));
                 }
-            } else {
-                nomInventari.setText("Inventari buit");
-                nomInventari.setStyle("-fx-font-weight: bold; -fx-text-fill: #888888;");
-                rapido_t.setText("Dau ràpid: 0");
-                lento_t.setText("Dau lent: 0");
-                peces_t.setText("Peixos: 0");
-                nieve_t.setText("Boles neu: 0");
             }
-        }
-    }
-
-    public void setGestorPartida(GestorPartida gestorPartida) {
-        this.gestorPartida = gestorPartida;
-        if (gestorPartida != null && gestorPartida.getPartida() != null) {
-            syncLoadedJugadores();
-            syncVisualPositions(false);
-            actualizarInventarioUI();
         }
     }
 
     /**
-     * Re-vincula els objectes Jugador carregats de la BBDD amb els nodes visuals (P1, P2...).
+     * CREA O RECUPERA EL NODE VISUAL PER A L'AVATAR DE LA FOCA.
      */
     private javafx.scene.Node getOrCreateFocaAvatar() {
-        // Cache-busting ID
         javafx.scene.Node focaAvatar = tablero.lookup("#ROBOT_SEAL_V3");
         StackPane sp;
         
@@ -1079,8 +1026,7 @@ public class PantallaJuego {
             sp = new StackPane();
             sp.setId("ROBOT_SEAL_V3");
             sp.getStyleClass().add("player");
-            sp.setStyle("-fx-background-color: transparent;"); 
-            sp.setMaxSize(50, 50); // Evitar que ocupe toda la pantalla
+            sp.setMaxSize(50, 50);
             tablero.getChildren().add(sp);
         } else {
             sp = (StackPane) focaAvatar;
@@ -1088,73 +1034,25 @@ public class PantallaJuego {
         }
 
         try {
-            // Path a la imagen proporcionada por el usuario
-            String[] paths = {
-                "/resources/images/casillas/foca.png",
-                "/images/casillas/foca.png",
-                "/resources/foca.png"
-            };
-            Image img = null;
-            boolean imgTrobat = false;
-            for (int i = 0; i < paths.length && !imgTrobat; i++) {
-                String p = paths[i];
-                java.net.URL url = getClass().getResource(p);
-                if (url != null) {
-                    img = new Image(url.toExternalForm());
-                    imgTrobat = true;
-                }
-            }
-
-            if (img != null) {
-                ImageView iv = new ImageView(img);
-                iv.setFitWidth(65);
-                iv.setFitHeight(65);
+            java.net.URL url = getClass().getResource("/resources/images/casillas/foca.png");
+            if (url != null) {
+                ImageView iv = new ImageView(new Image(url.toExternalForm()));
+                iv.setFitWidth(65); iv.setFitHeight(65);
                 iv.setPreserveRatio(true);
                 sp.getChildren().add(iv);
-            } else {
-                // Fallback visual muy claro (SIN EMOJIS que puedan fallar)
-                Rectangle r = new Rectangle(40, 40, Color.web("#1a2a44"));
-                r.setStroke(Color.CYAN);
-                r.setStrokeWidth(2);
-                Text t = new Text("ROBOT");
-                t.setFill(Color.WHITE);
-                t.setStyle("-fx-font-size: 9px; -fx-font-weight: bold;");
-                StackPane.setAlignment(t, Pos.CENTER);
-                sp.getChildren().addAll(r, t);
             }
         } catch (Exception e) {
-            System.err.println("CRITICAL: Error loading seal avatar: " + e.getMessage());
+            System.err.println("ERROR CARREGANT AVATAR FOCA.");
         }
 
         GridPane.setHalignment(sp, javafx.geometry.HPos.CENTER);
         GridPane.setValignment(sp, javafx.geometry.VPos.CENTER);
-        
         return sp;
     }
 
-    private void syncLoadedJugadores() {
-        if (gestorPartida == null || gestorPartida.getPartida() == null) return;
-        
-        java.util.List<Jugador> jugadores = gestorPartida.getPartida().getJugadores();
-        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
-        
-        tokenMap.clear();
-        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
-        
-        for (int i = 0; i < jugadores.size(); i++) {
-            Jugador j = jugadores.get(i);
-            if (j instanceof model.Foca) {
-                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
-                tokenMap.put(j, focaAvatar);
-                focaAvatar.setVisible(true);
-            } else if (i < pTokens.length && pTokens[i] != null) {
-                pTokens[i].setVisible(true);
-                tokenMap.put(j, pTokens[i]);
-                aplicarColorAToken(pTokens[i], j.getColor());
-            }
-        }
-    }
-    
+    /**
+     * ASSIGNA EL COLOR VISUAL AL GORRO DEL PINGÜÍ SEGONS EL COLOR LÒGIC DEL JUGADOR.
+     */
     private void aplicarColorAToken(javafx.scene.Node token, String colorStr) {
         if (colorStr == null) return;
         javafx.scene.paint.Color color;
@@ -1162,42 +1060,25 @@ public class PantallaJuego {
             case "vermell": color = javafx.scene.paint.Color.RED; break;
             case "verd": color = javafx.scene.paint.Color.GREEN; break;
             case "groc": color = javafx.scene.paint.Color.YELLOW; break;
-            case "rosa": color = javafx.scene.paint.Color.PINK; break;
-            case "cian": color = javafx.scene.paint.Color.CYAN; break;
             case "blau": color = javafx.scene.paint.Color.DEEPSKYBLUE; break;
             default: color = javafx.scene.paint.Color.DEEPSKYBLUE;
         }
 
-        // Aplicar ColorAdjust para teñir el pingüino
-        javafx.scene.effect.ColorAdjust monColor = new javafx.scene.effect.ColorAdjust();
-        // El azul original tiene un hue de aprox 0.6. Ajustamos el hue para llegar al color deseado.
-        // Forma más simple: usar un DropShadow de color muy fuerte o cambiar el relleno de las partes si fuera SVG.
-        // Como es un Group de formas, buscamos la forma principal (cuerpo) y le cambiamos el color.
         javafx.scene.Group targetGroup = null;
-        if (token instanceof javafx.scene.Group) {
-            targetGroup = (javafx.scene.Group) token;
-        } else if (token instanceof StackPane) {
-            StackPane sp = (StackPane) token;
-            if (!sp.getChildren().isEmpty() && sp.getChildren().get(0) instanceof javafx.scene.Group) {
-                targetGroup = (javafx.scene.Group) sp.getChildren().get(0);
-            }
-        }
+        if (token instanceof javafx.scene.Group) targetGroup = (javafx.scene.Group) token;
+        else if (token instanceof StackPane sp && !sp.getChildren().isEmpty() && sp.getChildren().get(0) instanceof javafx.scene.Group grp) targetGroup = grp;
 
         if (targetGroup != null) {
             for (javafx.scene.Node child : targetGroup.getChildren()) {
-                if (child instanceof javafx.scene.shape.Shape) {
-                    javafx.scene.shape.Shape s = (javafx.scene.shape.Shape) child;
-                    // El gorro suele estar compuesto por rectángulos o polígonos de color azul
+                if (child instanceof javafx.scene.shape.Shape s) {
+                    // CANVIEM EL COLOR DE LES FORMES QUE REPRESENTEN EL GORRO O IDENTIFICADOR
                     if (s.getFill() instanceof javafx.scene.paint.Color) {
-                        javafx.scene.paint.Color fill = (javafx.scene.paint.Color) s.getFill();
-                        // Si es el azul original del gorro, lo cambiamos
-                        if (fill.equals(javafx.scene.paint.Color.DEEPSKYBLUE) || 
-                            fill.equals(javafx.scene.paint.Color.BLUE) ||
-                            fill.toString().contains("0x00bfff") || // DeepSkyBlue
-                            fill.toString().contains("0xff4b2b") || // Rojo P2
-                            fill.toString().contains("0x11998e") || // Verde P3
-                            fill.toString().contains("0xf2c94c") || // Amarillo P4
-                            (child instanceof javafx.scene.shape.Rectangle)) { 
+                        s.setFill(color);
+                    }
+                }
+            }
+        }
+    }
                             s.setFill(color);
                         }
                     }
@@ -1319,65 +1200,62 @@ public class PantallaJuego {
                     return;
                 }
             }
-        } else if (j instanceof Foca) {
-            Foca f = (Foca) j;
+    /**
+     * COMPROVA LES INTERACCIONS VISUALS QUE REQUEREIXEN ACCIÓ DE L'USUARI (COMBAT O SUBORN).
+     */
+    private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
+        if (j instanceof model.Foca f) {
             if (!f.isSobornada()) {
-                // Busquem si hi ha algun pingüí humà en aquesta casella
+                // BUSQUEM SI HI HA ALGUN PINGÜÍ HUMÀ PER INTERACTUAR AMB LA FOCA
+                boolean interactuado = false;
                 for (Jugador otro : gestorPartida.getPartida().getJugadores()) {
-                    if (otro instanceof Pinguino && !((Pinguino) otro).isEsIA() && otro.getPosicion() == f.getPosicion()) {
-                        interactuarConFoca((Pinguino) otro, f, onDone);
-                        return;
+                    if (otro instanceof Pinguino p && !p.isEsIA() && otro.getPosicion() == f.getPosicion()) {
+                        interactuarConFoca(p, f, onDone);
+                        interactuado = true;
+                        break;
                     }
                 }
+                if (!interactuado) onDone.run();
+            } else {
+                onDone.run();
             }
-        }
-
-        // 3. GUERRA DE BOLAS DE NIEVE
-        if (!(j instanceof Pinguino)) {
+        } else if (j instanceof Pinguino p) {
+            // VERIFIQUEM SI HI HA UN COMBAT ENTRE PINGÜINS O AMB LA FOCA
+            Foca focaEnPos = findFocaEnPosicion(p.getPosicion());
+            if (focaEnPos != null && !focaEnPos.isSobornada() && !p.isEsIA()) {
+                interactuarConFoca(p, focaEnPos, onDone);
+            } else {
+                Jugador oponente = null;
+                for (Jugador otro : gestorPartida.getPartida().getJugadores()) {
+                    if (otro != p && otro instanceof Pinguino && otro.getPosicion() == p.getPosicion()) {
+                        oponente = otro;
+                        break;
+                    }
+                }
+                if (oponente != null) {
+                    ejecutarGuerraBolas(p, (Pinguino) oponente, onDone);
+                } else {
+                    onDone.run();
+                }
+            }
+        } else {
             onDone.run();
-            return;
         }
-
-        Jugador oponente = null;
-        boolean opoFound = false;
-        java.util.List<Jugador> lJ2 = gestorPartida.getPartida().getJugadores();
-        for(int k = 0; k < lJ2.size() && !opoFound; k++) {
-            Jugador otro = lJ2.get(k);
-            if (otro != j && otro instanceof Pinguino && otro.getPosicion() == j.getPosicion()) {
-                oponente = otro;
-                opoFound = true;
-            }
-        }
-
-        if (oponente != null) {
-            ejecutarGuerraBolas((Pinguino)j, (Pinguino)oponente, onDone);
-            return;
-        }
-
-        onDone.run();
     }
 
+    /**
+     * MOSTRA UN DIÀLEG DE DECISIÓ PERSONALITZAT (SÍ/NO) EN UNA OVERLAY.
+     */
     private void mostrarDecision(String titulo, String msg, Runnable onYes, Runnable onNo) {
         Platform.runLater(() -> {
             try {
-                if (boardStack == null) {
-                    onNo.run();
-                    return;
-                }
-
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaDecision.fxml"));
                 Parent root = loader.load();
                 PantallaDecision controller = loader.getController();
-                
                 controller.setContent(titulo, msg, onYes, onNo);
-                
-                // Afegim l'overlay al StackPane del joc
                 boardStack.getChildren().add(root);
-                
             } catch (Exception e) {
-                System.err.println("Error al mostrar decision: " + e.getMessage());
-                e.printStackTrace();
-                // Fallback a Alert si falla el custom UI
+                // FALLBACK A ALERTA ESTÀNDARD SI EL CUSTOM UI FALLA
                 Alert alert = new Alert(AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
                 alert.setTitle(titulo);
                 alert.showAndWait().ifPresent(response -> {
@@ -1388,33 +1266,35 @@ public class PantallaJuego {
         });
     }
 
+    /**
+     * EXECUTA LA LÒGICA DE LA GUERRA DE BOLES DE NEU ENTRE DOS PINGÜINS.
+     */
     private void ejecutarGuerraBolas(Pinguino p1, Pinguino p2, Runnable onDone) {
         Item b1it = p1.getInv().getItem(BolaDeNieve.class);
         Item b2it = p2.getInv().getItem(BolaDeNieve.class);
         int b1 = b1it != null ? b1it.getCantidad() : 0;
         int b2 = b2it != null ? b2it.getCantidad() : 0;
 
-        String msg = "GUERRA DE BOLES DE NEU!\n" + p1.getNombre() + " (" + b1 + ") vs " + p2.getNombre() + " (" + b2 + ")";
+        String msg = "GUERRA DE BOLES DE NEU!\n" + p1.getNombre().toUpperCase() + " (" + b1 + ") VS " + p2.getNombre().toUpperCase() + " (" + b2 + ")";
         
         Platform.runLater(() -> {
             PantallaAlerta.mostrar(rootPane, "GUERRA DE BOLES!", msg, () -> {
-                // Ambos gastan sus bolas
                 if (b1it != null) p1.getInv().quitarItem(b1it);
                 if (b2it != null) p2.getInv().quitarItem(b2it);
 
                 int diff = b1 - b2;
                 if (diff > 0) {
-                    anadirLog(p1.getNombre() + " guanya la guerra i avança " + diff + "!");
+                    anadirLog(p1.getNombre().toUpperCase() + " GUANYA I AVANÇA " + diff + ".");
                     int posAnt = p1.getPosicion();
                     p1.moverPosicion(diff);
                     animarMovimiento(p1, posAnt, p1.getPosicion(), onDone);
                 } else if (diff < 0) {
-                    anadirLog(p2.getNombre() + " guanya la guerra i avança " + (-diff) + "!");
+                    anadirLog(p2.getNombre().toUpperCase() + " GUANYA I AVANÇA " + (-diff) + ".");
                     int posAnt = p2.getPosicion();
                     p2.moverPosicion(-diff);
                     animarMovimiento(p2, posAnt, p2.getPosicion(), onDone);
                 } else {
-                    anadirLog("Empat! Cap jugador es mou.");
+                    anadirLog("EMPAT EN LA GUERRA DE BOLES!");
                     onDone.run();
                 }
                 actualizarInventarioUI();
@@ -1422,46 +1302,59 @@ public class PantallaJuego {
         });
     }
 
+    /**
+     * CERCA SI HI HA UNA FOCA EN UNA POSICIÓ DETERMINADA DEL TAULELL.
+     */
     private Foca findFocaEnPosicion(int pos) {
+        Foca fFound = null;
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
-            if (j instanceof Foca && j.getPosicion() == pos) return (Foca) j;
+            if (j instanceof Foca && j.getPosicion() == pos) {
+                fFound = (Foca) j;
+                break;
+            }
         }
-        return null;
+        return fFound;
     }
 
+    /**
+     * GESTIONA LA INTERACCIÓ DE SUBORN ENTRE UN JUGADOR I LA FOCA.
+     */
     private void interactuarConFoca(Pinguino p, Foca f, Runnable onDone) {
         Item pez = p.getInv().getItem(Pez.class);
         if (pez != null && pez.getCantidad() > 0) {
             mostrarDecision("FOCA ROBOT!", 
-                "La foca t'ha atrapat! Vols donar-li un peix per bloquejar-la 2 torns?", 
+                "LA FOCA T'HA ATRAPAT! VOLS DONAR-LI UN PEIX PER BLOQUEJAR-LA?", 
                 () -> {
                     pez.setCantidad(pez.getCantidad() - 1);
                     if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez);
                     f.activarSoborno();
-                    anadirLog(p.getNombre() + " ha sobornat la foca!");
+                    anadirLog(p.getNombre().toUpperCase() + " HA SUBORNAT LA FOCA.");
                     actualizarInventarioUI();
                     onDone.run();
                 }, () -> {
                     aplicarCastigoFoca(p, onDone);
                 });
         } else {
-            // No tiene peces
             showSpecialTileMessage("NO TENS PEIXOS! RETROCEDEIXES!", "hole", () -> {
                 aplicarCastigoFoca(p, onDone);
             });
         }
     }
 
+    /**
+     * APLICA EL CÀSTIG DE LA FOCA (RETROCEDIR FINS AL FORAT ANTERIOR).
+     */
     private void aplicarCastigoFoca(Jugador j, Runnable onDone) {
         int posAnterior = j.getPosicion();
-        // Usamos el método que ya existe en la clase Tablero
         int posAgujero = gestorPartida.getPartida().getTablero().buscarAgujeroAnterior(posAnterior);
         j.setPosicion(posAgujero);
-        anadirLog(j.getNombre() + " no té peixos i retrocedeix fins a la posició " + posAgujero);
-        
+        anadirLog(j.getNombre().toUpperCase() + " RETROCEDEIX PER CÀSTIG DE LA FOCA.");
         animarMovimiento(j, posAnterior, posAgujero, onDone);
     }
 
+    /**
+     * MOSTRA UNA FINESTRA D'ALERTA ESTÀNDARD DE JAVAFX.
+     */
     private void mostrarAlert(AlertType tipus, String titol, String missatge) {
         Platform.runLater(() -> {
             Alert alert = new Alert(tipus);
@@ -1470,5 +1363,17 @@ public class PantallaJuego {
             alert.setContentText(missatge);
             alert.showAndWait();
         });
+    }
+
+    /**
+     * MOSTRA L'OVERLAY DE VICTÒRIA QUAN UN JUGADOR ARRIBA A LA META.
+     */
+    private void mostrarVictoria(Jugador ganador) {
+        if (winOverlay != null) {
+            winLabel.setText("GUANYADOR: " + ganador.getNombre().toUpperCase());
+            winOverlay.setVisible(true);
+            javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.seconds(1), winOverlay);
+            ft.setFromValue(0); ft.setToValue(1); ft.play();
+        }
     }
 }

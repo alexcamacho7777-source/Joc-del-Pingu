@@ -14,36 +14,53 @@ import javafx.animation.RotateTransition;
 import javafx.util.Duration;
 import javafx.scene.layout.StackPane;
 
+/**
+ * CONTROLADOR DEL MENÚ PRINCIPAL DEL JOC.
+ * PERMET L'ACCÉS AL LOBBY, ESTADÍSTIQUES, AJUSTAMENTS I GESTIÓ D'USUARI.
+ */
 public class PantallaMenu {
 
+    // BOTONS PRINCIPALS DE LA INTERFÍCIE
     @FXML private Button btnJugar;
     @FXML private Button btnUsuari;
     @FXML private Button btnAjustes;
     @FXML private Label lblSessio;
     @FXML private javafx.scene.layout.StackPane rootPane;
 
+    // VARIABLE ESTÀTICA PER MANTENIR L'USUARI LOGUEJAT DURANT LA SESSIÓ
     private static String loggedInUser = null;
 
+    /**
+     * ESTABLEIX L'USUARI QUE HA INICIAT SESSIÓ.
+     */
     public static void setLoggedInUser(String user) {
         loggedInUser = user;
     }
 
+    /**
+     * RETORNA EL NOM DE L'USUARI ACTUAL.
+     */
     public static String getLoggedInUser() {
         return loggedInUser;
     }
 
+    /**
+     * INICIALITZA EL MENÚ, MOSTRA L'ESTAT DE LA SESSIÓ I CONFIGURA LES ANIMACIONS.
+     */
     @FXML
     private void initialize() {
         controlador.SoundManager.getInstance().playMenuMusic();
+        
+        // ACTUALITZACIÓ DEL TEXT DE BENVINGUDA SEGONS L'USUARI
         if (loggedInUser != null) {
-            lblSessio.setText("Sessió iniciada com: " + loggedInUser);
-            btnUsuari.setText("Tancar Sessió");
+            lblSessio.setText("SESSIÓ INICIADA COM: " + loggedInUser.toUpperCase());
+            btnUsuari.setText("TANCAR SESSIÓ");
         } else {
-            lblSessio.setText("");
-            btnUsuari.setText("Usuari");
+            lblSessio.setText("USUARI NO REGISTRAT");
+            btnUsuari.setText("INICIAR SESSIÓ");
         }
 
-        // Animació de rotació per al botó d'ajustes
+        // ANIMACIÓ DE ROTACIÓ PER AL BOTÓ D'AJUSTAMENTS (AL PASSAR EL RATOLÍ)
         if (btnAjustes != null) {
             RotateTransition rt = new RotateTransition(Duration.millis(1000), btnAjustes);
             rt.setByAngle(360);
@@ -58,16 +75,14 @@ public class PantallaMenu {
         }
     }
 
+    /**
+     * CANVIA A LA PANTALLA DEL LOBBY PER COMENÇAR O CARREGAR UNA PARTIDA.
+     */
     @FXML
     private void handleJugar(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
-        // Ja no és necessari estar loguejat al menú principal
-
         try {
             java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLobby.fxml");
-            if (fxmlUrl == null) {
-                throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLobby.fxml");
-            }
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
             Scene scene = new Scene(root);
@@ -76,15 +91,16 @@ public class PantallaMenu {
             stage.setFullScreen(true);
             stage.setFullScreenExitHint("");
         } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de lobby: " + e.getMessage());
+            mostrarAlert(Alert.AlertType.ERROR, "ERROR DE NAVEGACIÓ", "NO S'HA POGUT CARREGAR EL LOBBY.");
         }
     }
 
+    /**
+     * OBRE EL PANNELL D'AJUSTAMENTS (SÓ, MÚSICA, ETC.) COM UNA FINESTRA MODAL.
+     */
     @FXML
     private void handleAjustes(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
-        System.out.println("DEBUG: Obriu ajustes com overlay...");
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaAjustes.fxml"));
             Parent root = loader.load();
@@ -101,53 +117,44 @@ public class PantallaMenu {
             stage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
             stage.showAndWait();
         } catch (Exception e) {
-            System.err.println("ERROR carregant Ajustes: " + e.getMessage());
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar el menú d'ajustes: " + e.getMessage());
+            mostrarAlert(Alert.AlertType.ERROR, "ERROR", "NO S'HA POGUT CARREGAR ELS AJUSTAMENTS.");
         }
     }
 
+    /**
+     * GESTIONA EL LOGIN O LOGOUT DE L'USUARI SEGONS L'ESTAT ACTUAL.
+     */
     @FXML
     private void handleUsuari(ActionEvent event) {
         controlador.SoundManager.getInstance().playSound("click");
         if (loggedInUser != null) {
-            // Logout
+            // TANCAMENT DE SESSIÓ
             loggedInUser = null;
             initialize();
-            mostrarAlert(Alert.AlertType.INFORMATION, "Sessió tancada", "Has tancat la sessió correctament.");
+            mostrarAlert(Alert.AlertType.INFORMATION, "SESSIÓ TANCADA", "HAS SORTIT CORRECTAMENT.");
         } else {
+            // NAVEGACIÓ AL LOGIN
             try {
                 java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaLogin.fxml");
-                if (fxmlUrl == null) {
-                    throw new java.io.IOException("No s'ha trobat el fitxer FXML: /resources/PantallaLogin.fxml");
-                }
                 FXMLLoader loader = new FXMLLoader(fxmlUrl);
                 Parent root = loader.load();
                 Scene scene = new Scene(root);
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(scene);
                 stage.setFullScreen(true);
-                stage.setFullScreenExitHint("");
             } catch (Exception e) {
-                e.printStackTrace();
-                mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla de login: " + e.getMessage());
+                mostrarAlert(Alert.AlertType.ERROR, "ERROR", "NO S'HA POGUT CARREGAR EL LOGIN.");
             }
         }
     }
 
+    /**
+     * CANVIA A LA PANTALLA D'ESTADÍSTIQUES PER VEURE EL RÀNQUING I LES DADES GLOBALS.
+     */
     @FXML
     private void handleStats(ActionEvent event) {
         try {
             java.net.URL fxmlUrl = getClass().getResource("/resources/PantallaEstadistiques.fxml");
-            if (fxmlUrl == null) {
-                // Intentar sense la barra inicial si falla, o amb el ClassLoader
-                fxmlUrl = PantallaMenu.class.getClassLoader().getResource("resources/PantallaEstadistiques.fxml");
-            }
-            
-            if (fxmlUrl == null) {
-                throw new java.io.IOException("No s'ha trobat el fitxer FXML: resources/PantallaEstadistiques.fxml");
-            }
-
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
             Scene scene = new Scene(root);
@@ -155,11 +162,13 @@ public class PantallaMenu {
             stage.setScene(scene);
             stage.setFullScreen(true);
         } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut carregar la pantalla d'estadístiques: " + e.getMessage());
+            mostrarAlert(Alert.AlertType.ERROR, "ERROR", "NO S'HA POGUT CARREGAR LES ESTADÍSTIQUES.");
         }
     }
 
+    /**
+     * MÈTODE PER MOSTRAR ALERTES PERSONALITZADES USANT EL SISTEMA DE LA PANTALLA D'ALERTA.
+     */
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
         PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }

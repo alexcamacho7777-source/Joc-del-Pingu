@@ -20,6 +20,10 @@ import model.Pinguino;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CONTROLADOR PER A LA CONFIGURACIÓ DE NOVES PARTIDES.
+ * PERMET DEFINIR EL NOM DE LA PARTIDA I AFEGIR FINS A 4 JUGADORS (HUMANS, IA O FOCA).
+ */
 public class PantallaCrearPartida {
 
     @FXML private TextField txtNomPartida;
@@ -27,13 +31,16 @@ public class PantallaCrearPartida {
     @FXML private Button btnAddPlayer;
     @FXML private StackPane rootPane;
 
+    // LLISTA PER GESTIONAR LES TARGETES DE CONFIGURACIÓ DE CADA JUGADOR
     private List<PlayerCard> activeCards = new ArrayList<>();
     private static final int MAX_JUGADORES = 4;
 
+    /**
+     * INICIALITZA LA PANTALLA I AFEGEIX AUTOMÀTICAMENT EL JUGADOR LOGUEJAT COM A PRIMER INTEGRANT.
+     */
     @FXML
     private void initialize() {
         controlador.SoundManager.getInstance().playMenuMusic();
-        // Añadir el primer jugador por defecto (el usuario logueado)
         handleAddPlayer();
         if (!activeCards.isEmpty()) {
             PlayerCard firstCard = activeCards.get(0);
@@ -45,10 +52,13 @@ public class PantallaCrearPartida {
         }
     }
 
+    /**
+     * AFEGEIX UNA NOVA TARGETA DE JUGADOR AL CONTENIDOR VISUAL.
+     */
     @FXML
     private void handleAddPlayer() {
         if (activeCards.size() >= MAX_JUGADORES) {
-            mostrarAlert(Alert.AlertType.WARNING, "Límit de jugadors", "El màxim de jugadors és " + MAX_JUGADORES + ".");
+            mostrarAlert(Alert.AlertType.WARNING, "LÍMIT ASSOLIT", "EL MÀXIM DE JUGADORS ÉS " + MAX_JUGADORES + ".");
         } else {
             PlayerCard card = new PlayerCard();
             activeCards.add(card);
@@ -60,6 +70,9 @@ public class PantallaCrearPartida {
         }
     }
 
+    /**
+     * TORNA A LA PANTALLA DEL LOBBY.
+     */
     @FXML
     private void handleTornar(ActionEvent event) {
         try {
@@ -74,36 +87,43 @@ public class PantallaCrearPartida {
         }
     }
 
+    /**
+     * VALIDA TOTA LA CONFIGURACIÓ I INICIA LA PARTIDA SI NO HI HA ERRORS.
+     */
     @FXML
     private void handleComencar(ActionEvent event) {
         String nomPartida = txtNomPartida.getText().trim();
+        
+        // VALIDACIÓ ESTRUCTURADA SENSE RETURNS PREMATURS
         if (nomPartida.isEmpty()) {
-            mostrarAlert(Alert.AlertType.WARNING, "Dades incompletes", "Si us plau, posa un nom a la partida.");
+            mostrarAlert(Alert.AlertType.WARNING, "NOM BUIT", "SI US PLAU, POSA UN NOM A LA PARTIDA.");
         } else if (activeCards.size() < 2) {
-            mostrarAlert(Alert.AlertType.WARNING, "Pocs jugadors", "Has d'afegir almenys 2 jugadors per poder jugar.");
+            mostrarAlert(Alert.AlertType.WARNING, "FALTEN JUGADORS", "CALEN ALMENYS 2 JUGADORS PER JUGAR.");
         } else {
             List<Jugador> jugadoresFinales = new ArrayList<>();
             GestorBBDD db = new GestorBBDD();
             boolean errorValidacion = false;
 
+            // RECORREGUT PER CADA TARGETA PER VALIDAR USUARIS I CONTRASENYES
             for (int i = 0; i < activeCards.size() && !errorValidacion; i++) {
                 PlayerCard card = activeCards.get(i);
                 String tipo = card.comboTipo.getValue();
+                
                 if (tipo.equals("Pinguí")) {
                     String user = card.txtUsername.getText().trim();
                     String pass = card.txtPassword.getText();
                     
                     if (user.isEmpty()) {
-                        mostrarAlert(Alert.AlertType.ERROR, "Error Jugador", "El pinguí ha de tenir un nom d'usuari.");
+                        mostrarAlert(Alert.AlertType.ERROR, "NOM REQUERIT", "CADA PINGÜÍ HA DE TENIR UN NOM.");
                         errorValidacion = true;
                     } else {
                         boolean esIA = user.toLowerCase().contains("cpu");
                         if (!esIA) {
                             if (db.getIDJugador(user) == -1) {
-                                mostrarAlert(Alert.AlertType.ERROR, "Usuari no trobat", "L'usuari '" + user + "' no està registrat.");
+                                mostrarAlert(Alert.AlertType.ERROR, "USUARI INEXISTENT", "L'USUARI '" + user + "' NO ESTÀ REGISTRAT.");
                                 errorValidacion = true;
                             } else if (!db.loginUsuario(user, pass)) {
-                                mostrarAlert(Alert.AlertType.ERROR, "Contrasenya incorrecta", "La contrasenya per a l'usuari '" + user + "' no és correcta.");
+                                mostrarAlert(Alert.AlertType.ERROR, "CONTRASENYA INCORRECTA", "LA CONTRASENYA PER A '" + user + "' NO ÉS VÀLIDA.");
                                 errorValidacion = true;
                             }
                         }
@@ -115,6 +135,7 @@ public class PantallaCrearPartida {
                         }
                     }
                 } else {
+                    // CONFIGURACIÓ PER DEFECTE DE LA FOCA NPC
                     Foca f = new Foca();
                     f.setColor("Gris");
                     jugadoresFinales.add(f);
@@ -127,15 +148,14 @@ public class PantallaCrearPartida {
         }
     }
 
+    /**
+     * TRANSMET LA CONFIGURACIÓ AL TAULELL I INICIA LA PANTALLA DE JOC.
+     */
     private void lanzarJuego(ActionEvent event, String nomPartida, List<Jugador> jugadores) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaJuego.fxml"));
             Parent root = loader.load();
-            
             PantallaJuego controladorJoc = loader.getController();
-            controladorJoc.setUsuarioLogueado(PantallaMenu.getLoggedInUser());
-            
-            // Pasamos los jugadores configurados
             controladorJoc.iniciarPartidaPersonalizada(nomPartida, jugadores);
 
             Scene scene = new Scene(root);
@@ -143,16 +163,20 @@ public class PantallaCrearPartida {
             stage.setScene(scene);
             stage.setFullScreen(true);
         } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlert(Alert.AlertType.ERROR, "Error", "No s'ha pogut iniciar el joc.");
+            mostrarAlert(Alert.AlertType.ERROR, "ERROR", "NO S'HA POGUT INICIAR EL JOC.");
         }
     }
 
+    /**
+     * MOSTRA UNA ALERTA D'ERROR O ADVERTIMENT.
+     */
     private void mostrarAlert(Alert.AlertType tipus, String titol, String missatge) {
         PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 
-    // Inner class to handle each player UI card
+    /**
+     * CLASSE INTERNA PER GESTIONAR LA INTERFÍCIE VISUAL DE CADA TARGETA DE JUGADOR.
+     */
     private class PlayerCard {
         private VBox pane;
         private ChoiceBox<String> comboTipo;
@@ -161,15 +185,15 @@ public class PantallaCrearPartida {
         private ChoiceBox<String> comboColor;
         private VBox pinguinoOptions;
 
+        /**
+         * CONSTRUCTOR QUE DIBUIXA LA TARGETA I CONFIGURA ELS EVENTS DE VALIDACIÓ.
+         */
         public PlayerCard() {
             pane = new VBox(10);
             pane.getStyleClass().add("ice-card");
             pane.setPrefWidth(220);
             pane.setPadding(new Insets(15));
             pane.setAlignment(Pos.TOP_CENTER);
-            pane.setOpacity(0);
-            pane.setScaleX(0.8);
-            pane.setScaleY(0.8);
 
             Label lblTitle = new Label("JUGADOR " + (activeCards.size() + 1));
             lblTitle.getStyleClass().add("field-label");
@@ -181,14 +205,10 @@ public class PantallaCrearPartida {
 
             pinguinoOptions = new VBox(8);
             txtUsername = new TextField();
-            txtUsername.setPromptText("Usuari...");
-            txtUsername.getStyleClass().add("styled-input");
-            txtUsername.setStyle("-fx-border-color: rgba(255,255,255,0.2); -fx-border-radius: 5; -fx-padding: 5;");
+            txtUsername.setPromptText("USUARI...");
             
             txtPassword = new PasswordField();
-            txtPassword.setPromptText("Contrasenya...");
-            txtPassword.getStyleClass().add("styled-input");
-            txtPassword.setStyle("-fx-border-color: rgba(255,255,255,0.2); -fx-border-radius: 5; -fx-padding: 5;");
+            txtPassword.setPromptText("CONTRASENYA...");
             txtPassword.setManaged(false);
             txtPassword.setVisible(false);
 
@@ -197,38 +217,23 @@ public class PantallaCrearPartida {
             lblPass.setVisible(false);
             lblPass.setStyle("-fx-font-size: 10px; -fx-text-fill: #a2c1ff;");
 
-            // Real-time validation
+            // VALIDACIÓ EN TEMPS REAL: CANVIA EL COLOR DE LA TARGETA SI L'USUARI EXISTEIX
             txtUsername.textProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal.isEmpty()) {
-                    txtUsername.setStyle("-fx-border-color: rgba(255,255,255,0.2); -fx-border-radius: 5; -fx-padding: 5;");
-                    txtPassword.setManaged(false);
-                    txtPassword.setVisible(false);
-                    lblPass.setManaged(false);
-                    lblPass.setVisible(false);
+                    txtUsername.setStyle("-fx-border-color: rgba(255,255,255,0.2);");
+                    ocultarPassword();
                 } else {
                     GestorBBDD db = new GestorBBDD();
                     boolean exists = db.getIDJugador(newVal.trim()) != -1;
                     boolean esIA = newVal.toLowerCase().contains("cpu");
 
                     if (exists) {
-                        txtUsername.setStyle("-fx-border-color: #2ecc71; -fx-border-radius: 5; -fx-padding: 5; -fx-border-width: 2;");
-                        if (!esIA) {
-                            txtPassword.setManaged(true);
-                            txtPassword.setVisible(true);
-                            lblPass.setManaged(true);
-                            lblPass.setVisible(true);
-                        } else {
-                            txtPassword.setManaged(false);
-                            txtPassword.setVisible(false);
-                            lblPass.setManaged(false);
-                            lblPass.setVisible(false);
-                        }
+                        txtUsername.setStyle("-fx-border-color: #2ecc71; -fx-border-width: 2;");
+                        if (!esIA) mostrarPassword(lblPass);
+                        else ocultarPassword();
                     } else {
-                        txtUsername.setStyle("-fx-border-color: #e74c3c; -fx-border-radius: 5; -fx-padding: 5; -fx-border-width: 2;");
-                        txtPassword.setManaged(false);
-                        txtPassword.setVisible(false);
-                        lblPass.setManaged(false);
-                        lblPass.setVisible(false);
+                        txtUsername.setStyle("-fx-border-color: #e74c3c; -fx-border-width: 2;");
+                        ocultarPassword();
                     }
                 }
             });
@@ -240,38 +245,41 @@ public class PantallaCrearPartida {
 
             pinguinoOptions.getChildren().addAll(new Label("NOM"), txtUsername, lblPass, txtPassword, new Label("COLOR"), comboColor);
 
+            // ACCIÓ DE CANVI DE TIPUS (PINGÜÍ O FOCA)
             comboTipo.setOnAction(e -> {
                 pinguinoOptions.setVisible(comboTipo.getValue().equals("Pinguí"));
                 pinguinoOptions.setManaged(comboTipo.getValue().equals("Pinguí"));
             });
 
-            Button btnDelete = new Button("Eliminar");
+            Button btnDelete = new Button("ELIMINAR");
             btnDelete.getStyleClass().add("button-secondary");
-            btnDelete.setStyle("-fx-font-size: 11px; -fx-text-fill: #ff8e8e; -fx-border-color: rgba(255,142,142,0.3); -fx-background-color: rgba(255,0,0,0.1);");
             btnDelete.setOnAction(e -> {
-                javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(javafx.util.Duration.millis(200), pane);
-                fade.setToValue(0);
-                fade.setOnFinished(ev -> {
-                    activeCards.remove(this);
-                    flowJugadores.getChildren().remove(pane);
-                    btnAddPlayer.setDisable(false);
-                    actualizarTitulos();
-                });
-                fade.play();
+                activeCards.remove(this);
+                flowJugadores.getChildren().remove(pane);
+                btnAddPlayer.setDisable(false);
+                actualizarTitulos();
             });
 
             pane.getChildren().addAll(lblTitle, comboTipo, pinguinoOptions, btnDelete);
+        }
 
-            // Entry animation
-            javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(300), pane);
-            ft.setToValue(1);
-            javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(300), pane);
-            st.setToX(1); st.setToY(1);
-            new javafx.animation.ParallelTransition(ft, st).play();
+        private void mostrarPassword(Label lblPass) {
+            txtPassword.setManaged(true);
+            txtPassword.setVisible(true);
+            lblPass.setManaged(true);
+            lblPass.setVisible(true);
+        }
+
+        private void ocultarPassword() {
+            txtPassword.setManaged(false);
+            txtPassword.setVisible(false);
         }
 
         public VBox getPane() { return pane; }
 
+        /**
+         * REENUMERA ELS TITOLS DELS JUGADORS QUAN S'ELIMINA UNA TARGETA.
+         */
         private void actualizarTitulos() {
             for (int i = 0; i < activeCards.size(); i++) {
                 ((Label)activeCards.get(i).pane.getChildren().get(0)).setText("JUGADOR " + (i + 1));

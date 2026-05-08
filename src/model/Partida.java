@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * REPRESENTA UNA INSTÀNCIA DE PARTIDA DINS DEL JOC.
+ * COORDINA ELS JUGADORS, EL TAULELL, ELS TORNS I EL REGISTRE D'ESDEVENIMENTS.
+ */
 public class Partida {
 
     private int id;
@@ -18,10 +22,9 @@ public class Partida {
     private String nombre;
     private Random random;
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
-
+    /**
+     * CONSTRUCTOR PER DEFECTE QUE INICIALITZA ELS COMPONENTS DE LA PARTIDA.
+     */
     public Partida() {
         this.tablero = new Tablero();
         this.jugadores = new ArrayList<>();
@@ -33,7 +36,9 @@ public class Partida {
         this.random = new Random();
     }
 
-    // Getters y Setters 
+    // GETTERS I SETTERS PER A L'ACCÉS ALS ATRIBUTS DE LA PARTIDA
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public Tablero getTablero() { return tablero; }
     public void setTablero(Tablero tablero) { this.tablero = tablero; }
@@ -65,32 +70,47 @@ public class Partida {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
-    // --- Métodos ---
+    /**
+     * AFEGEIX UN NOU JUGADOR A LA LLISTA DE LA PARTIDA.
+     */
     public void anadirJugador(Jugador j) {
         jugadores.add(j);
     }
 
+    /**
+     * REGISTRA UN NOU ESDEVENIMENT AL LOG CRONOLÒGIC DE LA PARTIDA.
+     */
     public void anadirEvento(String evento) {
         logEventos.add(evento);
     }
 
+    /**
+     * RETORNA L'OBJECTE JUGADOR QUE TÉ EL TORN ACTUALMENT.
+     */
     public Jugador getJugadorActualObj() {
-        if (jugadores == null || jugadores.isEmpty()) return null;
-        if (jugadorActual < 0 || jugadorActual >= jugadores.size()) {
-            jugadorActual = 0; // Reset a 0 per seguretat
+        Jugador j = null;
+        if (jugadores != null && !jugadores.isEmpty()) {
+            if (jugadorActual < 0 || jugadorActual >= jugadores.size()) {
+                jugadorActual = 0;
+            }
+            j = jugadores.get(jugadorActual);
         }
-        return jugadores.get(jugadorActual);
+        return j;
     }
 
-
+    /**
+     * AVANÇA AL SEGÜENT TORN I INCREMENTA EL COMPTADOR TOTAL.
+     */
     public void siguienteTurno() {
-        jugadorActual = (jugadorActual + 1) % jugadores.size();
-        turnos++;
+        if (jugadores.size() > 0) {
+            jugadorActual = (jugadorActual + 1) % jugadores.size();
+            turnos++;
+        }
     }
 
     @Override
     public String toString() {
-        return "Partida{turnos=" + turnos + ", jugadorActual=" + jugadorActual +
-               ", finalizada=" + finalizada + ", jugadores=" + jugadores.size() + "}";
+        return "PARTIDA{TORNS=" + turnos + ", JUGADOR_ACTUAL=" + jugadorActual +
+               ", FINALITZADA=" + finalizada + ", JUGADORS=" + jugadores.size() + "}";
     }
 }

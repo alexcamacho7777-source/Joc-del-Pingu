@@ -1,7 +1,6 @@
 package controlador;
 
 import model.*;
-
 import java.util.Random;
 
 /**
@@ -11,19 +10,10 @@ import java.util.Random;
  */
 public class GestorPartida {
 
-    // PARTIDA EN EXECUCIÓ ACTUALMENT
     private Partida partida;
-
-    // CONTROLADOR DE LA LÒGICA DEL TAULELL I LES CASELLES
     private GestorTablero gestorTablero;
-
-    // CONTROLADOR DE LES ACCIONS ESPECÍFIQUES DELS JUGADORS
     private GestorJugador gestorJugador;
-
-    // CONTROLADOR PER A LA PERSISTÈNCIA DE DADES A ORACLE
     private GestorBBDD gestorBBDD;
-
-    // GENERADOR DE NÚMEROS ALEATORIS PER A DAUS I EVENTS
     private Random random;
 
     /**
@@ -65,7 +55,9 @@ public class GestorPartida {
         int resultado = dado.tirar(random);
         j.moverPosicion(resultado);
         int maxPos = partida.getTablero().getTotalCasillas() - 1;
-        if (j.getPosicion() > maxPos) j.setPosicion(maxPos);
+        if (j.getPosicion() > maxPos) {
+            j.setPosicion(maxPos);
+        }
         return resultado;
     }
 
@@ -89,7 +81,7 @@ public class GestorPartida {
         // 1. VERIFICACIÓ DE SI EL JUGADOR HA DE PERDRE EL TORN
         if (partida.getJugadorPierdeTurno() != null && partida.getJugadorPierdeTurno().equals(jugadorTurno)) {
             partida.setJugadorPierdeTurno(null);
-            partida.anadirEvento(jugadorTurno.getNombre() + " PERD AQUEST TORN.");
+            partida.anadirEvento(jugadorTurno.getNombre().toUpperCase() + " PERD AQUEST TORN.");
             partida.siguienteTurno();
         } else {
             boolean bloqueado = false;
@@ -116,7 +108,7 @@ public class GestorPartida {
                 }
                 int posNueva = jugadorTurno.getPosicion();
 
-                partida.anadirEvento(jugadorTurno.getNombre() + " AVANÇA " + pasos + " CASELLES.");
+                partida.anadirEvento(jugadorTurno.getNombre().toUpperCase() + " AVANÇA " + pasos + " CASELLES.");
 
                 // 4. LÒGICA DE LA FOCA: ROBA ÍTEMS SI PASSA PER SOBRE D'UN JUGADOR
                 if (jugadorTurno instanceof Foca foca) {
@@ -142,26 +134,35 @@ public class GestorPartida {
      * SI ÉS IA, DECIDEIX SI UTILITZA UN DAU ESPECIAL DE L'INVENTARI.
      */
     public int tirarDadoParaJugador(Jugador j) {
+        int r = 0;
+        boolean usatEspecial = false;
+        
         if (j instanceof Pinguino p) {
             if (p.isEsIA()) {
                 Item it = decidirDadoIA(p);
                 if (it instanceof Dado d) {
-                    return usarDadoEspecial(p, d);
+                    r = usarDadoEspecial(p, d);
+                    usatEspecial = true;
                 }
             }
         }
-        return 1 + random.nextInt(6);
+        
+        if (!usatEspecial) {
+            r = 1 + random.nextInt(6);
+        }
+        return r;
     }
 
     /**
-     * LÒGICA DE DECISIÓ PER A LA INTEL·LIGÈNCIA ARTIFICIAL.
+     * LÒGICA DE DECISIÓ PER A LA INTEL·LIGÈNCIA ARTIFICIAL PER ESCOLLIR DAUS.
      */
     private Item decidirDadoIA(Pinguino p) {
-        int r = random.nextInt(100);
-        if (r < 40) { // 40% DE PROBABILITAT D'USAR DAU ESPECIAL
-            return p.getInv().getItem(Dado.class);
+        Item res = null;
+        int prob = random.nextInt(100);
+        if (prob < 40) { 
+            res = p.getInv().getItem(Dado.class);
         }
-        return null;
+        return res;
     }
 
     /**
@@ -170,7 +171,9 @@ public class GestorPartida {
     public int usarDadoEspecial(Pinguino p, Dado d) {
         int resultado = d.tirar(random);
         d.setCantidad(d.getCantidad() - 1);
-        if (d.getCantidad() <= 0) p.getInv().quitarItem(d);
+        if (d.getCantidad() <= 0) {
+            p.getInv().quitarItem(d);
+        }
         return resultado;
     }
 
@@ -178,8 +181,11 @@ public class GestorPartida {
      * PERMET A LA IA REALITZAR ACCIONS PROACTIVES AVANS DE MOURE'S.
      */
     public void realizarAccionesIA(Jugador j) {
-        if (!(j instanceof Pinguino p) || !p.isEsIA()) return;
-        // (LÒGICA AMPLIABLE PER A ESTRATÈGIES DE LA IA)
+        if (j instanceof Pinguino p) {
+            if (p.isEsIA()) {
+                // ESPAI PER A LÒGICA D'IA ADDICIONAL
+            }
+        }
     }
 
     /**
@@ -195,7 +201,7 @@ public class GestorPartida {
                         if (!foca.isSobornada()) {
                             int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
                             p.setPosicion(anteriorAgujero);
-                            partida.anadirEvento("LA FOCA COLPEJA A " + p.getNombre() + " I L'ENVIA AL FORAT ANTERIOR.");
+                            partida.anadirEvento("LA FOCA COLPEJA A " + p.getNombre().toUpperCase() + " I L'ENVIA AL FORAT ANTERIOR.");
                         }
                     }
                 } else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
@@ -210,7 +216,7 @@ public class GestorPartida {
                 if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2 && p2.isEsIA()) {
                     int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
                     p2.setPosicion(anteriorAgujero);
-                    partida.anadirEvento("LA FOCA CAU SOBRE " + p2.getNombre() + " I EL COLPEJA AL FORAT ANTERIOR.");
+                    partida.anadirEvento("LA FOCA CAU SOBRE " + p2.getNombre().toUpperCase() + " I EL COLPEJA AL FORAT ANTERIOR.");
                 }
             }
         }
@@ -218,22 +224,22 @@ public class GestorPartida {
 
     /**
      * PROCESSA EL ROBATORI D'ÍTEMS QUAN LA FOCA PASSA PER SOBRE D'UN JUGADOR.
-     * EL JUGADOR PERD LA MEITAT DEL SEU INVENTARI SI NO ESTÀ A LA CASELLA D'INICI.
      */
     public java.util.Map<Pinguino, java.util.List<String>> procesarPasoDeFoca(Foca foca, int posAnterior, int posNueva) {
         java.util.Map<Pinguino, java.util.List<String>> robos = new java.util.HashMap<>();
-        if (foca.isSobornada()) return robos;
         
-        int start = Math.min(posAnterior, posNueva);
-        int end = Math.max(posAnterior, posNueva);
+        if (!foca.isSobornada()) {
+            int start = Math.min(posAnterior, posNueva);
+            int end = Math.max(posAnterior, posNueva);
 
-        for (Jugador j : partida.getJugadores()) {
-            if (j instanceof Pinguino p) {
-                if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() < end) {
-                    java.util.List<String> perdidos = perderMitadInventario(p);
-                    if (!perdidos.isEmpty()) {
-                        robos.put(p, perdidos);
-                        partida.anadirEvento("LA FOCA HA ROBAT A " + p.getNombre() + ".");
+            for (Jugador j : partida.getJugadores()) {
+                if (j instanceof Pinguino p) {
+                    if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() < end) {
+                        java.util.List<String> perdidos = perderMitadInventario(p);
+                        if (!perdidos.isEmpty()) {
+                            robos.put(p, perdidos);
+                            partida.anadirEvento("LA FOCA HA ROBAT LA MEITAT DE L'INVENTARI A " + p.getNombre().toUpperCase() + ".");
+                        }
                     }
                 }
             }
@@ -246,14 +252,16 @@ public class GestorPartida {
      */
     private java.util.List<String> perderMitadInventario(Jugador p) {
         java.util.List<String> perdidos = new java.util.ArrayList<>();
-        if (p.getInv() == null) return perdidos;
-        
-        int total = p.getInv().totalItems();
-        int perder = total / 2;
-        
-        for (int i = 0; i < perder; i++) {
-            Item stack = p.getInv().quitarUnidadAleatoria(random);
-            if (stack != null) perdidos.add(stack.getNombre());
+        if (p.getInv() != null) {
+            int total = p.getInv().totalItems();
+            int perder = total / 2;
+            
+            for (int i = 0; i < perder; i++) {
+                Item stack = p.getInv().quitarUnidadAleatoria(random);
+                if (stack != null) {
+                    perdidos.add(stack.getNombre().toUpperCase());
+                }
+            }
         }
         return perdidos;
     }
@@ -267,7 +275,7 @@ public class GestorPartida {
             if (j.getPosicion() >= meta && !(j instanceof Foca)) {
                 partida.setGanador(j);
                 partida.setFinalizada(true);
-                partida.anadirEvento("¡" + j.getNombre() + " HA GUANYAT LA PARTIDA!");
+                partida.anadirEvento("¡" + j.getNombre().toUpperCase() + " HA GUANYAT LA PARTIDA!");
             }
         }
     }
@@ -290,12 +298,14 @@ public class GestorPartida {
      * GUARDA L'ESTAT ACTUAL DE LA PARTIDA A LA BASE DE DADES ORACLE.
      */
     public boolean guardarPartida() {
+        boolean exit = false;
         if (gestorBBDD != null && partida != null) {
-            boolean ok = gestorBBDD.guardarBBDD(partida);
-            if (ok) partida.anadirEvento("PARTIDA GUARDADA CORRECTAMENT.");
-            return ok;
+            exit = gestorBBDD.guardarBBDD(partida);
+            if (exit) {
+                partida.anadirEvento("PARTIDA GUARDADA CORRECTAMENT A LA BASE DE DADES.");
+            }
         }
-        return false;
+        return exit;
     }
 
     /**
@@ -304,7 +314,9 @@ public class GestorPartida {
     public void cargarPartida(int id) {
         if (gestorBBDD != null) {
             partida = gestorBBDD.cargarBBDD(id);
-            partida.anadirEvento("PARTIDA CARREGADA (ID=" + id + ").");
+            if (partida != null) {
+                partida.anadirEvento("PARTIDA CARREGADA (ID=" + id + ").");
+            }
         }
     }
 }

@@ -1,21 +1,27 @@
 package model;
 
-
+/**
+ * REPRESENTA UNA CASELLA DE TIPUS 'OS'.
+ * ÈS UNA CASELLA DE PERILL ON UN OS POLAR ESPANTA ELS JUGADORS, FENT-LOS RETROCEDIR.
+ */
 public class Oso extends Casilla {
 
-
+    /**
+     * CONSTRUCTOR PER DEFINIR LA POSICIÓ DE LA CASELLA DE L'OS.
+     */
     public Oso(int posicion) {
         super(posicion);
     }
 
+    /**
+     * EXECUTA L'ACCIÓ DEL PERILL DE L'OS.
+     * PER ALS JUGADORS IA EL RETROCÉS ÉS IMMEDIAT; PER ALS HUMANS ES GESTIONA VISUALMENT.
+     */
     @Override
     public void realizarAccion(Partida partida, Jugador jugador) {
-        // La lógica de retorno al inicio se gestiona ahora en PantallaJuego 
-        // para permitir al jugador elegir si usa un pez.
-        // Si el jugador es IA, podemos mantener una lógica simple aquí.
         if (jugador instanceof Pinguino p && p.isEsIA()) {
              p.setPosicion(0);
-             partida.anadirEvento(p.getNombre() + " (IA) ha caigut en l'OS i torna a l'inici.");
+             partida.anadirEvento(p.getNombre().toUpperCase() + " (IA) HA CAIGUT EN L'OS I TORNA A L'INICI.");
         }
     }
 }

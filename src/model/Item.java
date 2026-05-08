@@ -1,16 +1,23 @@
 package model;
 
-
+/**
+ * CLASSE ABSTRACTA QUE REPRESENTA UN OBJECTE O ÍTEM DE L'INVENTARI.
+ * DEFINEIX EL NOM DE L'OBJECTE I LA QUANTITAT D'UNITATS DISPONIBLES.
+ */
 public abstract class Item {
 
     private String nombre;
     private int cantidad;
 
+    /**
+     * CONSTRUCTOR PER DEFINIR UN NOU ÍTEM AMB EL SEU NOM I QUANTITAT INICIAL.
+     */
     public Item(String nombre, int cantidad) {
         this.nombre = nombre;
         this.cantidad = cantidad;
     }
 
+    // GETTERS I SETTERS
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
@@ -19,6 +26,6 @@ public abstract class Item {
 
     @Override
     public String toString() {
-        return nombre + " x" + cantidad;
+        return nombre.toUpperCase() + " X" + cantidad;
     }
 }

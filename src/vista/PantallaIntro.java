@@ -11,49 +11,66 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Stage;
 
+/**
+ * CONTROLADOR DE LA PANTALLA D'INTRODUCCIÓ.
+ * GESTIONA LA REPRODUCCIÓ DEL VÍDEO INICIAL I LA TRANSICIÓ AL MENÚ PRINCIPAL.
+ */
 public class PantallaIntro {
 
     @FXML
     private StackPane rootPane;
 
+    /**
+     * INICIALITZA LA REPRODUCCIÓ DEL VÍDEO D'INTRODUCCIÓ.
+     * SI EL VÍDEO NO ES TROBA, SALTA DIRECTAMENT AL MENÚ DE FORMA SEGURA.
+     */
     @FXML
     public void initialize() {
-        System.out.println("PantallaIntro activada, comprobando intro.mp4...");
         try {
             java.net.URL videoUrl = getClass().getResource("/resources/intro.mp4");
+            
+            // VALIDACIÓ DE L'EXISTÈNCIA DEL FITXER MULTIMÈDIA
             if (videoUrl != null) {
-                Media media = new Media(videoUrl.toExternalForm());
-                MediaPlayer mediaPlayer = new MediaPlayer(media);
-                MediaView mediaView = new MediaView(mediaPlayer);
-
-                mediaView.fitWidthProperty().bind(rootPane.widthProperty());
-                mediaView.fitHeightProperty().bind(rootPane.heightProperty());
-                mediaView.setPreserveRatio(false); // Estirar para llenar la pantalla
-
-                rootPane.getChildren().add(mediaView);
-
-                // Al tocar la pantalla se salta la intro
-                rootPane.setOnMouseClicked(e -> {
-                    mediaPlayer.stop();
-                    goToMenu();
-                });
-
-                // Al finalizar el video se va al menú
-                mediaPlayer.setOnEndOfMedia(() -> goToMenu());
-
-                mediaPlayer.play();
+                configurarReproductor(videoUrl);
             } else {
-                System.out.println("No se ha encontrado /resources/intro.mp4, saltando directo al menú...");
                 jumpToMenuSafe();
             }
         } catch (Exception e) {
-            System.err.println("Error al reproducir el video de intro: " + e.getMessage());
             jumpToMenuSafe();
         }
     }
 
+    /**
+     * CONFIGURA EL REPRODUCTOR DE MITJANS I ELS EVENTS DE FINALITZACIÓ I SALT.
+     */
+    private void configurarReproductor(java.net.URL videoUrl) {
+        Media media = new Media(videoUrl.toExternalForm());
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        MediaView mediaView = new MediaView(mediaPlayer);
+
+        // AJUST DEL VÍDEO A LES DIMENSIONS DE LA FINESTRA
+        mediaView.fitWidthProperty().bind(rootPane.widthProperty());
+        mediaView.fitHeightProperty().bind(rootPane.heightProperty());
+        mediaView.setPreserveRatio(false); 
+
+        rootPane.getChildren().add(mediaView);
+
+        // OPCIÓ PER SALTAR EL VÍDEO FENT CLIC AMB EL RATOLÍ
+        rootPane.setOnMouseClicked(e -> {
+            mediaPlayer.stop();
+            goToMenu();
+        });
+
+        // TRANSICIÓ AUTOMÀTICA EN ACABAR EL VÍDEO
+        mediaPlayer.setOnEndOfMedia(() -> goToMenu());
+
+        mediaPlayer.play();
+    }
+
+    /**
+     * SALTA AL MENÚ AMB UN PETIT RETARD PER ASSEGURAR QUE LA SCENE ESTÀ PONT PER AL STAGE.
+     */
     private void jumpToMenuSafe() {
-        // Necesario un pequeño retardo controlado porque la Scene puede no estar asignada al Stage todavía durante el init
         Platform.runLater(() -> {
             javafx.animation.PauseTransition pt = new javafx.animation.PauseTransition(javafx.util.Duration.millis(100));
             pt.setOnFinished(e -> goToMenu());
@@ -61,6 +78,9 @@ public class PantallaIntro {
         });
     }
 
+    /**
+     * CARREGA LA PANTALLA DEL MENÚ PRINCIPAL.
+     */
     private void goToMenu() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaMenu.fxml"));
@@ -69,11 +89,10 @@ public class PantallaIntro {
             
             Stage stage = (Stage) rootPane.getScene().getWindow();
             stage.setScene(menuScene);
-            stage.setTitle("El Juego del Pingüino");
+            stage.setTitle("EL JOC DEL PINGÜÍ");
             stage.setFullScreen(true);
             stage.setFullScreenExitHint("");
         } catch (Exception e) {
-            System.err.println("Error al cargar PantallaMenu desde intro:");
             e.printStackTrace();
         }
     }

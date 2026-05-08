@@ -1,5 +1,9 @@
 package model;
 
+/**
+ * CLASSE ABSTRACTA QUE REPRESENTA UN JUGADOR DINS DEL JOC.
+ * DEFINEIX ELS ATRIBUTS COMUNS COM EL NOM, LA POSICIÓ I L'INVENTARI.
+ */
 public abstract class Jugador {
 
     private int posicion;
@@ -8,6 +12,10 @@ public abstract class Jugador {
     private boolean esIA;
     private Inventario inv;
 
+    /**
+     * CONSTRUCTOR PER INICIALITZAR UN JUGADOR AMB NOM I COLOR.
+     * PER DEFECTE COMENÇA A LA POSICIÓ 0 AMB UN INVENTARI BUIT.
+     */
     public Jugador(String nombre, String color) {
         this.nombre = nombre;
         this.color = color;
@@ -16,6 +24,7 @@ public abstract class Jugador {
         this.inv = new Inventario();
     }
 
+    // GETTERS I SETTERS AMB ACCÉS ESTRUCTURAT
     public boolean isEsIA() { return esIA; }
     public void setEsIA(boolean esIA) { this.esIA = esIA; }
 
@@ -31,13 +40,19 @@ public abstract class Jugador {
     public Inventario getInv() { return inv; }
     public void setInv(Inventario inv) { this.inv = inv; }
 
+    /**
+     * MODIFICA LA POSICIÓ DEL JUGADOR SUMANT EL VALOR INDICAT.
+     * ASSEGURA QUE LA POSICIÓ MAI SIGUI NEGATIVA.
+     */
     public void moverPosicion(int p) {
         this.posicion += p;
-        if (this.posicion < 0) this.posicion = 0;
+        if (this.posicion < 0) {
+            this.posicion = 0;
+        }
     }
 
     @Override
     public String toString() {
-        return nombre + " (" + color + ") - Pos: " + posicion;
+        return nombre.toUpperCase() + " (" + color.toUpperCase() + ") - POS: " + posicion;
     }
 }
