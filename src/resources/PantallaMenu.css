@@ -21,11 +21,12 @@
 }
 
 .glass-card {
-    -fx-background-color: rgba(5, 15, 35, 0.85);
+    -fx-background-color: rgba(5, 15, 35, 0.8);
     -fx-background-radius: 30;
-    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
     -fx-border-radius: 30;
     -fx-border-width: 1.5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 20, 0, 0, 0);
 }
 
 .card-title {
@@ -183,6 +184,52 @@
     -fx-background-color: rgba(0, 210, 255, 0.4);
     -fx-border-color: #00d2ff;
     -fx-border-width: 0 0 1 0;
+}
+
+/* TabPane Arctic Styling */
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab-header-area {
+    -fx-padding: 0 0 10 0;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s;
+}
+
+.tab:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+}
+
+.tab:selected {
+    -fx-background-color: linear-gradient(to bottom, #00c6ff, #0072ff);
+    -fx-effect: dropshadow(gaussian, rgba(0, 198, 255, 0.5), 10, 0, 0, 0);
+}
+
+.tab .tab-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-font-weight: bold;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+/* Amagar la línia base del TabPane */
+.tab-pane .tab-content-area {
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 0 0 15 15;
+    -fx-padding: 10;
 }
 
 /* Eliminar el bloc blanc de la capçalera (filler i corner) */

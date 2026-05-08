@@ -10,64 +10,70 @@
            stylesheets="@PantallaMenu.css">
 
     <VBox alignment="CENTER" spacing="20">
-        <VBox alignment="CENTER" spacing="30" maxWidth="1000" styleClass="glass-card" style="-fx-padding: 40;">
+        <VBox alignment="CENTER" spacing="30" maxWidth="1100" styleClass="glass-card" style="-fx-padding: 40; -fx-background-radius: 40;">
             
-            <Label text="ESTADÍSTIQUES I RANKINGS" styleClass="title" 
-                   style="-fx-font-size: 50px; -fx-effect: dropshadow(gaussian, rgba(0, 191, 255, 0.8), 15, 0.5, 0, 0);"/>
+            <VBox alignment="CENTER" spacing="5">
+                <Label text="📊 ESTADÍSTIQUES I RANKINGS" styleClass="title" 
+                       style="-fx-font-size: 54px; -fx-text-fill: linear-gradient(to bottom, #ffffff, #00BFFF);"/>
+                <Label text="Arctic Edition - Històric de Jugadors" styleClass="subtitle"/>
+            </VBox>
 
-            <HBox spacing="20" alignment="CENTER">
-                <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15; -fx-background-radius: 15; -fx-min-width: 180;">
-                    <Label text="MITJA VICTÒRIES" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblMitjaGlobal" text="0.0" style="-fx-text-fill: #00BFFF; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+            <HBox spacing="25" alignment="CENTER">
+                <VBox spacing="8" alignment="CENTER" styleClass="ice-card" style="-fx-min-width: 220; -fx-background-color: rgba(0, 191, 255, 0.15);">
+                    <Label text="🏆 MITJA VICTÒRIES" style="-fx-text-fill: #e0f0ff; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <Label fx:id="lblMitjaGlobal" text="0.0" style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: 900; -fx-effect: dropshadow(gaussian, #00BFFF, 10, 0, 0, 0);"/>
                 </VBox>
-                <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15; -fx-background-radius: 15; -fx-min-width: 180;">
-                    <Label text="RÈCORD VICTÒRIES" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblRecordGlobal" text="0" style="-fx-text-fill: #FFD700; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+                <VBox spacing="8" alignment="CENTER" styleClass="ice-card" style="-fx-min-width: 220; -fx-background-color: rgba(255, 215, 0, 0.15);">
+                    <Label text="👑 RÈCORD VICTÒRIES" style="-fx-text-fill: #e0f0ff; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <Label fx:id="lblRecordGlobal" text="0" style="-fx-text-fill: #FFD700; -fx-font-size: 32px; -fx-font-weight: 900; -fx-effect: dropshadow(gaussian, #FFD700, 10, 0, 0, 0);"/>
                 </VBox>
-                <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.1); -fx-padding: 15; -fx-background-radius: 15; -fx-min-width: 180;">
-                    <Label text="LES TEVES VICTÒRIES" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
-                    <Label fx:id="lblVictoriesPropies" text="0" style="-fx-text-fill: #00FF00; -fx-font-size: 24px; -fx-font-weight: 900;"/>
+                <VBox spacing="8" alignment="CENTER" styleClass="ice-card" style="-fx-min-width: 220; -fx-background-color: rgba(0, 255, 0, 0.15);">
+                    <Label text="👤 LES TEVES VICTÒRIES" style="-fx-text-fill: #e0f0ff; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+                    <Label fx:id="lblVictoriesPropies" text="0" style="-fx-text-fill: #00FF00; -fx-font-size: 32px; -fx-font-weight: 900; -fx-effect: dropshadow(gaussian, #00FF00, 10, 0, 0, 0);"/>
                 </VBox>
             </HBox>
 
             <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
-                <Tab text="Ranking Partides Totals">
-                    <TableView fx:id="tblRankingPartides" prefHeight="300">
+                <Tab text="📈 Partides Totals">
+                    <TableView fx:id="tblRankingPartides" prefHeight="350">
                         <columns>
-                            <TableColumn fx:id="colNomPartides" text="Jugador" prefWidth="300"/>
-                            <TableColumn fx:id="colTotalPartides" text="Total Partides Jugades" prefWidth="200"/>
+                            <TableColumn fx:id="colNomPartides" text="Jugador" prefWidth="450"/>
+                            <TableColumn fx:id="colTotalPartides" text="Total Partides Jugades" prefWidth="250"/>
                         </columns>
                     </TableView>
                 </Tab>
-                <Tab text="Campions (Rècord)">
-                    <TableView fx:id="tblRankingRecord" prefHeight="300">
+                <Tab text="🥇 Campions (Rècord)">
+                    <TableView fx:id="tblRankingRecord" prefHeight="350">
                         <columns>
-                            <TableColumn fx:id="colNomRecord" text="Jugador" prefWidth="300"/>
-                            <TableColumn fx:id="colMaxVics" text="Victòries" prefWidth="150"/>
+                            <TableColumn fx:id="colNomRecord" text="Jugador" prefWidth="450"/>
+                            <TableColumn fx:id="colMaxVics" text="Victòries" prefWidth="250"/>
                         </columns>
                     </TableView>
                 </Tab>
-                <Tab text="Superior a la Mitja">
-                    <TableView fx:id="tblRankingSobreMitja" prefHeight="300">
+                <Tab text="🔝 Superior a la Mitja">
+                    <TableView fx:id="tblRankingSobreMitja" prefHeight="350">
                         <columns>
-                            <TableColumn fx:id="colNomSobreMitja" text="Jugador" prefWidth="300"/>
-                            <TableColumn fx:id="colVicsSobreMitja" text="Victòries" prefWidth="150"/>
+                            <TableColumn fx:id="colNomSobreMitja" text="Jugador" prefWidth="450"/>
+                            <TableColumn fx:id="colVicsSobreMitja" text="Victòries" prefWidth="250"/>
                         </columns>
                     </TableView>
                 </Tab>
-                <Tab text="Percentatge Victòries">
-                    <VBox spacing="20" alignment="CENTER" style="-fx-padding: 20;">
-                        <Label text="Introdueix un nº de victòries per saber quin % de jugadors tenen MENYS victòries:" style="-fx-text-fill: white;"/>
-                        <HBox spacing="10" alignment="CENTER">
-                            <TextField fx:id="txtPuntuacio" promptText="Victòries" prefWidth="100"/>
-                            <Button text="Calcular %" onAction="#handleCalcularPercentatge" styleClass="button-primary"/>
+                <Tab text="🧮 Percentatges">
+                    <VBox spacing="25" alignment="CENTER" style="-fx-padding: 40; -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 20;">
+                        <Label text="Introdueix un nº de victòries per saber quin % de jugadors tenen MENYS victòries:" 
+                               style="-fx-text-fill: #b3d4ff; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <HBox spacing="15" alignment="CENTER">
+                            <TextField fx:id="txtPuntuacio" promptText="Ex: 5" prefWidth="150" 
+                                       style="-fx-background-color: rgba(0,0,0,0.5); -fx-text-fill: white; -fx-border-color: #00BFFF; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 10;"/>
+                            <Button text="CALCULAR" onAction="#handleCalcularPercentatge" styleClass="button-primary"/>
                         </HBox>
-                        <Label fx:id="lblResultatPercentatge" text="" style="-fx-text-fill: #00FF00; -fx-font-size: 18px;"/>
+                        <Label fx:id="lblResultatPercentatge" text="" style="-fx-text-fill: #00FF00; -fx-font-size: 20px; -fx-font-weight: bold;"/>
                     </VBox>
                 </Tab>
             </TabPane>
 
-            <Button text="TORNAR AL MENÚ" onAction="#handleTornar" styleClass="button-user" style="-fx-background-color: #f44336;"/>
+            <Button text="← TORNAR AL MENÚ PRINCIPAL" onAction="#handleTornar" styleClass="button-user" 
+                    style="-fx-background-color: linear-gradient(to right, #ff4b2b, #ff416c); -fx-font-size: 18px; -fx-padding: 12 40;"/>
         </VBox>
     </VBox>
 
