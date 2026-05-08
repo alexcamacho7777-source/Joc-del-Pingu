@@ -191,7 +191,17 @@ public class PantallaRuleta {
                 
                 resultLabel.setText("¡T'HA TOCAT: " + resultEvent + "!");
                 applyResult(resultEvent);
-                closeButton.setVisible(true);
+                
+                if (jugador != null && jugador.isEsIA()) {
+                    // SI ÉS IA, TANQUEM AUTOMÀTICAMENT DESPRÉS DE 2 SEGONS
+                    javafx.animation.PauseTransition autoClose = new javafx.animation.PauseTransition(Duration.seconds(2));
+                    autoClose.setOnFinished(ev -> handleClose());
+                    autoClose.play();
+                } else {
+                    closeButton.setVisible(true);
+                    closeButton.setManaged(true);
+                }
+
                 if (onFinishedCallback != null) {
                     onFinishedCallback.accept(resultEvent);
                 }

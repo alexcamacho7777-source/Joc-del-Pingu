@@ -21,7 +21,7 @@ public class main extends Application {
         // INICI DE LA MÚSICA DE FONS DELS MENÚS
         controlador.SoundManager.getInstance().playMenuMusic();
 
-        // CÀRREGA DE LA PRIMERA PANTALLA (INTRODUCCIÓ)
+        // CÀRREGA DE LA PRIMERA PANTALLA
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/resources/PantallaIntro.fxml"));
         Parent root = loader.load();
 
@@ -29,7 +29,7 @@ public class main extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("EL JOC DEL PINGÜÍ");
         
-        // CONFIGURACIÓ DE PANTALLA COMPLETA PER A UNA EXPERIÈNCIA IMMERSIVA
+        // CONFIGURACIÓ DE PANTALLA COMPLETA
         primaryStage.setFullScreen(true);
         primaryStage.setFullScreenExitHint("");
         primaryStage.show();

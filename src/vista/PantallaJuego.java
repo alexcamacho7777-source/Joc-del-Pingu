@@ -692,26 +692,38 @@ public class PantallaJuego {
     private void showSpecialTileMessage(String text, String sound, Runnable onFinished) {
         controlador.SoundManager.getInstance().playSound(sound);
         
-        Label label = new Label(text);
-        label.getStyleClass().add("special-tile-msg");
-        label.setStyle("-fx-font-size: 32px; -fx-text-fill: white; -fx-font-weight: bold;");
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.7);");
+        overlay.setOpacity(0);
         
-        StackPane container = new StackPane(label);
-        container.setStyle("-fx-background-color: rgba(0,0,0,0.8); -fx-padding: 30; -fx-background-radius: 20;");
-        container.setMaxWidth(800);
+        Label label = new Label(text.toUpperCase());
+        label.setStyle("-fx-font-size: 36px; -fx-text-fill: white; -fx-font-weight: bold; -fx-letter-spacing: 2px;");
+        label.setEffect(new javafx.scene.effect.DropShadow(10, javafx.scene.paint.Color.BLACK));
         
-        boardStack.getChildren().add(container);
+        overlay.getChildren().add(label);
+        boardStack.getChildren().add(overlay);
         
-        javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.seconds(1.5), container);
-        ft.setFromValue(0);
-        ft.setToValue(1);
-        ft.setAutoReverse(true);
-        ft.setCycleCount(2);
-        ft.setOnFinished(e -> {
-            boardStack.getChildren().remove(container);
-            onFinished.run();
+        // ANIMACIÓ D'ENTRADA (FADE IN)
+        javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(Duration.millis(500), overlay);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+        
+        // PAUSA I SORTIDA
+        fadeIn.setOnFinished(e -> {
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.seconds(1.5));
+            pause.setOnFinished(ev -> {
+                javafx.animation.FadeTransition fadeOut = new javafx.animation.FadeTransition(Duration.millis(500), overlay);
+                fadeOut.setFromValue(1);
+                fadeOut.setToValue(0);
+                fadeOut.setOnFinished(finish -> {
+                    boardStack.getChildren().remove(overlay);
+                    onFinished.run();
+                });
+                fadeOut.play();
+            });
+            pause.play();
         });
-        ft.play();
+        fadeIn.play();
     }
 
     /**
@@ -1048,9 +1060,18 @@ public class PantallaJuego {
             java.net.URL url = getClass().getResource("/resources/images/casillas/foca.png");
             if (url != null) {
                 ImageView iv = new ImageView(new Image(url.toExternalForm()));
-                iv.setFitWidth(65); iv.setFitHeight(65);
+                iv.setFitWidth(55); iv.setFitHeight(55);
                 iv.setPreserveRatio(true);
+                
+                // CLIP CIRCULAR PER ELIMINAR FONS BLANC DE LES CANTONADES
+                javafx.scene.shape.Circle clip = new javafx.scene.shape.Circle(27.5, 27.5, 27.5);
+                iv.setClip(clip);
+                
+                // EFECTE DE PROFUNDITAT
+                iv.setEffect(new javafx.scene.effect.DropShadow(10, javafx.scene.paint.Color.rgb(0,0,0,0.5)));
+                
                 sp.getChildren().add(iv);
+                sp.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 50;");
             }
         } catch (Exception e) {
             System.err.println("ERROR CARREGANT AVATAR FOCA.");
@@ -1080,9 +1101,16 @@ public class PantallaJuego {
         else if (token instanceof StackPane sp && !sp.getChildren().isEmpty() && sp.getChildren().get(0) instanceof javafx.scene.Group grp) targetGroup = grp;
 
         if (targetGroup != null) {
+            // APLIQUEM UN GLOW DEL COLOR CORRESPONENT
+            javafx.scene.effect.DropShadow glow = new javafx.scene.effect.DropShadow();
+            glow.setColor(color);
+            glow.setRadius(20);
+            glow.setSpread(0.7);
+            
+            targetGroup.setEffect(glow);
+
             for (javafx.scene.Node child : targetGroup.getChildren()) {
                 if (child instanceof javafx.scene.shape.Shape s) {
-                    // CANVIEM EL COLOR DE LES FORMES QUE REPRESENTEN EL GORRO O IDENTIFICADOR
                     if (s.getFill() instanceof javafx.scene.paint.Color) {
                         s.setFill(color);
                     }

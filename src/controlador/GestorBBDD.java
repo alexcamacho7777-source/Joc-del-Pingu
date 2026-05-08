@@ -150,13 +150,25 @@ public class GestorBBDD {
             ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (6, 'SUELOQUEBRADIZO', 'ES TRENCA AL PASSAR')");
 
             ArrayList<LinkedHashMap<String, String>> resTau = select(conexion, "SELECT COUNT(*) as TOTAL FROM taulell WHERE id_taulell = 1");
-            
-            // ELIMINAR COLUMNA COLOR_JUGADOR SI EXISTEIX (ALTRE MANTENIMENT)
-            ejecutar(conexion, "ALTER TABLE jugador DROP COLUMN color_jugador");
-
             if (resTau.isEmpty() || Integer.parseInt(resTau.get(0).get("TOTAL")) == 0) {
                 ejecutar(conexion, "INSERT INTO taulell (id_taulell, mida_taulell) VALUES (1, 50)");
             }
+            
+            // ELIMINAR COLUMNA COLOR_JUGADOR SI EXISTEIX (ALTRE MANTENIMENT)
+            ArrayList<LinkedHashMap<String, String>> colCheck = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='COLOR_JUGADOR'");
+            if (!colCheck.isEmpty()) {
+                ejecutar(conexion, "ALTER TABLE jugador DROP COLUMN color_jugador");
+            }
+
+            // REGISTRE DE BOTS PER A PERSISTÈNCIA (SI NO EXISTEIXEN)
+            for (int i = 1; i <= 4; i++) {
+                String botName = "BOT " + i;
+                ArrayList<LinkedHashMap<String, String>> existBot = select(conexion, "SELECT id_jugador FROM jugador WHERE nom_jugador = '" + botName + "'");
+                if (existBot.isEmpty()) {
+                    ejecutar(conexion, "INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) VALUES (99" + i + ", '" + botName + "', 0, 'BOT_PWD')");
+                }
+            }
+
             commit(conexion);
         }
     }
@@ -316,7 +328,8 @@ public class GestorBBDD {
                     } else {
                         // ASSIGNEM UN COLOR PER DEFECTE O BASAT EN L'INDEX SI CAL
                         Pinguino pin = new Pinguino(nom, "BLAU");
-                        pin.setEsIA(nom.toUpperCase().contains("CPU"));
+                        String nUpper = nom.toUpperCase();
+                        pin.setEsIA(nUpper.contains("CPU") || nUpper.startsWith("BOT") || nUpper.contains("IA"));
                         j = pin;
                     }
                     j.setPosicion(pos);

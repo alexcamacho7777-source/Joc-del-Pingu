@@ -112,13 +112,14 @@ public class PantallaCrearPartida {
                 if (tipo.equals("Pinguí")) {
                     String user = card.txtUsername.getText().trim();
                     String pass = card.txtPassword.getText();
+                    boolean esIA = card.comboMode.getValue().equals("IA (Bot)");
                     
                     if (user.isEmpty()) {
                         mostrarAlert(Alert.AlertType.ERROR, "NOM REQUERIT", "CADA PINGÜÍ HA DE TENIR UN NOM.");
                         errorValidacion = true;
                     } else {
-                        boolean esIA = user.toLowerCase().contains("cpu");
                         if (!esIA) {
+                            // VALIDACIÓ D'USUARI REAL A LA BBDD
                             if (db.getIDJugador(user) == -1) {
                                 mostrarAlert(Alert.AlertType.ERROR, "USUARI INEXISTENT", "L'USUARI '" + user + "' NO ESTÀ REGISTRAT.");
                                 errorValidacion = true;
@@ -135,9 +136,7 @@ public class PantallaCrearPartida {
                         }
                     }
                 } else {
-                    // CONFIGURACIÓ PER DEFECTE DE LA FOCA NPC
                     Foca f = new Foca();
-                    f.setColor("Gris");
                     jugadoresFinales.add(f);
                 }
             }
@@ -183,7 +182,9 @@ public class PantallaCrearPartida {
         private TextField txtUsername;
         private PasswordField txtPassword;
         private ChoiceBox<String> comboColor;
+        private ChoiceBox<String> comboMode;
         private VBox pinguinoOptions;
+        private Label lblPass;
 
         /**
          * CONSTRUCTOR QUE DIBUIXA LA TARGETA I CONFIGURA ELS EVENTS DE VALIDACIÓ.
@@ -212,25 +213,26 @@ public class PantallaCrearPartida {
             txtPassword.setManaged(false);
             txtPassword.setVisible(false);
 
-            Label lblPass = new Label("CONTRASENYA");
+            lblPass = new Label("CONTRASENYA");
             lblPass.setManaged(false);
             lblPass.setVisible(false);
             lblPass.setStyle("-fx-font-size: 10px; -fx-text-fill: #a2c1ff;");
 
             // VALIDACIÓ EN TEMPS REAL: CANVIA EL COLOR DE LA TARGETA SI L'USUARI EXISTEIX
             txtUsername.textProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal.isEmpty()) {
+                boolean isIA = comboMode.getValue().equals("IA (Bot)");
+                if (isIA) {
+                    txtUsername.setStyle("-fx-border-color: #3498db; -fx-border-width: 2;");
+                    ocultarPassword();
+                } else if (newVal.isEmpty()) {
                     txtUsername.setStyle("-fx-border-color: rgba(255,255,255,0.2);");
                     ocultarPassword();
                 } else {
                     GestorBBDD db = new GestorBBDD();
                     boolean exists = db.getIDJugador(newVal.trim()) != -1;
-                    boolean esIA = newVal.toLowerCase().contains("cpu");
-
                     if (exists) {
                         txtUsername.setStyle("-fx-border-color: #2ecc71; -fx-border-width: 2;");
-                        if (!esIA) mostrarPassword(lblPass);
-                        else ocultarPassword();
+                        mostrarPassword(lblPass);
                     } else {
                         txtUsername.setStyle("-fx-border-color: #e74c3c; -fx-border-width: 2;");
                         ocultarPassword();
@@ -243,7 +245,29 @@ public class PantallaCrearPartida {
             comboColor.setValue("Blau");
             comboColor.setPrefWidth(180);
 
-            pinguinoOptions.getChildren().addAll(new Label("NOM"), txtUsername, lblPass, txtPassword, new Label("COLOR"), comboColor);
+            comboMode = new ChoiceBox<>();
+            comboMode.getItems().addAll("Jugador Real", "IA (Bot)");
+            comboMode.setValue("Jugador Real");
+            comboMode.setPrefWidth(180);
+
+
+            // CANVI DE MODE (HUMÀ VS IA)
+            comboMode.setOnAction(e -> {
+                boolean isIA = comboMode.getValue().equals("IA (Bot)");
+                txtPassword.setVisible(!isIA);
+                txtPassword.setManaged(!isIA);
+                lblPass.setVisible(!isIA);
+                lblPass.setManaged(!isIA);
+                if (isIA) {
+                    txtUsername.setText("BOT " + (activeCards.indexOf(this) + 1));
+                    txtUsername.setStyle("-fx-border-color: #3498db; -fx-border-width: 2;");
+                } else {
+                    txtUsername.setText("");
+                    txtUsername.setStyle("-fx-border-color: rgba(255,255,255,0.2);");
+                }
+            });
+
+            pinguinoOptions.getChildren().addAll(new Label("JUGADOR"), comboMode, new Label("NOM"), txtUsername, lblPass, txtPassword, new Label("COLOR"), comboColor);
 
             // ACCIÓ DE CANVI DE TIPUS (PINGÜÍ O FOCA)
             comboTipo.setOnAction(e -> {
@@ -273,6 +297,10 @@ public class PantallaCrearPartida {
         private void ocultarPassword() {
             txtPassword.setManaged(false);
             txtPassword.setVisible(false);
+            if (lblPass != null) {
+                lblPass.setManaged(false);
+                lblPass.setVisible(false);
+            }
         }
 
         public VBox getPane() { return pane; }
@@ -282,7 +310,13 @@ public class PantallaCrearPartida {
          */
         private void actualizarTitulos() {
             for (int i = 0; i < activeCards.size(); i++) {
-                ((Label)activeCards.get(i).pane.getChildren().get(0)).setText("JUGADOR " + (i + 1));
+                PlayerCard card = activeCards.get(i);
+                ((Label)card.pane.getChildren().get(0)).setText("JUGADOR " + (i + 1));
+                
+                // SI ÉS UN BOT, ACTUALITZEM EL SEU NÚMERO PER ORDRE
+                if (card.comboMode.getValue().equals("IA (Bot)")) {
+                    card.txtUsername.setText("BOT " + (i + 1));
+                }
             }
         }
     }
