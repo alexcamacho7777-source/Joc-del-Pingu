@@ -634,24 +634,25 @@ public class PantallaJuego {
                 
                 showSpecialTileMessage(msg, sound, () -> {
                     int posAntEfecto = actual.getPosicion();
-                    boolean esRetroces = false;
+                    final boolean[] esRetroces = {false};
+                    
                     if ("Oso".equals(tipo)) {
                         actual.setPosicion(0);
-                        esRetroces = true;
+                        esRetroces[0] = true;
                     } else {
                         gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
-                        if ("Agujero".equals(tipo)) esRetroces = true;
+                        if ("Agujero".equals(tipo)) esRetroces[0] = true;
                     }
                     
                     // NOMÉS COMPROVEM INTERACCIONS SI ÉS UN TRINEU (AVANÇA), NO SI ÉS UN RETROCÉS
-                    if (!esRetroces) {
+                    if (!esRetroces[0]) {
                         gestorPartida.comprobarInteraccionesEnCasilla(actual);
                     }
 
                     int posFinal = actual.getPosicion();
                     animarMovimiento(actual, posAntEfecto, posFinal, () -> {
                         // SI ÉS RETROCÉS, SALTEM LES INTERACCIONS VISUALS (UI)
-                        finalizarLogicaTurno(actual, esRetroces, () -> {});
+                        finalizarLogicaTurno(actual, esRetroces[0], () -> {});
                     });
                 });
             } else {
@@ -1395,5 +1396,5 @@ public class PantallaJuego {
             alert.showAndWait();
         });
     }
-
+    }
 }
