@@ -634,23 +634,31 @@ public class PantallaJuego {
                 
                 showSpecialTileMessage(msg, sound, () -> {
                     int posAntEfecto = actual.getPosicion();
+                    boolean esRetroces = false;
                     if ("Oso".equals(tipo)) {
                         actual.setPosicion(0);
+                        esRetroces = true;
                     } else {
                         gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                        if ("Agujero".equals(tipo)) esRetroces = true;
                     }
-                    gestorPartida.comprobarInteraccionesEnCasilla(actual);
-                    int posFinal = actual.getPosicion();
                     
+                    // NOMÉS COMPROVEM INTERACCIONS SI ÉS UN TRINEU (AVANÇA), NO SI ÉS UN RETROCÉS
+                    if (!esRetroces) {
+                        gestorPartida.comprobarInteraccionesEnCasilla(actual);
+                    }
+
+                    int posFinal = actual.getPosicion();
                     animarMovimiento(actual, posAntEfecto, posFinal, () -> {
-                        finalizarLogicaTurno(actual, () -> {});
+                        // SI ÉS RETROCÉS, SALTEM LES INTERACCIONS VISUALS (UI)
+                        finalizarLogicaTurno(actual, esRetroces, () -> {});
                     });
                 });
             } else {
                 // CASELLA NORMAL O D'ESDEVENIMENT
                 gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
                 gestorPartida.comprobarInteraccionesEnCasilla(actual);
-                finalizarLogicaTurno(actual, () -> {});
+                finalizarLogicaTurno(actual, false, () -> {});
             }
         });
     }
@@ -659,8 +667,8 @@ public class PantallaJuego {
      * FINALITZA LA LÒGICA DEL TORN ACTUAL I PREPARA EL SEGÜENT.
      * VERIFICA SI S'HA D'OBRIR LA RULETA O SI HI HA UN GUANYADOR.
      */
-    private void finalizarLogicaTurno(Jugador actual, Runnable onDone) {
-        comprobarInteraccionesUI(actual, () -> {
+    private void finalizarLogicaTurno(Jugador actual, boolean skipInteractions, Runnable onDone) {
+        Runnable next = () -> {
             gestorPartida.getPartida().siguienteTurno();
             
             Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
@@ -676,14 +684,21 @@ public class PantallaJuego {
                 mostrarVictoria(gestorPartida.getPartida().getGanador());
             } else {
                 Casilla casillaActual = gestorPartida.getPartida().getTablero().getCasilla(actual.getPosicion());
-                // SI EL JUGADOR CAU EN UN ESDEVENIMENT, S'OBRE LA RULETA (EXCEPTE SI ÉS LA FOCA)
-                if (casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
+                // SI EL JUGADOR CAU EN UN ESDEVENIMENT, S'OBRE LA RULETA (EXCEPTE SI ÉS LA FOCA O HA RETROCEDIT)
+                if (!skipInteractions && casillaActual instanceof Evento && !(actual instanceof model.Foca)) {
                     mostrarRuleta(actual, this::finalizarTurnoComplet);
                 } else {
                     finalizarTurnoComplet();
                 }
             }
-        });
+            onDone.run();
+        };
+
+        if (skipInteractions) {
+            next.run();
+        } else {
+            comprobarInteraccionesUI(actual, next);
+        }
     }
 
     /**
