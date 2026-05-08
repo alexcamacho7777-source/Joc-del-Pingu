@@ -421,7 +421,11 @@ public class PantallaJuego {
         st.setDelay(Duration.millis(i * 10));
         st.setToX(1); st.setToY(1);
         
-     /**
+        ft.play();
+        st.play();
+    }
+
+    /**
      * GESTIONA L'ACCIÓ DE GUARDAR LA PARTIDA A LA BASE DE DADES.
      */
     @FXML private void handleSaveGame() { 
@@ -766,47 +770,54 @@ public class PantallaJuego {
             onFinished.run();
             return;
         }
-       onFinished.run();
-            return;
-        }
 
-        while (current != to) {
+        int step = (to > from) ? 1 : -1;
+        final int totalSteps = Math.abs(to - from);
+        
+        javafx.animation.SequentialTransition sequential = new javafx.animation.SequentialTransition();
+        int current = from;
+
+        for (int i = 0; i < totalSteps; i++) {
             current += step;
             final int finalCurrent = current;
             
-            // Animación de "Salto": sube, cambia la celda, y vuelve a bajar
+            // ANIMACIÓ DE SALT: PUJADA I ESCALA
             javafx.animation.ScaleTransition scaleUp = new javafx.animation.ScaleTransition(Duration.millis(120), token);
             scaleUp.setToX(1.3); scaleUp.setToY(1.3);
-            // ANIMACIÓ DE SALT (PUJADA)
+            
             javafx.animation.TranslateTransition moveYUp = new javafx.animation.TranslateTransition(Duration.millis(120), token);
             moveYUp.setByY(-15);
             
             javafx.animation.ParallelTransition hopUp = new javafx.animation.ParallelTransition(scaleUp, moveYUp);
             
-            // ACTUALITZACIÓ DEL CONTENIDOR GRID (LAYOUT) EN EL MOMENT DEL SALT
+            // ACTUALITZACIÓ DEL POSICIONAMENT AL GRID (SENSE ANIMACIÓ DE TRANSLATE INTERNA)
             javafx.animation.PauseTransition pauseLayout = new javafx.animation.PauseTransition(Duration.millis(10));
             pauseLayout.setOnFinished(e -> {
                 int f = finalCurrent;
                 if (f < 0) f = 0; if (f >= 50) f = 49;
-                GridPane.setRowIndex(token, f / COLUMNS);
-                GridPane.setColumnIndex(token, f % COLUMNS);
+                GridPane.setRowIndex(token, f / 5);
+                GridPane.setColumnIndex(token, f % 5);
                 token.toFront();
+                token.setTranslateY(15); // COMPENSEM LA PUJADA ANTERIOR
             });
 
-            // ANIMACIÓ DE SALT (BAIXADA)
+            // ANIMACIÓ DE SALT: BAIXADA
             javafx.animation.ScaleTransition scaleDown = new javafx.animation.ScaleTransition(Duration.millis(120), token);
             scaleDown.setToX(1.0); scaleDown.setToY(1.0);
             
             javafx.animation.TranslateTransition moveYDown = new javafx.animation.TranslateTransition(Duration.millis(120), token);
-            moveYDown.setByY(15);
+            moveYDown.setByY(-15);
             
             javafx.animation.ParallelTransition hopDown = new javafx.animation.ParallelTransition(scaleDown, moveYDown);
-
-            seq.getChildren().addAll(hopUp, pauseLayout, hopDown);
+            
+            sequential.getChildren().addAll(hopUp, pauseLayout, hopDown);
         }
 
-        seq.setOnFinished(e -> onFinished.run());
-        seq.play();
+        sequential.setOnFinished(e -> {
+            token.setTranslateY(0);
+            onFinished.run();
+        });
+        sequential.play();
     }
     
     /**
@@ -1079,10 +1090,27 @@ public class PantallaJuego {
             }
         }
     }
-                            s.setFill(color);
-                        }
-                    }
+
+    /**
+     * ACTUALITZA LA LLISTA DE FITXES VISUALS SEGONS ELS JUGADORS DE LA PARTIDA CARREGADA.
+     */
+    private void syncLoadedJugadores() {
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
+        tokenMap.clear();
+
+        int pIndex = 0;
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            if (j instanceof Pinguino) {
+                if (pIndex < pTokens.length) {
+                    pTokens[pIndex].setVisible(true);
+                    tokenMap.put(j, pTokens[pIndex]);
+                    aplicarColorAToken(pTokens[pIndex], j.getColor());
+                    pIndex++;
                 }
+            } else if (j instanceof Foca) {
+                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
+                tokenMap.put(j, focaAvatar);
             }
         }
     }
@@ -1160,46 +1188,6 @@ public class PantallaJuego {
         }
     }
 
-    /**
-     * Comprueba interacciones que requieren decisión del usuario (Peces vs Oso/Foca)
-     * o eventos especiales (Guerra de bolas de nieve).
-     */
-    private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
-        if (gestorPartida != null && gestorPartida.getPartida() != null) {
-            // --- CASILLA INICIO: ZONA SEGURA ---
-            if (j.getPosicion() != 0) {
-                Tablero t = gestorPartida.getPartida().getTablero();
-                Casilla c = t.getCasilla(j.getPosicion());
-                
-                boolean decisionTomada = false;
-                // 1. INTERACCIÓN CON OSO
-                if (c instanceof Oso && j instanceof Pinguino && !((Pinguino)j).isEsIA()) {
-                    // (Lògica de decisió d'os)
-                    decisionTomada = true;
-                }
-                
-                if (!decisionTomada) {
-                    // 2. INTERACCIÓN CON FOCA
-                    // ... (resta de lògica)
-                }
-            } else {
-                onDone.run();
-            }
-        } else {
-            onDone.run();
-        }
-    }
-
-        // 2. INTERACCIÓN CON FOCA
-        if (j instanceof Pinguino) {
-            Pinguino p = (Pinguino) j;
-            if (!p.isEsIA()) {
-                Foca f = findFocaEnPosicion(p.getPosicion());
-                if (f != null && !f.isSobornada()) {
-                    interactuarConFoca(p, f, onDone);
-                    return;
-                }
-            }
     /**
      * COMPROVA LES INTERACCIONS VISUALS QUE REQUEREIXEN ACCIÓ DE L'USUARI (COMBAT O SUBORN).
      */
@@ -1365,15 +1353,4 @@ public class PantallaJuego {
         });
     }
 
-    /**
-     * MOSTRA L'OVERLAY DE VICTÒRIA QUAN UN JUGADOR ARRIBA A LA META.
-     */
-    private void mostrarVictoria(Jugador ganador) {
-        if (winOverlay != null) {
-            winLabel.setText("GUANYADOR: " + ganador.getNombre().toUpperCase());
-            winOverlay.setVisible(true);
-            javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(Duration.seconds(1), winOverlay);
-            ft.setFromValue(0); ft.setToValue(1); ft.play();
-        }
-    }
 }
