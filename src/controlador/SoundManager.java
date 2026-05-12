@@ -19,6 +19,8 @@ public class SoundManager {
     private Map<String, AudioClip> sounds = new HashMap<>();
     private boolean soundEnabled = true;
     private boolean musicEnabled = true;
+    private double musicVolume = 0.5;
+    private double soundVolume = 1.0;
 
     /**
      * CONSTRUCTOR PRIVAT QUE CARREGA TOTS ELS RECURSOS D'ÀUDIO.
@@ -159,6 +161,7 @@ public class SoundManager {
      * AJUSTA EL VOLUM DE LA MÚSICA DE FONS.
      */
     public void setMusicVolume(double volume) {
+        this.musicVolume = volume;
         if (menuMusic != null) {
             menuMusic.setVolume(volume);
         }
@@ -171,6 +174,7 @@ public class SoundManager {
      * AJUSTA EL VOLUM DE TOTS ELS EFECTES DE SO.
      */
     public void setSoundVolume(double volume) {
+        this.soundVolume = volume;
         for (AudioClip clip : sounds.values()) {
             clip.setVolume(volume);
         }
@@ -201,4 +205,6 @@ public class SoundManager {
 
     public boolean isSoundEnabled() { return soundEnabled; }
     public boolean isMusicEnabled() { return musicEnabled; }
+    public double getMusicVolume() { return musicVolume; }
+    public double getSoundVolume() { return soundVolume; }
 }

@@ -44,22 +44,39 @@ public class Tablero {
      * DISTRIBUEIX OSOS, FORATS, TRINEUS I ESDEVENIMENTS DE FORMA ALEATÒRIA.
      */
     private void generarTablero(Random r) {
-        int targetOsoCount = r.nextInt(5) + 1; 
-        List<Integer> possibleIndices = new ArrayList<>();
-        for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
-            possibleIndices.add(i);
-        }
-        java.util.Collections.shuffle(possibleIndices, r);
-        List<Integer> osoIndices = possibleIndices.subList(0, targetOsoCount);
-
         // CASELLA D'INICI
         casillas.add(new Normal(0)); 
         
+        // Assegurem que hi hagi almenys un de cada tipus especial
+        List<Integer> specialIndices = new ArrayList<>();
         for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
-            if (osoIndices.contains(i)) {
-                casillas.add(new Oso(i));
+            specialIndices.add(i);
+        }
+        java.util.Collections.shuffle(specialIndices, r);
+        
+        // Assignem manualment els primers índexs barrejats a cada tipus per garantir presència
+        int idx = 0;
+        casillas.addAll(new ArrayList<>(java.util.Collections.nCopies(TOTAL_CASILLAS - 2, null)));
+        
+        // Tipus obligatoris (almenys 1)
+        casillas.set(specialIndices.get(idx++), new Oso(0)); // Posició temporal
+        casillas.set(specialIndices.get(idx++), new Agujero(0));
+        casillas.set(specialIndices.get(idx++), new Trineo(0));
+        casillas.set(specialIndices.get(idx++), new Evento(0));
+        casillas.set(specialIndices.get(idx++), new SueloQuebradizo(0));
+
+        // Omplim la resta amb probabilitats millorades (menys normals)
+        for (int i = 1; i < TOTAL_CASILLAS - 1; i++) {
+            if (casillas.get(i) == null) {
+                casillas.set(i, crearCasillaAleatoriaMillorada(i, r));
             } else {
-                casillas.add(crearCasillaAleatoriaSinOso(i, r));
+                // Corregim la posició interna de les obligatòries
+                Casilla c = casillas.get(i);
+                if (c instanceof Oso) casillas.set(i, new Oso(i));
+                else if (c instanceof Agujero) casillas.set(i, new Agujero(i));
+                else if (c instanceof Trineo) casillas.set(i, new Trineo(i));
+                else if (c instanceof Evento) casillas.set(i, new Evento(i));
+                else if (c instanceof SueloQuebradizo) casillas.set(i, new SueloQuebradizo(i));
             }
         }
         
@@ -68,21 +85,16 @@ public class Tablero {
     }
 
     /**
-     * CREA UNA CASELLA ALEATÒRIA EXCLOENT EL TIPUS 'OS'.
+     * CREA UNA CASELLA ALEATÒRIA AMB PROBABILITATS AJUSTADES (MENYS NORMALS).
      */
-    private Casilla crearCasillaAleatoriaSinOso(int pos, Random r) {
-        Casilla c;
-        int tipo = r.nextInt(11) + 1; 
-        switch (tipo) {
-            case 1: c = new Agujero(pos); break;
-            case 2: c = new Trineo(pos); break;
-            case 3:
-            case 4:
-            case 5: c = new Evento(pos); break;
-            case 6: c = new SueloQuebradizo(pos); break;
-            default: c = new Normal(pos); break;
-        }
-        return c;
+    private Casilla crearCasillaAleatoriaMillorada(int pos, Random r) {
+        int tipo = r.nextInt(100);
+        if (tipo < 15) return new Agujero(pos);      // 15%
+        if (tipo < 30) return new Trineo(pos);       // 15%
+        if (tipo < 55) return new Evento(pos);       // 25%
+        if (tipo < 70) return new Oso(pos);          // 15%
+        if (tipo < 85) return new SueloQuebradizo(pos); // 15%
+        return new Normal(pos);                      // 15% (Molt menys que abans)
     }
 
     /**

@@ -19,31 +19,43 @@ public class GestorBBDD {
     private static final String PASS_PROJ  = "AACGFAM";
 
     private Connection conexion;
+    private java.util.List<String> logsConnexio = new java.util.ArrayList<>();
+
+    // FILTRE PER MOSTRAR NOMÉS USUARIS REALS (EXCLOU BOTS I JUGADORS NO REGISTRATS)
+    private static final String FILTRE_USUARIS = "contrasenya IS NOT NULL AND contrasenya != 'BOT_PWD' " +
+            "AND nom_jugador NOT LIKE 'Jugador %' AND nom_jugador NOT LIKE 'CPU %' " +
+            "AND nom_jugador NOT LIKE 'BOT %' AND nom_jugador NOT LIKE 'Foca %'";
 
     /**
      * CONSTRUCTOR QUE ESTABLEIX LA CONNEXIÓ AUTOMÀTICAMENT.
      * PRIORITZA LA XARXA LOCAL I COMMUTA A LA REMOTA SI ÉS NECESSARI.
      */
     public GestorBBDD() {
+        logsConnexio.add("INICIANT CONNEXIÓ A LA BBDD...");
         this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
         
         if (this.conexion == null) {
-            System.out.println("INTENTANT CONNEXIÓ REMOTA...");
+            logsConnexio.add("INTENTANT CONNEXIÓ REMOTA...");
             this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ);
         }
         
         if (this.conexion != null) {
+            logsConnexio.add("CONNEXIÓ ESTABLERTA AMB ÈXIT.");
             assegurarEstructuraPLSQL();
             inicializarTablasMaestras();
+        } else {
+            logsConnexio.add("NO S'HA POGUT ESTABLIR CAP CONNEXIÓ AMB EL SERVIDOR.");
         }
     }
+
+    public java.util.List<String> getLogsConnexio() { return logsConnexio; }
 
     public Connection getConexion() { return conexion; }
 
     /**
      * MÈTODE INTERN PER ESTABLIR LA CONNEXIÓ JDBC AMB EL DRIVER D'ORACLE.
      */
-    private static Connection conectarDirecte(String url, String user, String pwd) {
+    private Connection conectarDirecte(String url, String user, String pwd) {
         Connection con = null;
         try {
             try {
@@ -54,6 +66,7 @@ public class GestorBBDD {
             DriverManager.setLoginTimeout(5); 
             con = DriverManager.getConnection(url, user, pwd);
         } catch (Exception e) {
+            logsConnexio.add("ERROR CONNEXIÓ (" + url + "): " + e.getMessage());
             System.err.println("ERROR EN LA CONNEXIÓ A " + url + ": " + e.getMessage());
         }
         return con;
@@ -138,7 +151,7 @@ public class GestorBBDD {
     }
 
     /**
-     * INICIALITZA LES TAULES MESTRES AMB DADES PER DEFECTE SI NO EXISTEIXEN.
+     * INICIALITZA LES TAULES AMB DADES PER DEFECTE SI NO EXISTEIXEN.
      */
     private void inicializarTablasMaestras() {
         if (conexion != null) {
@@ -363,8 +376,12 @@ public class GestorBBDD {
         return res;
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // MÈTODES D'ESTADÍSTIQUES — CRIDEN FUNCIONS I PROCEDIMENTS PL/SQL
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
-     * MÈTODES PER A ESTADÍSTIQUES I RÀNQUINGS.
+     * OBTÉ LES VICTÒRIES D'UN JUGADOR PEL SEU ID.
      */
     public int getVictoriesSQL(int idJugador) {
         ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT victories FROM jugador WHERE id_jugador = " + idJugador);
@@ -372,41 +389,170 @@ public class GestorBBDD {
         return Integer.parseInt(res.get(0).get("VICTORIES"));
     }
 
+    /**
+     * CRIDA LA FUNCIÓ PL/SQL GET_MITJA_VICTORIES.
+     * Retorna la mitjana de victòries entre tots els jugadors.
+     */
     public double getMitjaGlobalSQL() {
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT AVG(victories) as MITJA FROM jugador");
-        if (res.isEmpty() || res.get(0).get("MITJA") == null) return 0.0;
-        return Double.parseDouble(res.get(0).get("MITJA"));
+        double result = 0.0;
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MITJA_VICTORIES}")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.execute();
+                result = cs.getDouble(1);
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL GET_MITJA_VICTORIES: " + e.getMessage());
+            }
+        }
+        return result;
     }
 
     public double getMitjaVictoriesSQL() { return getMitjaGlobalSQL(); }
 
+    /**
+     * CRIDA LA FUNCIÓ PL/SQL GET_MAX_VICTORIES_RECORD.
+     * Retorna el màxim número de victòries (rècord).
+     */
     public int getMaxVictoriesRecordSQL() {
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(victories) as MAX_V FROM jugador");
-        if (res.isEmpty() || res.get(0).get("MAX_V") == null) return 0;
-        return Integer.parseInt(res.get(0).get("MAX_V"));
+        int result = 0;
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MAX_VICTORIES_RECORD}")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.execute();
+                result = cs.getInt(1);
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL GET_MAX_VICTORIES_RECORD: " + e.getMessage());
+            }
+        }
+        return result;
     }
 
+    /**
+     * CRIDA EL PROCEDIMENT PL/SQL RANKING_PARTIDES_TOTALS.
+     * Retorna un cursor amb el rànquing per partides jugades (de més a menys).
+     */
     public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
-        return select(conexion, "SELECT nom_jugador, victories as TOTAL FROM jugador ORDER BY victories DESC FETCH FIRST 10 ROWS ONLY");
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{call RANKING_PARTIDES_TOTALS(?)}")) {
+                cs.registerOutParameter(1, -10); // OracleTypes.CURSOR = -10
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(1);
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("TOTAL", String.valueOf(rs.getInt("TOTAL")));
+                    resultados.add(fila);
+                }
+                rs.close();
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL RANKING_PARTIDES_TOTALS: " + e.getMessage());
+            }
+        }
+        return resultados;
     }
 
+    /**
+     * CRIDA EL PROCEDIMENT PL/SQL GET_JUGADORS_RECORD.
+     * Passa el rècord com a paràmetre i retorna els jugadors que el tenen.
+     */
     public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
-        int max = getMaxVictoriesRecordSQL();
-        return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories = " + max + " AND victories > 0");
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion != null) {
+            int record = getMaxVictoriesRecordSQL(); // Obtenim el rècord via PL/SQL
+            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?, ?)}")) {
+                cs.setInt(1, record);                // p_record IN
+                cs.registerOutParameter(2, -10);     // p_cursor OUT (SYS_REFCURSOR)
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(2);
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
+                    resultados.add(fila);
+                }
+                rs.close();
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL GET_JUGADORS_RECORD: " + e.getMessage());
+            }
+        }
+        return resultados;
     }
 
+    /**
+     * CRIDA EL PROCEDIMENT PL/SQL GET_JUGADORS_SOBRE_MITJA.
+     * Retorna els jugadors amb més victòries que la mitjana global.
+     */
     public ArrayList<LinkedHashMap<String, String>> getJugadorsSobreMitjaSQL() {
-        double mitja = getMitjaGlobalSQL();
-        return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories > " + mitja + " ORDER BY victories DESC");
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_SOBRE_MITJA(?)}")) {
+                cs.registerOutParameter(1, -10);     // p_cursor OUT (SYS_REFCURSOR)
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(1);
+                while (rs.next()) {
+                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                    fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
+                    resultados.add(fila);
+                }
+                rs.close();
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL GET_JUGADORS_SOBRE_MITJA: " + e.getMessage());
+            }
+        }
+        return resultados;
     }
 
+    /**
+     * CRIDA LA FUNCIÓ PL/SQL PERCENTATGE_MENYS_VICTORIES.
+     * Passa el nº de victòries i retorna el % de jugadors que en tenen menys.
+     */
     public double getPercentatgeMenysVictoriesSQL(int vics) {
-        ArrayList<LinkedHashMap<String, String>> resTotal = select(conexion, "SELECT COUNT(*) as TOTAL FROM jugador");
-        ArrayList<LinkedHashMap<String, String>> resMenys = select(conexion, "SELECT COUNT(*) as MENYS FROM jugador WHERE victories < " + vics);
-        
-        if (resTotal.isEmpty()) return 0.0;
-        double total = Double.parseDouble(resTotal.get(0).get("TOTAL"));
-        double menys = Double.parseDouble(resMenys.get(0).get("MENYS"));
-        return (menys / total) * 100.0;
+        double result = 0.0;
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{? = call PERCENTATGE_MENYS_VICTORIES(?)}")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC); // RETURN NUMBER
+                cs.setInt(2, vics);                                  // p_vics IN
+                cs.execute();
+                result = cs.getDouble(1);
+            } catch (SQLException e) {
+                System.out.println("ERROR PL/SQL PERCENTATGE_MENYS_VICTORIES: " + e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * CRIDA EL PROCEDIMENT PL/SQL CONSULTAR_ESTADISTIQUES_JUGADOR.
+     * Retorna victòries, partides totals i posició al rànquing.
+     * Controla errors: -20001 (jugador no existeix) i -20002 (sense partides).
+     */
+    public LinkedHashMap<String, String> consultarEstadistiquesJugador(String nom) {
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall(
+                    "{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?, ?)}")) {
+                cs.setString(1, nom);                                       // p_nom IN
+                cs.registerOutParameter(2, java.sql.Types.NUMERIC);         // p_vics OUT
+                cs.registerOutParameter(3, java.sql.Types.NUMERIC);         // p_total_partides OUT
+                cs.registerOutParameter(4, java.sql.Types.NUMERIC);         // p_posicio_ranking OUT
+                cs.execute();
+                result.put("VICTORIES", String.valueOf(cs.getInt(2)));
+                result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
+                result.put("POSICIO_RANKING", String.valueOf(cs.getInt(4)));
+            } catch (SQLException e) {
+                // CONTROL D'ERRORS PL/SQL
+                String msg = e.getMessage();
+                if (msg != null && msg.contains("20001")) {
+                    result.put("ERROR", "El jugador '" + nom + "' no existeix a la base de dades.");
+                } else if (msg != null && msg.contains("20002")) {
+                    result.put("ERROR", "El jugador '" + nom + "' encara no ha guardat cap partida.");
+                } else {
+                    result.put("ERROR", "Error inesperat: " + msg);
+                }
+            }
+        }
+        return result;
     }
 }

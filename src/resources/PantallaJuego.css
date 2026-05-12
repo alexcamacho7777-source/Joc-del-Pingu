@@ -93,7 +93,6 @@
 
 .grid-tile:hover {
     -fx-translate-y: -10;
-    -fx-background-color: linear-gradient(to bottom right, #ffffff, #00d2ff);
     -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.8), 35, 0, 0, 20);
 }
 

@@ -14,7 +14,7 @@
           style="-fx-background-color: linear-gradient(to bottom right, #001a33, #050f23); -fx-background-radius: 30; -fx-border-color: #00c6ff; -fx-border-radius: 30; -fx-border-width: 2; -fx-padding: 30;" 
           spacing="20">
         
-        <Label text="AJUSTES" styleClass="title" style="-fx-font-size: 32px; -fx-text-fill: white;"/>
+        <Label text="CONFIGURACIÓ" styleClass="title" style="-fx-font-size: 32px; -fx-text-fill: white;"/>
 
         <VBox spacing="20">
             <!-- Música -->
@@ -53,11 +53,13 @@
             </VBox>
         </VBox>
 
-        <HBox alignment="CENTER" spacing="20">
+        <HBox alignment="CENTER" spacing="15">
             <Button text="CANCEL·LAR" onAction="#handleCancelar" 
-                    style="-fx-background-color: #334466; -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 120; -fx-padding: 10 20; -fx-cursor: hand;"/>
+                    style="-fx-background-color: #334466; -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 100; -fx-padding: 10 15; -fx-cursor: hand;"/>
+            <Button text="TANCAR JOC" onAction="#handleSortir" 
+                    style="-fx-background-color: #cc0000; -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 100; -fx-padding: 10 15; -fx-cursor: hand;"/>
             <Button text="GUARDAR" onAction="#handleGuardar" 
-                    style="-fx-background-color: linear-gradient(to right, #00c6ff, #0072ff); -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 120; -fx-padding: 10 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 10, 0, 0, 4);"/>
+                    style="-fx-background-color: linear-gradient(to right, #00c6ff, #0072ff); -fx-background-radius: 20; -fx-text-fill: white; -fx-font-weight: bold; -fx-min-width: 100; -fx-padding: 10 15; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0, 114, 255, 0.5), 10, 0, 0, 4);"/>
         </HBox>
 
     </VBox>

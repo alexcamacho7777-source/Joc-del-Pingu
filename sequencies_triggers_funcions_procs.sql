@@ -53,13 +53,13 @@ END;
 /
 
 -- 5. OBTENIR JUGADORS AMB EL RÈCORD (P)
--- Retorna un cursor amb els noms i victòries dels jugadors que tenen el rècord actual.
-CREATE OR REPLACE PROCEDURE GET_JUGADORS_RECORD(p_cursor OUT SYS_REFCURSOR) IS
+-- Passant el rècord com a paràmetre, retorna un cursor amb els jugadors que el tenen.
+CREATE OR REPLACE PROCEDURE GET_JUGADORS_RECORD(p_record IN NUMBER, p_cursor OUT SYS_REFCURSOR) IS
 BEGIN
     OPEN p_cursor FOR
         SELECT NOM_JUGADOR, VICTORIES
         FROM JUGADOR
-        WHERE VICTORIES = (SELECT MAX(VICTORIES) FROM JUGADOR)
+        WHERE VICTORIES = p_record
         AND VICTORIES > 0;
 END;
 /
@@ -129,13 +129,15 @@ END;
 /
 
 -- 11. PROCEDIMENT DE CONSULTA AMB CONTROL D'ERRORS (P)
--- Consulta les dades d'un jugador amb validació d'existència i de partides guardades.
+-- Consulta les dades d'un jugador amb validació d'existència, partides i posició al rànking.
 CREATE OR REPLACE PROCEDURE CONSULTAR_ESTADISTIQUES_JUGADOR(
     p_nom IN VARCHAR2, 
     p_vics OUT NUMBER,
-    p_total_partides OUT NUMBER
+    p_total_partides OUT NUMBER,
+    p_posicio_ranking OUT NUMBER
 ) IS
     v_count NUMBER;
+    v_id NUMBER;
 BEGIN
     -- Error: Si no existeix aquest jugador a la taula de jugadors
     SELECT COUNT(*) INTO v_count FROM JUGADOR WHERE NOM_JUGADOR = p_nom;
@@ -143,16 +145,23 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20001, 'ERROR: El jugador ' || p_nom || ' no existeix.');
     END IF;
 
+    SELECT ID_JUGADOR INTO v_id FROM JUGADOR WHERE NOM_JUGADOR = p_nom;
+
     -- Error: Si el jugador especificat no ha guardat encara cap partida
     SELECT COUNT(*) INTO p_total_partides 
     FROM JUGADOR_PARTIDA JP 
-    JOIN JUGADOR J ON J.ID_JUGADOR = JP.ID_JUGADOR 
-    WHERE J.NOM_JUGADOR = p_nom;
+    WHERE JP.ID_JUGADOR = v_id;
     
     IF p_total_partides = 0 THEN
         RAISE_APPLICATION_ERROR(-20002, 'ERROR: El jugador ' || p_nom || ' encara no ha guardat cap partida.');
     END IF;
 
-    SELECT VICTORIES INTO p_vics FROM JUGADOR WHERE NOM_JUGADOR = p_nom;
+    -- Obtenim les victòries del jugador
+    SELECT VICTORIES INTO p_vics FROM JUGADOR WHERE ID_JUGADOR = v_id;
+
+    -- Calculem la posició al rànking (1 = millor)
+    SELECT COUNT(*) + 1 INTO p_posicio_ranking
+    FROM JUGADOR
+    WHERE VICTORIES > p_vics;
 END;
 /

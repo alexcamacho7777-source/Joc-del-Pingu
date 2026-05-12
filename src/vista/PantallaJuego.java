@@ -197,6 +197,13 @@ public class PantallaJuego {
         }
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         
+        // MOSTRAR LOGS DE CONNEXIÓ A LA UI
+        if (gestorPartida.getGestorBBDD() != null) {
+            for (String logMsg : gestorPartida.getGestorBBDD().getLogsConnexio()) {
+                anadirLog("BBDD: " + logMsg);
+            }
+        }
+        
         anadirLog("--- BENVINGUT AL JOC DEL PINGÜÍ ---");
         
         // AJUST DE LES IMATGES DE FONS PER A QUE SIGUIN RESPONSIVES
@@ -670,6 +677,7 @@ public class PantallaJuego {
      */
     private void finalizarLogicaTurno(Jugador actual, boolean skipInteractions, Runnable onDone) {
         Runnable next = () -> {
+            gestorPartida.actualizarEstadoTablero(); // VERIFIQUEM SI HI HA GUANYADOR
             gestorPartida.getPartida().siguienteTurno();
             
             Jugador proxSiguiente = gestorPartida.getPartida().getJugadorActualObj();
@@ -978,8 +986,8 @@ public class PantallaJuego {
             for (Item itemLoop : inv.getLista()) {
                 if (itemLoop instanceof Dado d) {
                     String name = d.getNombre().toLowerCase();
-                    if (tipo.equals("DadoRapido") && name.contains("rapid")) dadoElegido = d;
-                    if (tipo.equals("DadoLento") && name.contains("lent")) dadoElegido = d;
+                    if (tipo.equals("DadoRapido") && (name.contains("rapid") || name.contains("ràpid") || name.contains("rápido"))) dadoElegido = d;
+                    if (tipo.equals("DadoLento") && (name.contains("lent") || name.contains("lento"))) dadoElegido = d;
                 }
             }
 
@@ -1397,4 +1405,4 @@ public class PantallaJuego {
         });
     }
     }
-}
+

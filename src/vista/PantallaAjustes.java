@@ -35,6 +35,17 @@ public class PantallaAjustes {
      */
     @FXML
     public void initialize() {
+        // CARREGAR VALORS ACTUALS DEL SOUNDMANAGER
+        double currentMusic = controlador.SoundManager.getInstance().getMusicVolume() * 100.0;
+        double currentSound = controlador.SoundManager.getInstance().getSoundVolume() * 100.0;
+        
+        sldMusica.setValue(currentMusic);
+        sldEfectes.setValue(currentSound);
+        lblMusica.setText((int)currentMusic + "%");
+        lblEfectes.setText((int)currentSound + "%");
+        actualizarIconoMuteMusica((int)currentMusic);
+        actualizarIconoMuteEfectes((int)currentSound);
+
         // CONFIGURACIÓ DEL CONTROL DE MÚSICA
         sldMusica.valueProperty().addListener((obs, oldVal, newVal) -> {
             lblMusica.setText(newVal.intValue() + "%");
@@ -162,6 +173,16 @@ public class PantallaAjustes {
     private void handleCancelar() {
         controlador.SoundManager.getInstance().playSound("click");
         tancarFinestra();
+    }
+
+    /**
+     * TANCAR EL JOC COMPLETAMENT.
+     */
+    @FXML
+    private void handleSortir() {
+        controlador.SoundManager.getInstance().playSound("click");
+        javafx.application.Platform.exit();
+        System.exit(0);
     }
 
     private void tancarFinestra() {
