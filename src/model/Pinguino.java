@@ -13,6 +13,8 @@ public class Pinguino extends Jugador {
         super(nombre, color);
     }
 
+    private Dado dadoEquipado;
+
     /**
      * CONSTRUCTOR DETALLAT PER CARREGAR UN PINGÜÍ AMB POSICIÓ I INVENTARI EXISTENT.
      */
@@ -20,7 +22,11 @@ public class Pinguino extends Jugador {
         super(nombre, color);
         this.setPosicion(posicion);
         this.setInv(inv);
+        this.dadoEquipado = null;
     }
+
+    public Dado getDadoEquipado() { return dadoEquipado; }
+    public void setDadoEquipado(Dado d) { this.dadoEquipado = d; }
 
     /**
      * AFEGEIX UN ELEMENT A L'INVENTARI DEL PINGÜÍ.

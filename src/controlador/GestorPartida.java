@@ -179,7 +179,14 @@ public class GestorPartida {
         boolean usatEspecial = false;
         
         if (j instanceof Pinguino p) {
-            if (p.isEsIA()) {
+            // 1. Prioritat: Si el jugador ha equipat un dau des de la UI o IA
+            if (p.getDadoEquipado() != null) {
+                r = usarDadoEspecial(p, p.getDadoEquipado());
+                p.setDadoEquipado(null); // Consumit
+                usatEspecial = true;
+            } 
+            // 2. Si és IA i no tenia dau equipat, decideix si en vol usar un
+            else if (p.isEsIA()) {
                 Item it = decidirDadoIA(p);
                 if (it instanceof Dado d) {
                     r = usarDadoEspecial(p, d);
@@ -188,7 +195,7 @@ public class GestorPartida {
             }
         }
         
-        // Si no s'ha usat un dau especial, tirem el dau normal (1-6)
+        // 3. Si no s'ha usat un dau especial, tirem el dau normal (1-6)
         if (!usatEspecial) {
             r = 1 + random.nextInt(6);
         }
@@ -233,53 +240,69 @@ public class GestorPartida {
     public void realizarAccionesIA(Jugador j) {
         if (j instanceof Pinguino p) {
             if (p.isEsIA()) {
-                // Aquí podríem afegir lògica per usar peixos o boles de neu abans de tirar el dau.
+                // La IA intenta usar daus especials si els té
+                Item d = p.getInv().getItem(Dado.class);
+                if (d != null && random.nextInt(100) < 30) {
+                   // Usat automàticament en el mètode tirarDadoParaJugador
+                }
             }
         }
     }
 
     /**
-     * GESTIONA ELS ENCONTRES DINS D'UNA MATEIXA CASELLA.
      * Implementa les regles de contacte: suborn a la foca o guerra de boles de neu.
-     * @param p Jugador que acaba d'aterrar en la casella.
+     * @param p Jugador que acaba d'aterrar en la casella o que és colpejat.
      */
     public void comprobarInteraccionesEnCasilla(Jugador p) {
         int meta = partida.getTablero().getTotalCasillas() - 1;
-        for (Jugador otro : partida.getJugadores()) {
-            if (otro != p && otro.getPosicion() == p.getPosicion()) {
-                // CAS A: INTERACCIÓ AMB LA FOCA
+        // Llista temporal per evitar ConcurrentModificationException
+        java.util.List<Jugador> copiaJugadors = new java.util.ArrayList<>(partida.getJugadores());
+        
+        for (Jugador otro : copiaJugadors) {
+            if (otro != p && otro.getPosicion() == p.getPosicion() && p.getPosicion() > 0 && p.getPosicion() < meta) {
+                
+                // CAS A: INTERACCIÓ AMB LA FOCA (El jugador cau on és la foca)
                 if (otro instanceof Foca foca) {
-                    if (foca.getPosicion() < meta) {
-                        if (p instanceof Pinguino pin && pin.isEsIA()) {
-                            // La IA intenta subornar automàticament si té peixos
-                            gestorJugador.focaInteraccion(pin, foca);
-                            if (!foca.isSobornada()) {
-                                // Si no se la suborna, ens colpeja al forat anterior
-                                int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
-                                p.setPosicion(anteriorAgujero);
-                                partida.anadirEvento("LA FOCA HA ATURAT A " + p.getNombre().toUpperCase() + " I L'HA ENVIAT ENRERE.");
-                            }
-                        }
-                    }
+                    interactuarAmbFoca(p, foca);
                 } 
-                // CAS B: INTERACCIÓ ENTRE PINGUINS (Guerra)
-                else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
-                    if (p1.isEsIA() || p2.isEsIA()) {
-                        // Resolem la trobada (possible pèrdua de torn per impacte de bola de neu)
-                        gestorJugador.pinguinoGuerraQuema(p1, p2);
-                    }
+                // CAS B: LA FOCA CAU ON ÉS EL JUGADOR
+                else if (p instanceof Foca foca && otro instanceof Pinguino pin) {
+                    interactuarAmbFoca(pin, foca);
                 }
-            }
-            
-            // CAS C: SI LA FOCA CAU SOBRE UN JUGADOR (TORN DE LA FOCA)
-            if (p instanceof Foca foca && !foca.isSobornada() && foca.getPosicion() < meta) {
-                if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2 && p2.isEsIA()) {
-                    int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
-                    p2.setPosicion(anteriorAgujero);
-                    partida.anadirEvento("LA FOCA HA ENYAMPAT A " + p2.getNombre().toUpperCase() + " EN LA SEVA CASELLA!");
+                // CAS C: INTERACCIÓ ENTRE PINGÜINS (Guerra de boles)
+                else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
+                    anadirEvento("⚔️ GUERRA DE BOLES ENTRE " + p1.getNombre().toUpperCase() + " I " + p2.getNombre().toUpperCase() + "!");
+                    gestorJugador.pinguinoGuerraQuema(p1, p2);
                 }
             }
         }
+    }
+
+    /** Lògica de la foca colpejant o sent alimentada */
+    private void interactuarAmbFoca(Jugador p, Foca foca) {
+        if (foca.isSobornada()) {
+            anadirEvento("🐟 LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
+            return;
+        }
+
+        if (p instanceof Pinguino pin) {
+            Item pez = pin.getInv().getItem(Pez.class);
+            if (pez != null) {
+                // El jugador té un peix, l'alimenta
+                pin.getInv().quitarUnidadAleatoria(random);
+                foca.activarSoborno();
+                anadirEvento("🍣 " + pin.getNombre().toUpperCase() + " HA ALIMENTAT LA FOCA! QUEDA BLOQUEJADA 2 TORNS.");
+            } else {
+                // No té peix, la foca el colpeja
+                pin.setPosicion(0);
+                anadirEvento("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
+            }
+        }
+    }
+
+    /** Afegeix un missatge al log del model i a la vista si és possible */
+    private void anadirEvento(String msg) {
+        partida.anadirEvento(msg);
     }
 
     /**
@@ -298,10 +321,10 @@ public class GestorPartida {
                 if (j instanceof Pinguino p) {
                     // Verifiquem si el pinguí està dins del rang de moviment de la foca
                     if (p.getPosicion() != 0 && p.getPosicion() > start && p.getPosicion() < end) {
-                        java.util.List<String> perdidos = perderMitadInventario(p);
+                        java.util.List<String> perdidos = perderUnObjecte(p);
                         if (!perdidos.isEmpty()) {
                             robos.put(p, perdidos);
-                            partida.anadirEvento("LA FOCA HA ARRASAT L'INVENTARI DE " + p.getNombre().toUpperCase() + " EN PASSAR.");
+                            partida.anadirEvento("🦭 LA FOCA HA ROBAT UN OBJECTE A " + p.getNombre().toUpperCase() + " AL PASSAR.");
                         }
                     }
                 }
@@ -311,21 +334,16 @@ public class GestorPartida {
     }
 
     /**
-     * ELIMINA LA MEITAT DELS ÍTEMS DE L'INVENTARI D'UN JUGADOR DE FORMA ALEATÒRIA.
+     * ELIMINA UN ÍTEM DE L'INVENTARI D'UN JUGADOR DE FORMA ALEATÒRIA.
      * @param p Jugador afectat.
      * @return Llista de noms d'ítems perduts per mostrar-ho al log.
      */
-    private java.util.List<String> perderMitadInventario(Jugador p) {
+    private java.util.List<String> perderUnObjecte(Jugador p) {
         java.util.List<String> perdidos = new java.util.ArrayList<>();
-        if (p.getInv() != null) {
-            int total = p.getInv().totalItems();
-            int perder = total / 2;
-            
-            for (int i = 0; i < perder; i++) {
-                Item stack = p.getInv().quitarUnidadAleatoria(random);
-                if (stack != null) {
-                    perdidos.add(stack.getNombre().toUpperCase());
-                }
+        if (p.getInv() != null && p.getInv().totalItems() > 0) {
+            Item stack = p.getInv().quitarUnidadAleatoria(random);
+            if (stack != null) {
+                perdidos.add(stack.getNombre().toUpperCase());
             }
         }
         return perdidos;
@@ -333,7 +351,7 @@ public class GestorPartida {
 
     /**
      * VERIFICA SI ALGUN JUGADOR HA ARRIBAT A LA CASELLA FINAL I DETERMINA EL GUANYADOR.
-     * Actualitza l'estat de la partida a finalitzada i registra el guanyador.
+     * Actualitza l'estat de la partida a finalitzada, registra el guanyador i guarda a BBDD.
      */
     public void actualizarEstadoTablero() {
         int meta = partida.getTablero().getTotalCasillas() - 1;
@@ -341,7 +359,10 @@ public class GestorPartida {
             if (j.getPosicion() >= meta && !(j instanceof Foca)) {
                 partida.setGanador(j);
                 partida.setFinalizada(true);
-                partida.anadirEvento("¡¡¡ " + j.getNombre().toUpperCase() + " HA ARRIBAT A LA META !!!");
+                anadirEvento("🏆 ¡¡¡ " + j.getNombre().toUpperCase() + " HA ARRIBAT A LA META I GUANYA LA PARTIDA !!!");
+                
+                // GUARDEM AUTOMÀTICAMENT PERQUÈ ES REGISTRI LA VICTÒRIA A LES ESTADÍSTIQUES
+                guardarPartida();
             }
         }
     }

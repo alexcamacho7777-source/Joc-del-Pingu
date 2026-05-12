@@ -81,7 +81,7 @@ public class SoundManager {
 
             // 3. CÀRREGA DELS EFECTES DE SO (AudioClips per a latència baixa)
             loadSound("click", "/resources/sounds/click.mp3");
-            loadSound("bear", "/resources/sounds/bear.mp3");
+            // loadSound("bear", "/resources/sounds/bear.mp3"); // Soroll eliminat a petició de l'usuari
             loadSound("hole", "/resources/sounds/hole.mp3");
             loadSound("sled", "/resources/sounds/sled.mp3");
             loadSound("ice", "/resources/sounds/ice.mp3");

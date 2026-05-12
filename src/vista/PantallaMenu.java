@@ -162,6 +162,7 @@ public class PantallaMenu {
             stage.setScene(scene);
             stage.setFullScreen(true);
         } catch (Exception e) {
+            e.printStackTrace(); // Imprimeix l'error a la consola per a diagnòstic
             mostrarAlert(Alert.AlertType.ERROR, "ERROR", "NO S'HA POGUT CARREGAR LES ESTADÍSTIQUES.");
         }
     }

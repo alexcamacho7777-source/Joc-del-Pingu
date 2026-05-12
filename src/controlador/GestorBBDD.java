@@ -538,7 +538,7 @@ public class GestorBBDD {
                     }
                     rs.close();
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 System.out.println("ERROR PL/SQL RANKING_PARTIDES_TOTALS: " + e.getMessage());
             }
         }
@@ -552,12 +552,11 @@ public class GestorBBDD {
     public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (conexion != null) {
-            int record = getMaxVictoriesRecordSQL(); 
-            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?, ?)}")) {
-                cs.setInt(1, record);                
-                cs.registerOutParameter(2, -10);     
+            // Intentem cridar el procediment. Si falla amb 2 paràmetres, provem amb 1 (només el cursor)
+            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?)}")) {
+                cs.registerOutParameter(1, -10); // OracleTypes.CURSOR
                 cs.execute();
-                ResultSet rs = (ResultSet) cs.getObject(2);
+                ResultSet rs = (ResultSet) cs.getObject(1);
                 if (rs != null) {
                     while (rs.next()) {
                         LinkedHashMap<String, String> fila = new LinkedHashMap<>();
@@ -567,8 +566,10 @@ public class GestorBBDD {
                     }
                     rs.close();
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 System.out.println("ERROR PL/SQL GET_JUGADORS_RECORD: " + e.getMessage());
+                // Fallback: Si el procediment requeria el record, el busquem per SQL directe
+                return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories = (SELECT MAX(victories) FROM jugador)");
             }
         }
         return resultados;
@@ -594,7 +595,7 @@ public class GestorBBDD {
                     }
                     rs.close();
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 System.out.println("ERROR PL/SQL GET_JUGADORS_SOBRE_MITJA: " + e.getMessage());
             }
         }
@@ -615,7 +616,7 @@ public class GestorBBDD {
                 cs.setInt(2, vics);                                  // p_vics IN
                 cs.execute();
                 result = cs.getDouble(1);
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 System.out.println("ERROR PL/SQL PERCENTATGE_MENYS_VICTORIES: " + e.getMessage());
             }
         }
@@ -632,6 +633,7 @@ public class GestorBBDD {
     public LinkedHashMap<String, String> consultarEstadistiquesJugador(String nom) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
         if (conexion != null) {
+            // Intentem primer la versió de 4 paràmetres (1 IN + 3 OUT: Victòries, Partides, Rànquing)
             try (CallableStatement cs = conexion.prepareCall(
                     "{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?, ?)}")) {
                 cs.setString(1, nom);                                       
@@ -642,8 +644,12 @@ public class GestorBBDD {
                 result.put("VICTORIES", String.valueOf(cs.getInt(2)));
                 result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
                 result.put("POSICIO_RANKING", String.valueOf(cs.getInt(4)));
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 String msg = e.getMessage();
+                // Si falla per número d'arguments, provem la versió reduïda de 3 paràmetres
+                if (msg != null && (msg.contains("00306") || msg.contains("wrong number"))) {
+                    return consultarEstadistiquesJugadorV3(nom);
+                }
                 // Gestionem els codis d'error definits al servidor (20001 i 20002)
                 if (msg != null && msg.contains("20001")) {
                     result.put("ERROR", "El jugador '" + nom + "' no existeix.");
@@ -658,4 +664,22 @@ public class GestorBBDD {
         }
         return result;
     }
+
+    /** Versió de seguretat amb 3 paràmetres (sense rànquing) */
+    private LinkedHashMap<String, String> consultarEstadistiquesJugadorV3(String nom) {
+        LinkedHashMap<String, String> result = new LinkedHashMap<>();
+        try (CallableStatement cs = conexion.prepareCall("{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?)}")) {
+            cs.setString(1, nom);
+            cs.registerOutParameter(2, java.sql.Types.NUMERIC);
+            cs.registerOutParameter(3, java.sql.Types.NUMERIC);
+            cs.execute();
+            result.put("VICTORIES", String.valueOf(cs.getInt(2)));
+            result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
+            result.put("POSICIO_RANKING", "N/A");
+        } catch (SQLException e) {
+            result.put("ERROR", "Error en V3: " + e.getMessage());
+        }
+        return result;
+    }
+
 }

@@ -8,7 +8,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<StackPane fx:id="root" style="-fx-background-color: rgba(0,0,0,0.75);" 
+<StackPane fx:id="root" style="-fx-background-color: rgba(5, 25, 55, 0.75);" 
            xmlns="http://javafx.com/javafx/21" 
            xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="vista.PantallaAlerta">

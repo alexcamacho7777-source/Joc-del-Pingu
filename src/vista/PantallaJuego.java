@@ -175,17 +175,36 @@ public class PantallaJuego {
      * El log es desplaça automàticament cap a l'última entrada.
      */
     private void anadirLog(String msg) {
-        if (vboxEventos == null) return;
+        if (vboxEventos == null || msg == null) return;
         
         Text text = new Text(msg);
         text.getStyleClass().add("log-entry");
         text.setWrappingWidth(300);
+        
+        // Estilització per colors per fer-ho més visual i detallat
+        if (msg.contains("DAU") || msg.contains("TREURE")) text.setFill(Color.LIGHTBLUE);
+        else if (msg.contains("🏆") || msg.contains("GUANYA")) {
+            text.setFill(Color.GOLD);
+            text.setStyle("-fx-font-weight: bold;");
+        }
+        else if (msg.contains("ÓS") || msg.contains("FORAT") || msg.contains("💥")) text.setFill(Color.ORANGERED);
+        else if (msg.contains("🎒") || msg.contains("PEIX") || msg.contains("MOTO")) text.setFill(Color.LIGHTGREEN);
+        else text.setFill(Color.WHITE);
+        
         vboxEventos.getChildren().add(text);
         
-        // Esperem 50ms per assegurar que el node s'ha renderitzat abans de fer scroll
-        javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(Duration.millis(50));
-        pause.setOnFinished(e -> scrollEventos.setVvalue(1.0));
-        pause.play();
+        // Auto-scroll cap avall usant Platform.runLater per major fiabilitat
+        Platform.runLater(() -> scrollEventos.setVvalue(1.0));
+    }
+
+    private int lastLogIndex = 0;
+    /** Sincronitza els logs interns del model Partida amb la interfície visual */
+    private void syncModelLogs() {
+        if (gestorPartida.getPartida() == null) return;
+        java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
+        while (lastLogIndex < logs.size()) {
+            anadirLog(logs.get(lastLogIndex++));
+        }
     }
 
     /**
@@ -200,11 +219,9 @@ public class PantallaJuego {
         }
         gestorPartida.setGestorBBDD(new controlador.GestorBBDD());
         
-        // Bolquem els logs de connexió de la BBDD al xat del joc per informar l'usuari
+        // Connexió silenciosa a la BBDD
         if (gestorPartida.getGestorBBDD() != null) {
-            for (String logMsg : gestorPartida.getGestorBBDD().getLogsConnexio()) {
-                anadirLog("SISTEMA: " + logMsg);
-            }
+            // Logs de connexió eliminats de la UI per petició de l'usuari
         }
         
         anadirLog("--- BENVINGUT AL JOC DEL PINGÜÍ ---");
@@ -583,31 +600,40 @@ public class PantallaJuego {
         if (actual.isEsIA()) gestorPartida.realizarAccionesIA(actual);
 
         int pasos = gestorPartida.tirarDadoParaJugador(actual);
+        anadirLog(actual.getNombre().toUpperCase() + " HA TREURE UN " + pasos + " AL DAU.");
+        
         int posNova = Math.min(posAnterior + pasos, 49);
         actual.setPosicion(posNova);
 
         animarMovimiento(actual, posAnterior, posNova, () -> {
+            Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(posNova);
+            String tipo = casilla.getClass().getSimpleName();
+            anadirLog(actual.getNombre().toUpperCase() + " HA CAIGUT A: " + traducirTipoCasilla(tipo).toUpperCase() + " (Casella " + posNova + ").");
+
             // Lògica de la foca robant ítems al seu pas
             if (actual instanceof Foca foca) {
                 if (!gestorPartida.procesarPasoDeFoca(foca, posAnterior, posNova).isEmpty()) {
                     actualizarInventarioUI();
-                    anadirLog("LA FOCA HA ROBAT AL SEU PAS!");
+                    anadirLog("⚠️ LA FOCA HA ROBAT OBJECTES AL SEU PAS!");
                 }
             }
 
-            Casilla casilla = gestorPartida.getPartida().getTablero().getCasilla(posNova);
-            String tipo = casilla.getClass().getSimpleName();
-            
             // Gestió de caselles especials (Ós, Forat, Trineu)
             if (tipo.equals("Oso") || tipo.equals("Agujero") || tipo.equals("Trineo")) {
                 String sound = tipo.equals("Oso") ? "bear" : (tipo.equals("Trineo") ? "sled" : "hole");
                 String msg = tipo.equals("Oso") ? "L'ÓS T'ENVIA A L'INICI!" : (tipo.equals("Trineo") ? "AVANCES AMB EL TRINEU!" : "HAS CAIGUT AL FORAT!");
                 
+                anadirLog("✨ EVENT: " + msg);
                 showSpecialTileMessage(msg, sound, () -> {
                     int posAbansEfecte = actual.getPosicion();
                     gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
+                    syncModelLogs();
                     int posDespresEfecte = actual.getPosicion();
                     
+                    if (posDespresEfecte != posAbansEfecte) {
+                        anadirLog("NOVA POSICIÓ: CASELLA " + posDespresEfecte);
+                    }
+
                     animarMovimiento(actual, posAbansEfecte, posDespresEfecte, () -> {
                         finalizarLogicaTurno(actual, posDespresEfecte < posAbansEfecte, () -> {});
                     });
@@ -615,9 +641,24 @@ public class PantallaJuego {
             } else {
                 gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
                 gestorPartida.comprobarInteraccionesEnCasilla(actual);
+                syncModelLogs();
                 finalizarLogicaTurno(actual, false, () -> {});
             }
         });
+    }
+
+    /** Tradueix el nom de la classe de la casella a un nom llegible */
+    private String traducirTipoCasilla(String tipo) {
+        switch (tipo) {
+            case "Oso": return "Ós Polar";
+            case "Agujero": return "Forat al Gel";
+            case "Trineo": return "Trineu Ràpid";
+            case "Evento": return "Esdeveniment (Ruleta)";
+            case "Nieve": return "Neu Profunda";
+            case "Peces": return "Banc de Peixos";
+            case "CasillaNormal": return "Gel Estreure";
+            default: return tipo;
+        }
     }
 
     /**
@@ -707,6 +748,12 @@ public class PantallaJuego {
             Parent root = loader.load();
             PantallaRuleta ctrl = loader.getController();
             ctrl.setGameContext(gestorPartida.getPartida(), j);
+            
+            // Registrem el log quan la ruleta acaba
+            ctrl.setOnFinishedCallback(result -> {
+                anadirLog("🎰 RULETA: " + j.getNombre().toUpperCase() + " HA REBUT: " + result.toUpperCase());
+            });
+
             boardStack.getChildren().add(root);
             root.parentProperty().addListener((obs, old, newVal) -> { if (newVal == null) onFinished.run(); });
         } catch (Exception e) { onFinished.run(); }
@@ -812,10 +859,40 @@ public class PantallaJuego {
         Jugador act = gestorPartida.getPartida().getJugadorActualObj();
         if (!(act instanceof Pinguino p) || p.isEsIA()) return;
 
-        if (tipo.startsWith("Dado")) {
-            // Lògica simplificada per usar daus des de la UI
-            actualizarInventarioUI();
-            // (La lògica interna ja es gestiona al GestorPartida)
+        int countAntes = p.getInv().contarItems(tipo);
+        if (countAntes > 0) {
+            if (tipo.contains("Dado")) {
+                // Equipar el dau per a la propera tirada
+                Item it = p.getInv().getItem(Dado.class);
+                if (it instanceof Dado d) {
+                    p.setDadoEquipado(d);
+                    anadirLog("🎒 " + p.getNombre().toUpperCase() + " HA PREPARAT UN: " + tipo.toUpperCase());
+                }
+            } else if (tipo.equals("BolaNieve")) {
+                // Ús actiu: Tirar bola a un altre jugador aleatori
+                Jugador objetivo = null;
+                for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+                    if(j != p && j.getPosicion() > 0) {
+                        objetivo = j; break; 
+                    }
+                }
+                
+                if (objetivo != null) {
+                    p.getInv().quitarUnidadAleatoria(new java.util.Random());
+                    int retroceso = 1 + new java.util.Random().nextInt(3);
+                    int posVella = objetivo.getPosicion();
+                    objetivo.setPosicion(Math.max(0, posVella - retroceso));
+                    anadirLog("❄️ " + p.getNombre().toUpperCase() + " HA LLANÇAT UNA BOLA A " + objetivo.getNombre().toUpperCase() + "!");
+                    anadirLog(objetivo.getNombre().toUpperCase() + " RETROCEDEIX " + retroceso + " CASELLES.");
+                    syncVisualPositions(true);
+                } else {
+                    anadirLog("⚠️ NO HI HA NINGÚ A PROP PER TIRAR LA BOLA!");
+                }
+            } else if (tipo.equals("Peces")) {
+                anadirLog("🍣 EL PEIX S'USA AUTOMÀTICAMENT QUAN ET TROBES AMB L'ÓS O LA FOCA.");
+            }
+        } else {
+             anadirLog("❌ NO TENS " + tipo.toUpperCase() + " A L'INVENTARI.");
         }
         actualizarInventarioUI();
     }

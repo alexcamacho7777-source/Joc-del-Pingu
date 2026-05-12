@@ -1,6 +1,6 @@
 .root {
     -fx-font-family: 'Segoe UI', 'Inter', Roboto, sans-serif;
-    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #0d1b2a, #010409);
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, #051937, #001026);
 }
 
 /* MENU BAR & DROPDOWN */
@@ -54,7 +54,7 @@
 
 /* OVERLAYS */
 .overlay {
-    -fx-background-color: rgba(1, 4, 9, 0.9);
+    -fx-background-color: rgba(5, 25, 55, 0.92);
 }
 
 .loading-text {
@@ -66,8 +66,7 @@
 
 /* VICTORY STYLES */
 .win-overlay {
-    -fx-background-color: rgba(1, 4, 9, 0.85);
-    -fx-backdrop-filter: blur(15px);
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, rgba(5, 25, 55, 0.95), rgba(0, 77, 122, 0.98));
 }
 
 .win-box {

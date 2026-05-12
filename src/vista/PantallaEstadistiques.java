@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.MapValueFactory;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -40,8 +41,19 @@ public class PantallaEstadistiques {
     @FXML private TableColumn<Map, String> colNomSobreMitja;
     @FXML private TableColumn<Map, String> colVicsSobreMitja;
 
-    @FXML private TextField txtPuntuacio;
     @FXML private Label lblResultatPercentatge;
+    
+    // MISSING COMPONENTS FROM FXML
+    @FXML private TextField txtPuntuacio;
+    @FXML private TextField txtNomJugador;
+    
+    // VISUAL COMPONENTS FOR CONSULTATION
+    @FXML private VBox containerResultatConsulta;
+    @FXML private Label lblNomResultat;
+    @FXML private Label lblVicsResultat;
+    @FXML private Label lblPartResultat;
+    @FXML private Label lblRankResultat;
+    @FXML private Label lblErrorConsulta;
 
     private GestorBBDD db;
 
@@ -113,6 +125,37 @@ public class PantallaEstadistiques {
             lblResultatPercentatge.setText(String.format("SUPERES AL %.1f%% DELS JUGADORS!", perc));
         } catch (NumberFormatException e) {
             lblResultatPercentatge.setText("INTRODUEIX UN NÚMERO VÀLID.");
+        }
+    }
+
+    /**
+     * CONSULTA LES DADES ESPECÍFIQUES D'UN JUGADOR PEL SEU NOM.
+     */
+    @FXML
+    private void handleConsultarJugador(ActionEvent event) {
+        String nom = txtNomJugador.getText().trim();
+        if (nom.isEmpty()) {
+            containerResultatConsulta.setVisible(false);
+            lblErrorConsulta.setText("INTRODUEIX UN NOM PER CONSULTAR.");
+            lblErrorConsulta.setVisible(true);
+            return;
+        }
+
+        LinkedHashMap<String, String> stats = db.consultarEstadistiquesJugador(nom);
+        if (stats.containsKey("ERROR")) {
+            containerResultatConsulta.setVisible(false);
+            lblErrorConsulta.setText(stats.get("ERROR"));
+            lblErrorConsulta.setVisible(true);
+        } else {
+            lblErrorConsulta.setVisible(false);
+            lblNomResultat.setText(nom.toUpperCase());
+            lblVicsResultat.setText(stats.get("VICTORIES"));
+            lblPartResultat.setText(stats.get("TOTAL_PARTIDES"));
+            
+            String rank = stats.get("POSICIO_RANKING");
+            lblRankResultat.setText(rank.equals("N/A") ? rank : "#" + rank);
+            
+            containerResultatConsulta.setVisible(true);
         }
     }
 
