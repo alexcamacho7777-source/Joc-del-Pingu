@@ -33,6 +33,13 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 import java.io.IOException;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -405,9 +412,9 @@ public class PantallaJuego {
         boolean ok = gestorPartida.guardarPartida();
         if (ok) {
             anadirLog(">>> LA PARTIDA S'HA GUARDAT AL SERVIDOR.");
-            mostrarAlert(AlertType.INFORMATION, "ÈXIT", "PROGRÉS GUARDAT CORRECTAMENT.");
+            mostrarAlerta(AlertType.INFORMATION, "ÈXIT", "PROGRÉS GUARDAT CORRECTAMENT.");
         } else {
-            mostrarAlert(AlertType.ERROR, "ERROR", "NO S'HA POGUT CONNECTAR AMB LA BBDD.");
+            mostrarAlerta(AlertType.ERROR, "ERROR", "NO S'HA POGUT CONNECTAR AMB LA BBDD.");
         }
     }
 
@@ -485,6 +492,32 @@ public class PantallaJuego {
     }
 
     /**
+     * SINCRONITZA ELS TOKENS VISUALS AMB ELS JUGADORS CARREGATS.
+     */
+    private void syncLoadedJugadores() {
+        if (gestorPartida == null || gestorPartida.getPartida() == null) return;
+        
+        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
+        tokenMap.clear();
+
+        int pIndex = 0;
+        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+            if (j instanceof Pinguino) {
+                if (pIndex < pTokens.length) {
+                    pTokens[pIndex].setVisible(true);
+                    tokenMap.put(j, pTokens[pIndex]);
+                    aplicarColorAToken(pTokens[pIndex], j.getColor());
+                    pIndex++;
+                }
+            } else if (j instanceof Foca) {
+                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
+                tokenMap.put(j, focaAvatar);
+            }
+        }
+    }
+
+    /**
      * ACCIÓ DE TIRAR EL DAU PRINCIPAL.
      */
     @FXML
@@ -523,6 +556,14 @@ public class PantallaJuego {
                 if (!saltarTorn && actual instanceof model.Foca f && f.getTurnosBloqueada() > 0) {
                     f.reducirBloqueo();
                     anadirLog("LA FOCA CONTINUA CONGELADA.");
+                    gestorPartida.getPartida().siguienteTurno();
+                    finalizarTurnoComplet();
+                    saltarTorn = true;
+                }
+
+                // Comprovació de la foca a la meta (per evitar bucles infinits)
+                if (!saltarTorn && actual instanceof model.Foca f && f.getPosicion() >= 49) {
+                    anadirLog("LA FOCA JA ÉS A LA META.");
                     gestorPartida.getPartida().siguienteTurno();
                     finalizarTurnoComplet();
                     saltarTorn = true;
@@ -821,5 +862,14 @@ public class PantallaJuego {
     private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
         // Gestió de trobades entre jugadors que requereixen decisió
         onDone.run();
+    }
+
+    /**
+     * MOSTRA UNA ALERTA PERSONALITZADA UTILITZANT L'OVERLAY DEL JOC.
+     */
+    private void mostrarAlerta(AlertType tipus, String titol, String missatge) {
+        // Utilitzem la utilitat PantallaAlerta pròpia del projecte per a una millor estètica
+        controlador.SoundManager.getInstance().playSound("event");
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 }
