@@ -407,7 +407,7 @@ public class GestorBBDD {
             if (!resP.isEmpty()) {
                 p.setNombre(resP.get(0).get("NOM_PARTIDA"));
                 int tornActual = Integer.parseInt(resP.get(0).get("TORN_ACTUAL"));
-                p.setJugadorActual(tornActual - 1); // Passem de format Oracle (1-4) a Java (0-3)
+                p.setJugadorActual(tornActual - 1); 
                 
                 String finStr = resP.get(0).get("FINALITZADA");
                 p.setFinalizada("1".equals(finStr) || "SÍ".equalsIgnoreCase(finStr));
@@ -468,7 +468,6 @@ public class GestorBBDD {
 
     // ══════════════════════════════════════════════════════════════════════════
     // MÈTODES D'ESTADÍSTIQUES — CRIDEN FUNCIONS I PROCEDIMENTS PL/SQL
-    // Aquesta secció compleix els requisits avançats d'utilització de CallableStatement.
     // ══════════════════════════════════════════════════════════════════════════
 
     /**
