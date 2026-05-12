@@ -105,6 +105,7 @@ public class PantallaJuego {
     @FXML private Rectangle loadingBar;
     @FXML private StackPane winOverlay;
     @FXML private Label winLabel;
+    @FXML private ImageView winIcon;
 
     // PANELLS ARREL PER A LA JERARQUIA DE NODES
     @FXML private StackPane boardStack;
@@ -1171,27 +1172,43 @@ public class PantallaJuego {
         if (winOverlay != null) {
             if (ganador.isEsIA()) {
                 winLabel.setText("DERROTA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT...");
+                if (winIcon != null) winIcon.setOpacity(0.5); // Menys brillant en derrota
             } else {
-                winLabel.setText("VICTÒRIA! " + ganador.getNombre().toUpperCase() + " HA GUANYAT!");
+                winLabel.setText(ganador.getNombre().toUpperCase() + " HA GUANYAT!");
+                if (winIcon != null) winIcon.setOpacity(1.0);
             }
             
             gestorPartida.getPartida().setFinalizada(true);
             gestorPartida.getPartida().setGanador(ganador);
             gestorPartida.guardarPartida();
+            
             winOverlay.setVisible(true);
             winOverlay.setMouseTransparent(false);
             winOverlay.setOpacity(0);
             
-            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1.5), winOverlay);
+            // Animació de fons (Fade)
+            javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(Duration.seconds(1), winOverlay);
             fade.setFromValue(0);
             fade.setToValue(1);
-            fade.play();
             
-            // Efecto de escala
-            javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(Duration.seconds(1), winOverlay);
-            scale.setFromX(0.5); scale.setFromY(0.5);
+            // Animació d'escala del contingut (VBox)
+            javafx.scene.Node content = winOverlay.getChildren().get(0);
+            javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(Duration.seconds(0.8), content);
+            scale.setFromX(0); scale.setFromY(0);
             scale.setToX(1); scale.setToY(1);
+            scale.setInterpolator(javafx.animation.Interpolator.SPLINE(0.1, 0.8, 0.2, 1.0));
+            
+            fade.play();
             scale.play();
+            
+            // Efecte de "brillantor" extra si és victòria
+            if (!ganador.isEsIA() && winIcon != null) {
+                javafx.animation.RotateTransition rotate = new javafx.animation.RotateTransition(Duration.seconds(10), winIcon);
+                rotate.setByAngle(360);
+                rotate.setCycleCount(javafx.animation.Animation.INDEFINITE);
+                rotate.setInterpolator(javafx.animation.Interpolator.LINEAR);
+                rotate.play();
+            }
         }
     }
 

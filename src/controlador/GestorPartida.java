@@ -87,6 +87,14 @@ public class GestorPartida {
             boolean bloqueado = false;
             // 2. GESTIÓ DEL BLOQUEIG ESPECÍFIC DE LA FOCA
             if (jugadorTurno instanceof Foca foca) {
+                // SI LA FOCA JA ÉS A LA META, ES QUEDA ALLÍ I NO FA RES MÉS
+                int meta = partida.getTablero().getTotalCasillas() - 1;
+                if (foca.getPosicion() >= meta) {
+                    partida.anadirEvento("LA FOCA HA ARRIBAT AL FINAL I ES QUEDA DESCANSANT.");
+                    partida.siguienteTurno();
+                    return;
+                }
+
                 if (foca.getTurnosBloqueada() > 0) {
                     foca.reducirBloqueo();
                     partida.anadirEvento("LA FOCA CONTINUA BLOQUEJADA (" + foca.getTurnosBloqueada() + " TORNS RESTANTS).");
@@ -193,15 +201,19 @@ public class GestorPartida {
      * INCLOU LA LÒGICA DE SUBORN DE LA FOCA I LA GUERRA DE BOLES DE NEU.
      */
     public void comprobarInteraccionesEnCasilla(Jugador p) {
+        int meta = partida.getTablero().getTotalCasillas() - 1;
         for (Jugador otro : partida.getJugadores()) {
             if (otro != p && otro.getPosicion() == p.getPosicion()) {
                 if (otro instanceof Foca foca) {
-                    if (p instanceof Pinguino pin && pin.isEsIA()) {
-                        gestorJugador.focaInteraccion(pin, foca);
-                        if (!foca.isSobornada()) {
-                            int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
-                            p.setPosicion(anteriorAgujero);
-                            partida.anadirEvento("LA FOCA COLPEJA A " + p.getNombre().toUpperCase() + " I L'ENVIA AL FORAT ANTERIOR.");
+                    // LA FOCA NO INTERACCIONA SI JA ÉS A LA META
+                    if (foca.getPosicion() < meta) {
+                        if (p instanceof Pinguino pin && pin.isEsIA()) {
+                            gestorJugador.focaInteraccion(pin, foca);
+                            if (!foca.isSobornada()) {
+                                int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p.getPosicion());
+                                p.setPosicion(anteriorAgujero);
+                                partida.anadirEvento("LA FOCA COLPEJA A " + p.getNombre().toUpperCase() + " I L'ENVIA AL FORAT ANTERIOR.");
+                            }
                         }
                     }
                 } else if (otro instanceof Pinguino p2 && p instanceof Pinguino p1) {
@@ -212,7 +224,7 @@ public class GestorPartida {
             }
             
             // SI LA FOCA ACABA EL SEU MOVIMENT SOBRE UN JUGADOR
-            if (p instanceof Foca foca && !foca.isSobornada()) {
+            if (p instanceof Foca foca && !foca.isSobornada() && foca.getPosicion() < meta) {
                 if (otro.getPosicion() == foca.getPosicion() && otro instanceof Pinguino p2 && p2.isEsIA()) {
                     int anteriorAgujero = partida.getTablero().buscarAgujeroAnterior(p2.getPosicion());
                     p2.setPosicion(anteriorAgujero);

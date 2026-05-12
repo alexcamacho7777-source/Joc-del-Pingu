@@ -64,6 +64,36 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.5), 15, 0, 0, 0);
 }
 
+/* VICTORY STYLES */
+.win-overlay {
+    -fx-background-color: rgba(1, 4, 9, 0.85);
+    -fx-backdrop-filter: blur(15px);
+}
+
+.win-box {
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    -fx-background-radius: 40;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 2;
+    -fx-padding: 60;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 50, 0, 0, 20);
+}
+
+.win-title {
+    -fx-font-size: 90px;
+    -fx-font-weight: 900;
+    -fx-text-fill: linear-gradient(to bottom, #ffffff, #00d2ff);
+    -fx-effect: dropshadow(gaussian, #00d2ff, 40, 0.5, 0, 0);
+    -fx-letter-spacing: 8px;
+}
+
+.win-subtitle {
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: white;
+    -fx-opacity: 0.9;
+}
+
 /* TABLERO (BOARD) */
 .board {
     -fx-background-color: transparent;

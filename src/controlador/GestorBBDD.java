@@ -32,11 +32,13 @@ public class GestorBBDD {
      */
     public GestorBBDD() {
         logsConnexio.add("INICIANT CONNEXIÓ A LA BBDD...");
-        this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ);
+        
+        // Reduïm el timeout inicial per detectar ràpidament si no som a la xarxa local
+        this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ, 2);
         
         if (this.conexion == null) {
-            logsConnexio.add("INTENTANT CONNEXIÓ REMOTA...");
-            this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ);
+            logsConnexio.add("SERVIDOR LOCAL NO TROBAT. INTENTANT CONNEXIÓ REMOTA...");
+            this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ, 7);
         }
         
         if (this.conexion != null) {
@@ -44,7 +46,7 @@ public class GestorBBDD {
             assegurarEstructuraPLSQL();
             inicializarTablasMaestras();
         } else {
-            logsConnexio.add("NO S'HA POGUT ESTABLIR CAP CONNEXIÓ AMB EL SERVIDOR.");
+            logsConnexio.add("CRÍTIC: NO S'HA POGUT CONNECTAR AMB CAP SERVIDOR.");
         }
     }
 
@@ -55,7 +57,7 @@ public class GestorBBDD {
     /**
      * MÈTODE INTERN PER ESTABLIR LA CONNEXIÓ JDBC AMB EL DRIVER D'ORACLE.
      */
-    private Connection conectarDirecte(String url, String user, String pwd) {
+    private Connection conectarDirecte(String url, String user, String pwd, int timeout) {
         Connection con = null;
         try {
             try {
@@ -63,11 +65,16 @@ public class GestorBBDD {
             } catch (ClassNotFoundException e) {
                 Class.forName("oracle.jdbc.driver.OracleDriver");
             }
-            DriverManager.setLoginTimeout(5); 
+            DriverManager.setLoginTimeout(timeout); 
             con = DriverManager.getConnection(url, user, pwd);
         } catch (Exception e) {
-            logsConnexio.add("ERROR CONNEXIÓ (" + url + "): " + e.getMessage());
-            System.err.println("ERROR EN LA CONNEXIÓ A " + url + ": " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg.contains("ORA-12170") || msg.contains("timeout")) {
+                logsConnexio.add("TIMEOUT A " + url + " (" + timeout + "s).");
+            } else {
+                logsConnexio.add("ERROR A " + url + ": " + msg);
+            }
+            // No imprimim per System.err aquí per no embrutar la consola si el fallback funciona
         }
         return con;
     }
@@ -288,9 +295,10 @@ public class GestorBBDD {
                 }
 
                 String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                              "WHEN MATCHED THEN UPDATE SET torn_actual = " + (p.getJugadorActual() + 1) + ", nom_partida = '" + p.getNombre() + "' " +
-                              "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual) " +
-                              "VALUES (" + idPartida + ", 1, '" + p.getNombre() + "', SYSDATE, " + (p.getJugadorActual() + 1) + ")";
+                              "WHEN MATCHED THEN UPDATE SET torn_actual = " + (p.getJugadorActual() + 1) + ", nom_partida = '" + p.getNombre() + "', " +
+                              "finalitzada = " + (p.isFinalizada() ? 1 : 0) + " " +
+                              "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual, finalitzada) " +
+                              "VALUES (" + idPartida + ", 1, '" + p.getNombre() + "', SYSDATE, " + (p.getJugadorActual() + 1) + ", " + (p.isFinalizada() ? 1 : 0) + ")";
                 ejecutar(conexion, sqlP);
 
                 // GUARDAR POSICIONS DELS JUGADORS
@@ -302,6 +310,15 @@ public class GestorBBDD {
                                        "WHEN MATCHED THEN UPDATE SET posicio_actual = " + j.getPosicion() + " " +
                                        "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, posicio_actual) VALUES (src.id_j, src.id_p, " + j.getPosicion() + ")";
                         ejecutar(conexion, sqlJP);
+                    }
+                }
+
+                // ACTUALITZAR LES VICTÒRIES DEL GUANYADOR SI LA PARTIDA ACABA D'ACABAR
+                if (p.isFinalizada() && p.getGanador() != null) {
+                    int idG = getIDJugador(p.getGanador().getNombre());
+                    if (idG != -1) {
+                        // Incrementem només si no estava ja finalitzada (opcional, però recomanat)
+                        ejecutar(conexion, "UPDATE jugador SET victories = victories + 1 WHERE id_jugador = " + idG);
                     }
                 }
 
@@ -326,6 +343,9 @@ public class GestorBBDD {
                 p.setNombre(resP.get(0).get("NOM_PARTIDA"));
                 int tornActual = Integer.parseInt(resP.get(0).get("TORN_ACTUAL"));
                 p.setJugadorActual(tornActual - 1);
+                
+                String finStr = resP.get(0).get("FINALITZADA");
+                p.setFinalizada("1".equals(finStr) || "SÍ".equalsIgnoreCase(finStr));
 
                 ArrayList<LinkedHashMap<String, String>> resJ = select(conexion, 
                     "SELECT j.nom_jugador, jp.posicio_actual FROM jugador j " +
@@ -438,13 +458,15 @@ public class GestorBBDD {
                 cs.registerOutParameter(1, -10); // OracleTypes.CURSOR = -10
                 cs.execute();
                 ResultSet rs = (ResultSet) cs.getObject(1);
-                while (rs.next()) {
-                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
-                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
-                    fila.put("TOTAL", String.valueOf(rs.getInt("TOTAL")));
-                    resultados.add(fila);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                        fila.put("TOTAL", String.valueOf(rs.getInt("TOTAL")));
+                        resultados.add(fila);
+                    }
+                    rs.close();
                 }
-                rs.close();
             } catch (SQLException e) {
                 System.out.println("ERROR PL/SQL RANKING_PARTIDES_TOTALS: " + e.getMessage());
             }
@@ -459,19 +481,21 @@ public class GestorBBDD {
     public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (conexion != null) {
-            int record = getMaxVictoriesRecordSQL(); // Obtenim el rècord via PL/SQL
+            int record = getMaxVictoriesRecordSQL(); 
             try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?, ?)}")) {
-                cs.setInt(1, record);                // p_record IN
-                cs.registerOutParameter(2, -10);     // p_cursor OUT (SYS_REFCURSOR)
+                cs.setInt(1, record);                
+                cs.registerOutParameter(2, -10);     
                 cs.execute();
                 ResultSet rs = (ResultSet) cs.getObject(2);
-                while (rs.next()) {
-                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
-                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
-                    fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
-                    resultados.add(fila);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                        fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
+                        resultados.add(fila);
+                    }
+                    rs.close();
                 }
-                rs.close();
             } catch (SQLException e) {
                 System.out.println("ERROR PL/SQL GET_JUGADORS_RECORD: " + e.getMessage());
             }
@@ -487,16 +511,18 @@ public class GestorBBDD {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (conexion != null) {
             try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_SOBRE_MITJA(?)}")) {
-                cs.registerOutParameter(1, -10);     // p_cursor OUT (SYS_REFCURSOR)
+                cs.registerOutParameter(1, -10);     
                 cs.execute();
                 ResultSet rs = (ResultSet) cs.getObject(1);
-                while (rs.next()) {
-                    LinkedHashMap<String, String> fila = new LinkedHashMap<>();
-                    fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
-                    fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
-                    resultados.add(fila);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                        fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
+                        resultados.add(fila);
+                    }
+                    rs.close();
                 }
-                rs.close();
             } catch (SQLException e) {
                 System.out.println("ERROR PL/SQL GET_JUGADORS_SOBRE_MITJA: " + e.getMessage());
             }
@@ -533,25 +559,26 @@ public class GestorBBDD {
         if (conexion != null) {
             try (CallableStatement cs = conexion.prepareCall(
                     "{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?, ?)}")) {
-                cs.setString(1, nom);                                       // p_nom IN
-                cs.registerOutParameter(2, java.sql.Types.NUMERIC);         // p_vics OUT
-                cs.registerOutParameter(3, java.sql.Types.NUMERIC);         // p_total_partides OUT
-                cs.registerOutParameter(4, java.sql.Types.NUMERIC);         // p_posicio_ranking OUT
+                cs.setString(1, nom);                                       
+                cs.registerOutParameter(2, java.sql.Types.NUMERIC);         
+                cs.registerOutParameter(3, java.sql.Types.NUMERIC);         
+                cs.registerOutParameter(4, java.sql.Types.NUMERIC);         
                 cs.execute();
                 result.put("VICTORIES", String.valueOf(cs.getInt(2)));
                 result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
                 result.put("POSICIO_RANKING", String.valueOf(cs.getInt(4)));
             } catch (SQLException e) {
-                // CONTROL D'ERRORS PL/SQL
                 String msg = e.getMessage();
                 if (msg != null && msg.contains("20001")) {
-                    result.put("ERROR", "El jugador '" + nom + "' no existeix a la base de dades.");
+                    result.put("ERROR", "El jugador '" + nom + "' no existeix.");
                 } else if (msg != null && msg.contains("20002")) {
-                    result.put("ERROR", "El jugador '" + nom + "' encara no ha guardat cap partida.");
+                    result.put("ERROR", "El jugador '" + nom + "' no té dades.");
                 } else {
-                    result.put("ERROR", "Error inesperat: " + msg);
+                    result.put("ERROR", "Error: " + msg);
                 }
             }
+        } else {
+            result.put("ERROR", "SENSE CONNEXIÓ A LA BBDD");
         }
         return result;
     }
