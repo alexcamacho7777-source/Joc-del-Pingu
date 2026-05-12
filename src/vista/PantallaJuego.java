@@ -612,9 +612,19 @@ public class PantallaJuego {
 
             // Lògica de la foca robant ítems al seu pas
             if (actual instanceof Foca foca) {
-                if (!gestorPartida.procesarPasoDeFoca(foca, posAnterior, posNova).isEmpty()) {
+                java.util.Map<model.Pinguino, java.util.List<String>> robos = gestorPartida.procesarPasoDeFoca(foca, posAnterior, posNova);
+                if (!robos.isEmpty()) {
                     actualizarInventarioUI();
                     anadirLog("⚠️ LA FOCA HA ROBAT OBJECTES AL SEU PAS!");
+                    StringBuilder sb = new StringBuilder();
+                    boolean afectaHuma = false;
+                    for (java.util.Map.Entry<model.Pinguino, java.util.List<String>> entry : robos.entrySet()) {
+                        sb.append(" - ").append(entry.getKey().getNombre().toUpperCase()).append(" perd: ").append(String.join(", ", entry.getValue())).append("\n");
+                        if (!entry.getKey().isEsIA()) afectaHuma = true;
+                    }
+                    if (afectaHuma) {
+                        mostrarAlerta(Alert.AlertType.WARNING, "LA FOCA T'HA ADELANTAT!", "La foca ha passat per sobre i ha robat ítems:\n\n" + sb.toString());
+                    }
                 }
             }
 
@@ -640,7 +650,6 @@ public class PantallaJuego {
                 });
             } else {
                 gestorPartida.getGestorTablero().ejecutarCasilla(gestorPartida.getPartida(), actual, casilla);
-                gestorPartida.comprobarInteraccionesEnCasilla(actual);
                 syncModelLogs();
                 finalizarLogicaTurno(actual, false, () -> {});
             }
@@ -958,8 +967,123 @@ public class PantallaJuego {
         ft.setFromValue(0); ft.setToValue(1); ft.play();
     }
 
-    private void comprobarInteraccionesUI(Jugador j, Runnable onDone) {
-        // Gestió de trobades entre jugadors que requereixen decisió
+    private void comprobarInteraccionesUI(Jugador p, Runnable onDone) {
+        if (p.getPosicion() == 0 || gestorPartida.getPartida().isFinalizada()) {
+            onDone.run();
+            return;
+        }
+
+        int meta = 49;
+        java.util.List<Jugador> copiaJugadors = new java.util.ArrayList<>(gestorPartida.getPartida().getJugadores());
+        
+        for (Jugador otro : copiaJugadors) {
+            if (otro != p && otro.getPosicion() == p.getPosicion() && p.getPosicion() > 0 && p.getPosicion() < meta) {
+                // CAS A: INTERACCIÓ AMB LA FOCA
+                if (otro instanceof model.Foca foca) {
+                    gestionarEncuentroFocaUI(p, foca, onDone);
+                    return;
+                } else if (p instanceof model.Foca foca && otro instanceof model.Pinguino pin) {
+                    gestionarEncuentroFocaUI(pin, foca, onDone);
+                    return;
+                }
+                // CAS C: GUERRA DE BOLES
+                else if (otro instanceof model.Pinguino p2 && p instanceof model.Pinguino p1) {
+                    gestionarGuerraBolesUI(p1, p2, onDone);
+                    return;
+                }
+            }
+        }
+        onDone.run();
+    }
+
+    private void gestionarEncuentroFocaUI(Jugador p, model.Foca foca, Runnable onDone) {
+        if (foca.isSobornada()) {
+            anadirLog("🐟 LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
+            onDone.run();
+            return;
+        }
+
+        if (p instanceof model.Pinguino pin) {
+            model.Item pez = pin.getInv().getItem(model.Pez.class);
+            int numPeces = pez != null ? pez.getCantidad() : 0;
+            
+            if (numPeces > 0 && !pin.isEsIA()) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Trobada amb la Foca");
+                alert.setHeaderText("LA FOCA T'ESTÀ ATACANT!");
+                alert.setContentText("Tens " + numPeces + " peixos 🐟 a la motxilla.\nVols gastar 1 peix per subornar la foca i evitar que t'enviï a l'inici?");
+                
+                ButtonType btnSi = new ButtonType("Sí, sobornar", ButtonBar.ButtonData.YES);
+                ButtonType btnNo = new ButtonType("No", ButtonBar.ButtonData.NO);
+                alert.getButtonTypes().setAll(btnSi, btnNo);
+                
+                alert.showAndWait().ifPresent(type -> {
+                    if (type == btnSi) {
+                        pez.setCantidad(pez.getCantidad() - 1);
+                        if (pez.getCantidad() <= 0) pin.getInv().quitarItem(pez);
+                        foca.activarSoborno();
+                        anadirLog("🍣 " + pin.getNombre().toUpperCase() + " HA ALIMENTAT LA FOCA! QUEDA BLOQUEJADA 2 TORNS.");
+                        mostrarAlerta(Alert.AlertType.INFORMATION, "SUBORN COMPLETAT", "Has subornat la foca amb un peix. T'has salvat!");
+                    } else {
+                        pin.setPosicion(0);
+                        anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
+                        mostrarAlerta(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No has subornat la foca. Tornes a la casella de sortida!");
+                    }
+                    onDone.run();
+                });
+            } else if (numPeces > 0 && pin.isEsIA()) {
+                pez.setCantidad(pez.getCantidad() - 1);
+                if (pez.getCantidad() <= 0) pin.getInv().quitarItem(pez);
+                foca.activarSoborno();
+                anadirLog("🍣 " + pin.getNombre().toUpperCase() + " HA ALIMENTAT LA FOCA! QUEDA BLOQUEJADA 2 TORNS.");
+                onDone.run();
+            } else {
+                pin.setPosicion(0);
+                anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
+                if (!pin.isEsIA()) {
+                    mostrarAlerta(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No tens cap peix 🐟 per subornar la foca.\nEt colpeja i tornes a la casella de sortida!");
+                }
+                onDone.run();
+            }
+        } else {
+            onDone.run();
+        }
+    }
+
+    private void gestionarGuerraBolesUI(model.Pinguino p1, model.Pinguino p2, Runnable onDone) {
+        model.Item b1item = p1.getInv().getItem(model.BolaDeNieve.class);
+        model.Item b2item = p2.getInv().getItem(model.BolaDeNieve.class);
+
+        int b1 = b1item != null ? b1item.getCantidad() : 0;
+        int b2 = b2item != null ? b2item.getCantidad() : 0;
+
+        if (b1item != null) p1.getInv().quitarItem(b1item);
+        if (b2item != null) p2.getInv().quitarItem(b2item);
+
+        int diferencia = b1 - b2;
+        String winnerText;
+        if (diferencia > 0) {
+            p1.moverPosicion(diferencia);
+            if (p1.getPosicion() > 49) p1.setPosicion(49);
+            winnerText = p1.getNombre().toUpperCase() + " HA GUANYAT (+ " + diferencia + " caselles)";
+        } else if (diferencia < 0) {
+            p2.moverPosicion(-diferencia);
+            if (p2.getPosicion() > 49) p2.setPosicion(49);
+            winnerText = p2.getNombre().toUpperCase() + " HA GUANYAT (+ " + (-diferencia) + " caselles)";
+        } else {
+            winnerText = "EMPAT (Ningú es mou)";
+        }
+
+        anadirLog("⚔️ GUERRA DE BOLES ENTRE " + p1.getNombre().toUpperCase() + " I " + p2.getNombre().toUpperCase() + "!");
+        
+        if (!p1.isEsIA() || !p2.isEsIA()) {
+            mostrarAlerta(Alert.AlertType.INFORMATION, "⚔️ GUERRA DE BOLES DE NEU!", 
+                "Jugadors implicats:\n" +
+                "  - " + p1.getNombre().toUpperCase() + " (" + b1 + " boles)\n" +
+                "  - " + p2.getNombre().toUpperCase() + " (" + b2 + " boles)\n\n" +
+                "Resultat: " + winnerText);
+        }
+        
         onDone.run();
     }
 
