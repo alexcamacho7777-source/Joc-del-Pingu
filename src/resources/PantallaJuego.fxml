@@ -180,7 +180,7 @@
                 <VBox alignment="CENTER" spacing="40" styleClass="win-box" maxWidth="800" maxHeight="600">
                     <ImageView fx:id="winIcon" fitWidth="200" fitHeight="200" preserveRatio="true">
                         <image>
-                            <Image url="@images/casillas/trineo.png"/>
+                            <Image url="@images/trophy_victory.png"/>
                         </image>
                     </ImageView>
                     <VBox alignment="CENTER" spacing="10">

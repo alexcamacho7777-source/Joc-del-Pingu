@@ -190,6 +190,11 @@ public class GestorPartida {
                 Item it = decidirDadoIA(p);
                 if (it instanceof Dado d) {
                     r = usarDadoEspecial(p, d);
+                    
+                    // Com que l'IA no usa la UI, hem de consumir el dau aquí
+                    d.setCantidad(d.getCantidad() - 1);
+                    if (d.getCantidad() <= 0) p.getInv().quitarItem(d);
+                    
                     usatEspecial = true;
                 }
             }
@@ -224,13 +229,9 @@ public class GestorPartida {
      * @return El resultat obtingut de la tirada.
      */
     public int usarDadoEspecial(Pinguino p, Dado d) {
-        int resultado = d.tirar(random);
-        d.setCantidad(d.getCantidad() - 1);
-        // Si s'esgoten les unitats, l'eliminem de l'inventari
-        if (d.getCantidad() <= 0) {
-            p.getInv().quitarItem(d);
-        }
-        return resultado;
+        // Retornem directament el resultat. El consum de l'ítem ja es fa quan
+        // s'equipa des de la UI o quan la IA el decideix usar.
+        return d.tirar(random);
     }
 
     /**

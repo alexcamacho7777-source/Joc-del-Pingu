@@ -294,6 +294,32 @@ public class GestorBBDD {
             if (colsJ.isEmpty()) {
                 ejecutar(conexion, "ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))");
             }
+            
+            // PATCH AUTOMÀTIC PER L'ERROR ORA-04091 DE TAULA MUTANT AL TRIGGER TRG_AVIS_RANKING
+            String triggerFix = 
+                "CREATE OR REPLACE TRIGGER TRG_AVIS_RANKING\n" +
+                "FOR UPDATE OF victories ON JUGADOR\n" +
+                "COMPOUND TRIGGER\n" +
+                "  TYPE t_jugador_rec IS RECORD (nom VARCHAR2(100), vics NUMBER);\n" +
+                "  TYPE t_jugador_tab IS TABLE OF t_jugador_rec;\n" +
+                "  v_jugadors t_jugador_tab := t_jugador_tab();\n" +
+                "  AFTER EACH ROW IS\n" +
+                "  BEGIN\n" +
+                "    v_jugadors.EXTEND;\n" +
+                "    v_jugadors(v_jugadors.LAST).nom := :NEW.nom_jugador;\n" +
+                "    v_jugadors(v_jugadors.LAST).vics := :NEW.victories;\n" +
+                "  END AFTER EACH ROW;\n" +
+                "  AFTER STATEMENT IS\n" +
+                "    v_perc NUMBER;\n" +
+                "  BEGIN\n" +
+                "    FOR i IN 1 .. v_jugadors.COUNT LOOP\n" +
+                "      v_perc := PERCENTATGE_MENYS_VICTORIES(v_jugadors(i).vics);\n" +
+                "      DBMS_OUTPUT.PUT_LINE('AVIS: ' || v_jugadors(i).nom || ' supera al ' || ROUND(v_perc, 2) || '%');\n" +
+                "    END LOOP;\n" +
+                "  END AFTER STATEMENT;\n" +
+                "END;";
+            ejecutar(conexion, triggerFix);
+            
             commit(conexion);
         }
     }
@@ -515,6 +541,14 @@ public class GestorBBDD {
             }
         }
         return result;
+    }
+
+    /**
+     * OBTÉ EL RÀNQUING GLOBAL DE TOTS ELS JUGADORS PER VICTÒRIES.
+     */
+    public ArrayList<LinkedHashMap<String, String>> getRankingGlobalVictoriesSQL() {
+        // Obtenim tots els jugadors amb victòries ordenats de més a menys
+        return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories > 0 AND " + FILTRE_USUARIS + " ORDER BY victories DESC");
     }
 
     /**

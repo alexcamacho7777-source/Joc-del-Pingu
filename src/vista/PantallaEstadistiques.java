@@ -33,9 +33,11 @@ public class PantallaEstadistiques {
     @FXML private TableColumn<Map, String> colNomPartides;
     @FXML private TableColumn<Map, String> colTotalPartides;
 
-    @FXML private TableView<Map> tblRankingRecord;
-    @FXML private TableColumn<Map, String> colNomRecord;
-    @FXML private TableColumn<Map, String> colMaxVics;
+    @FXML private Label lblNomTop1, lblVicTop1, lblNomTop2, lblVicTop2, lblNomTop3, lblVicTop3;
+    @FXML private TableView<Map> tblRestaRanking;
+    @FXML private TableColumn<Map, String> colPosicioResta;
+    @FXML private TableColumn<Map, String> colNomResta;
+    @FXML private TableColumn<Map, String> colVicsResta;
 
     @FXML private TableView<Map> tblRankingSobreMitja;
     @FXML private TableColumn<Map, String> colNomSobreMitja;
@@ -85,8 +87,9 @@ public class PantallaEstadistiques {
         colNomPartides.setCellValueFactory(new MapValueFactory<>("NOM_JUGADOR"));
         colTotalPartides.setCellValueFactory(new MapValueFactory<>("TOTAL"));
 
-        colNomRecord.setCellValueFactory(new MapValueFactory<>("NOM_JUGADOR"));
-        colMaxVics.setCellValueFactory(new MapValueFactory<>("VICTORIES"));
+        colPosicioResta.setCellValueFactory(new MapValueFactory<>("POS"));
+        colNomResta.setCellValueFactory(new MapValueFactory<>("NOM_JUGADOR"));
+        colVicsResta.setCellValueFactory(new MapValueFactory<>("VICTORIES"));
 
         colNomSobreMitja.setCellValueFactory(new MapValueFactory<>("NOM_JUGADOR"));
         colVicsSobreMitja.setCellValueFactory(new MapValueFactory<>("VICTORIES"));
@@ -103,10 +106,31 @@ public class PantallaEstadistiques {
         ObservableList<Map> itemsPartides = FXCollections.observableArrayList(resPartides);
         tblRankingPartides.setItems(itemsPartides);
 
-        // RÀNQUING DE JUGADORS AMB MÉS VICTÒRIES (RÈCORD)
-        ArrayList<LinkedHashMap<String, String>> resRecord = db.getJugadorsRecordSQL();
-        ObservableList<Map> itemsRecord = FXCollections.observableArrayList(resRecord);
-        tblRankingRecord.setItems(itemsRecord);
+        // PODI I RÀNQUING GLOBAL (Top 3 i la resta)
+        ArrayList<LinkedHashMap<String, String>> resGlobal = db.getRankingGlobalVictoriesSQL();
+        
+        if (resGlobal.size() > 0) {
+            lblNomTop1.setText(resGlobal.get(0).get("NOM_JUGADOR"));
+            lblVicTop1.setText(resGlobal.get(0).get("VICTORIES") + " vics");
+        }
+        if (resGlobal.size() > 1) {
+            lblNomTop2.setText(resGlobal.get(1).get("NOM_JUGADOR"));
+            lblVicTop2.setText(resGlobal.get(1).get("VICTORIES") + " vics");
+        }
+        if (resGlobal.size() > 2) {
+            lblNomTop3.setText(resGlobal.get(2).get("NOM_JUGADOR"));
+            lblVicTop3.setText(resGlobal.get(2).get("VICTORIES") + " vics");
+        }
+        
+        // La resta dels jugadors van a la taula
+        ArrayList<LinkedHashMap<String, String>> resta = new ArrayList<>();
+        for (int i = 3; i < resGlobal.size(); i++) {
+            LinkedHashMap<String, String> row = resGlobal.get(i);
+            row.put("POS", String.valueOf(i + 1));
+            resta.add(row);
+        }
+        ObservableList<Map> itemsResta = FXCollections.observableArrayList(resta);
+        tblRestaRanking.setItems(itemsResta);
 
         // JUGADORS QUE ESTAN PER SOBRE DE LA MITJANA GLOBAL
         ArrayList<LinkedHashMap<String, String>> resSobreMitja = db.getJugadorsSobreMitjaSQL();

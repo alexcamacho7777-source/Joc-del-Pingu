@@ -245,3 +245,18 @@
 .current-player {
     -fx-effect: dropshadow(gaussian, #00d2ff, 50, 0.8, 0, 0);
 }
+
+/* VICTORY OVERLAY TEXT STYLES */
+.win-title {
+    -fx-font-size: 80px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #00ffff;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.8), 30, 0.5, 0, 0);
+}
+
+.win-subtitle {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 10, 0, 0, 2);
+}

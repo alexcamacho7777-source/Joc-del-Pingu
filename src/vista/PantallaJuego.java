@@ -862,12 +862,28 @@ public class PantallaJuego {
         int countAntes = p.getInv().contarItems(tipo);
         if (countAntes > 0) {
             if (tipo.contains("Dado")) {
-                // Equipar el dau per a la propera tirada
-                Item it = p.getInv().getItem(Dado.class);
-                if (it instanceof Dado d) {
-                    p.setDadoEquipado(d);
-                    anadirLog("🎒 " + p.getNombre().toUpperCase() + " HA PREPARAT UN: " + tipo.toUpperCase());
+                // Equipar i consumir el dau específic IMMEDIATAMENT
+                Dado dSelect = null;
+                for (Item i : p.getInv().getLista()) {
+                    if (i instanceof Dado d) {
+                        String nomL = d.getNombre().toLowerCase();
+                        if (tipo.contains("Rapido") && (nomL.contains("rapid") || nomL.contains("ràpid") || nomL.contains("rápido"))) {
+                            dSelect = d; break;
+                        } else if (tipo.contains("Lento") && (nomL.contains("lent") || nomL.contains("lento"))) {
+                            dSelect = d; break;
+                        }
+                    }
                 }
+                
+                if (dSelect != null) {
+                    p.setDadoEquipado(dSelect);
+                    anadirLog("🎒 " + p.getNombre().toUpperCase() + " HA PREPARAT UN: " + tipo.toUpperCase());
+                    
+                    // Consumir visualment i realment el dau ara mateix
+                    dSelect.setCantidad(dSelect.getCantidad() - 1);
+                    if (dSelect.getCantidad() <= 0) p.getInv().quitarItem(dSelect);
+                }
+                
             } else if (tipo.equals("BolaNieve")) {
                 // Ús actiu: Tirar bola a un altre jugador aleatori
                 Jugador objetivo = null;
@@ -878,7 +894,13 @@ public class PantallaJuego {
                 }
                 
                 if (objetivo != null) {
-                    p.getInv().quitarUnidadAleatoria(new java.util.Random());
+                    // Consumir la bola de neu correctament
+                    Item bola = p.getInv().getItem(BolaDeNieve.class);
+                    if (bola != null) {
+                        bola.setCantidad(bola.getCantidad() - 1);
+                        if (bola.getCantidad() <= 0) p.getInv().quitarItem(bola);
+                    }
+                    
                     int retroceso = 1 + new java.util.Random().nextInt(3);
                     int posVella = objetivo.getPosicion();
                     objetivo.setPosicion(Math.max(0, posVella - retroceso));

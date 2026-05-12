@@ -23,15 +23,18 @@ public class Oso extends Casilla {
             Item pez = p.getInv().getItem(Pez.class);
             if (pez != null) {
                 // El jugador té un peix, pot subornar l'ós
-                p.getInv().quitarUnidadAleatoria(new java.util.Random()); // Consumir 1 peix
+                pez.setCantidad(pez.getCantidad() - 1);
+                if (pez.getCantidad() <= 0) p.getInv().quitarItem(pez); // Consumir 1 peix correctament
                 partida.anadirEvento("🦴 " + p.getNombre().toUpperCase() + " HA SUBORNAT L'ÓS AMB UN PEIX I SE SALVA!");
             } else {
                 // No té peix, torna a l'inici
                 p.setPosicion(0);
                 partida.anadirEvento("🐻 " + p.getNombre().toUpperCase() + " HA ESTAT ATACAT PER L'ÓS I TORNA A L'INICI!");
             }
-        } else if (jugador instanceof Foca) {
-            // La foca no es veu afectada per l'ós
+        } else if (jugador instanceof Foca f) {
+            // La foca ara també és espantada per l'ós i torna a l'inici
+            f.setPosicion(0);
+            partida.anadirEvento("🐻 LA FOCA HA ESTAT ESPANTADA PER L'ÓS I TORNA A L'INICI!");
         }
     }
 }

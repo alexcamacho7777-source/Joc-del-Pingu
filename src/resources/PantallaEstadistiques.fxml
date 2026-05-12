@@ -42,13 +42,45 @@
                         </columns>
                     </TableView>
                 </Tab>
-                <Tab text="🥇 Campions (Rècord)">
-                    <TableView fx:id="tblRankingRecord" prefHeight="350">
-                        <columns>
-                            <TableColumn fx:id="colNomRecord" text="Jugador" prefWidth="450"/>
-                            <TableColumn fx:id="colMaxVics" text="Victòries" prefWidth="250"/>
-                        </columns>
-                    </TableView>
+                <Tab text="🏆 Podi Global (Victòries)">
+                    <VBox spacing="10" alignment="CENTER" style="-fx-padding: 10;">
+                        <!-- Podi (Top 3) -->
+                        <HBox alignment="BOTTOM_CENTER" spacing="15" minHeight="180">
+                            <!-- 2n Lloc -->
+                            <VBox alignment="BOTTOM_CENTER" spacing="2">
+                                <Label fx:id="lblNomTop2" text="---" style="-fx-text-fill: #C0C0C0; -fx-font-weight: bold; -fx-font-size: 16px;"/>
+                                <Label fx:id="lblVicTop2" text="0 vics" style="-fx-text-fill: #C0C0C0; -fx-font-size: 12px;"/>
+                                <StackPane prefHeight="90" prefWidth="130" style="-fx-background-color: linear-gradient(to top, #808080, #C0C0C0); -fx-background-radius: 15 15 0 0;">
+                                    <Label text="2" style="-fx-font-size: 36px; -fx-font-weight: 900; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);"/>
+                                </StackPane>
+                            </VBox>
+                            <!-- 1r Lloc -->
+                            <VBox alignment="BOTTOM_CENTER" spacing="2">
+                                <Label fx:id="lblNomTop1" text="---" style="-fx-text-fill: #FFD700; -fx-font-weight: 900; -fx-font-size: 20px;"/>
+                                <Label fx:id="lblVicTop1" text="0 vics" style="-fx-text-fill: #FFD700; -fx-font-size: 14px;"/>
+                                <StackPane prefHeight="130" prefWidth="130" style="-fx-background-color: linear-gradient(to top, #B8860B, #FFD700); -fx-background-radius: 15 15 0 0;">
+                                    <Label text="1" style="-fx-font-size: 50px; -fx-font-weight: 900; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 5, 0, 0, 2);"/>
+                                </StackPane>
+                            </VBox>
+                            <!-- 3r Lloc -->
+                            <VBox alignment="BOTTOM_CENTER" spacing="2">
+                                <Label fx:id="lblNomTop3" text="---" style="-fx-text-fill: #CD7F32; -fx-font-weight: bold; -fx-font-size: 16px;"/>
+                                <Label fx:id="lblVicTop3" text="0 vics" style="-fx-text-fill: #CD7F32; -fx-font-size: 12px;"/>
+                                <StackPane prefHeight="60" prefWidth="130" style="-fx-background-color: linear-gradient(to top, #8B4513, #CD7F32); -fx-background-radius: 15 15 0 0;">
+                                    <Label text="3" style="-fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);"/>
+                                </StackPane>
+                            </VBox>
+                        </HBox>
+                        
+                        <!-- Resta de jugadors -->
+                        <TableView fx:id="tblRestaRanking" prefHeight="150" styleClass="transparent-table">
+                            <columns>
+                                <TableColumn fx:id="colPosicioResta" text="Pos" prefWidth="80"/>
+                                <TableColumn fx:id="colNomResta" text="Jugador" prefWidth="400"/>
+                                <TableColumn fx:id="colVicsResta" text="Victòries" prefWidth="220"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
                 </Tab>
                 <Tab text="🔝 Superior a la Mitja">
                     <TableView fx:id="tblRankingSobreMitja" prefHeight="350">
