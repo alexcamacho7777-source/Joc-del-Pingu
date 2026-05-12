@@ -9,21 +9,36 @@ import java.util.Map;
 
 /**
  * GESTOR DE SO DE L'APLICACIÓ (SINGLETON).
- * CONTROLA LA REPRODUCCIÓ DE MÚSICA DE FONS I ELS EFECTES DE SO DELS ESDEVENIMENTS.
+ * Aquesta classe centralitza tota la gestió d'àudio del projecte. Implementa el 
+ * patró Singleton per assegurar que només hi hagi un controlador de so actiu, 
+ * evitant conflictes en la reproducció i permetent un control unificat del 
+ * volum i els estats (Activat/Desactivat).
+ * 
+ * @author Alex Camacho
+ * @version 1.2
  */
 public class SoundManager {
+    
+    // Instància única del Singleton
     private static SoundManager instance;
+    
+    // Reproductors per a les diferents músiques de fons (loops)
     private MediaPlayer menuMusic;
     private MediaPlayer gameMusic;
     private MediaPlayer currentMusic;
+    
+    // Diccionari per emmagatzemar els efectes de so curts (clips)
     private Map<String, AudioClip> sounds = new HashMap<>();
+    
+    // Estats de configuració
     private boolean soundEnabled = true;
     private boolean musicEnabled = true;
     private double musicVolume = 0.5;
     private double soundVolume = 1.0;
 
     /**
-     * CONSTRUCTOR PRIVAT QUE CARREGA TOTS ELS RECURSOS D'ÀUDIO.
+     * CONSTRUCTOR PRIVAT.
+     * Es crida només un cop des de getInstance(). Carrega tots els fitxers de so.
      */
     private SoundManager() {
         loadSounds();
@@ -31,6 +46,7 @@ public class SoundManager {
 
     /**
      * RETORNA L'INSTÀNCIA ÚNICA DEL GESTOR DE SO.
+     * Si no existeix, la crea.
      */
     public static SoundManager getInstance() {
         if (instance == null) {
@@ -41,28 +57,29 @@ public class SoundManager {
 
     /**
      * CARREGA ELS FITXERS MP3 DES DELS RECURSOS DEL PROJECTE.
+     * Inicialitza els reproductors de música i el mapa d'efectes.
      */
     private void loadSounds() {
         try {
-            // MÚSICA DE FONS PER ALS MENÚS
+            // 1. CONFIGURACIÓ DE LA MÚSICA DEL MENÚ
             URL menuURL = getClass().getResource("/resources/sounds/menu_music.mp3");
             if (menuURL != null) {
                 Media media = new Media(menuURL.toExternalForm());
                 menuMusic = new MediaPlayer(media);
-                menuMusic.setCycleCount(MediaPlayer.INDEFINITE);
-                menuMusic.setVolume(0.5);
+                menuMusic.setCycleCount(MediaPlayer.INDEFINITE); // Bucle infinit
+                menuMusic.setVolume(musicVolume);
             }
 
-            // MÚSICA DE FONS PER A LA PARTIDA
+            // 2. CONFIGURACIÓ DE LA MÚSICA DE JOC (In-Game)
             URL gameURL = getClass().getResource("/resources/sounds/game_music.mp3");
             if (gameURL != null) {
                 Media media = new Media(gameURL.toExternalForm());
                 gameMusic = new MediaPlayer(media);
                 gameMusic.setCycleCount(MediaPlayer.INDEFINITE);
-                gameMusic.setVolume(0.5);
+                gameMusic.setVolume(musicVolume);
             }
 
-            // EFECTES DE SO ESPECÍFICS
+            // 3. CÀRREGA DELS EFECTES DE SO (AudioClips per a latència baixa)
             loadSound("click", "/resources/sounds/click.mp3");
             loadSound("bear", "/resources/sounds/bear.mp3");
             loadSound("hole", "/resources/sounds/hole.mp3");
@@ -72,10 +89,13 @@ public class SoundManager {
             loadSound("win", "/resources/sounds/win.mp3");
 
         } catch (Exception e) {
-            System.err.println("ERROR CARREGANT ELS SONS DEL JOC.");
+            System.err.println("ERROR CRÍTIC: No s'han pogut carregar els recursos d'àudio.");
         }
     }
 
+    /**
+     * MÈTODE AUXILIAR PER CARREGAR UN CLIP DE SO INDIVIDUAL.
+     */
     private void loadSound(String name, String path) {
         try {
             URL url = getClass().getResource(path);
@@ -83,12 +103,13 @@ public class SoundManager {
                 sounds.put(name, new AudioClip(url.toExternalForm()));
             }
         } catch (Exception e) {
-            System.err.println("ERROR CARREGANT L'EFECTE: " + name);
+            System.err.println("Advertència: No s'ha trobat l'efecte '" + name + "'.");
         }
     }
 
     /**
      * REPRODUEIX UN EFECTE DE SO PEL SEU NOM.
+     * @param name Identificador del so (ex: "click").
      */
     public void playSound(String name) {
         if (soundEnabled && sounds.containsKey(name)) {
@@ -97,7 +118,8 @@ public class SoundManager {
     }
 
     /**
-     * REPRODUEIX UN EFECTE NOMÉS SI NO ESTÀ SONANT ACTUALMENT.
+     * REPRODUEIX UN EFECTE NOMÉS SI NO ESTÀ SONANT JA.
+     * Útil per evitar saturació de so en animacions ràpides.
      */
     public void playSoundOnce(String name) {
         if (soundEnabled && sounds.containsKey(name)) {
@@ -109,7 +131,7 @@ public class SoundManager {
     }
 
     /**
-     * ATURA LA REPRODUCCIÓ D'UN EFECTE DE SO.
+     * ATURA LA REPRODUCCIÓ D'UN EFECTE DE SO CONCRET.
      */
     public void stopSound(String name) {
         if (sounds.containsKey(name)) {
@@ -118,7 +140,8 @@ public class SoundManager {
     }
 
     /**
-     * INICIA LA MÚSICA DELS MENÚS.
+     * CANVIA LA MÚSICA DE FONS A LA DEL MENÚ.
+     * Atura la música actual si és diferent per fer una transició neta.
      */
     public void playMenuMusic() {
         if (musicEnabled && menuMusic != null) {
@@ -133,7 +156,7 @@ public class SoundManager {
     }
 
     /**
-     * INICIA LA MÚSICA DE L'ENTORN DE JOC.
+     * CANVIA LA MÚSICA DE FONS A LA DEL JOC.
      */
     public void playGameMusic() {
         if (musicEnabled && gameMusic != null) {
@@ -148,7 +171,7 @@ public class SoundManager {
     }
 
     /**
-     * ATURA QUALSEVOL MÚSICA DE FONS QUE ESTIGUI SONANT.
+     * ATURA TOTALMENT LA MÚSICA DE FONS.
      */
     public void stopBackgroundMusic() {
         if (currentMusic != null) {
@@ -158,7 +181,8 @@ public class SoundManager {
     }
 
     /**
-     * AJUSTA EL VOLUM DE LA MÚSICA DE FONS.
+     * AJUSTA EL VOLUM DE TOTA LA MÚSICA DE FONS.
+     * @param volume Valor entre 0.0 i 1.0.
      */
     public void setMusicVolume(double volume) {
         this.musicVolume = volume;
@@ -172,6 +196,7 @@ public class SoundManager {
 
     /**
      * AJUSTA EL VOLUM DE TOTS ELS EFECTES DE SO.
+     * @param volume Valor entre 0.0 i 1.0.
      */
     public void setSoundVolume(double volume) {
         this.soundVolume = volume;
@@ -181,7 +206,7 @@ public class SoundManager {
     }
 
     /**
-     * ACTIVA O DESACTIVA ELS EFECTES DE SO.
+     * ACTIVA O DESACTIVA LA REPRODUCCIÓ D'EFECTES DE SO.
      */
     public void setSoundEnabled(boolean enabled) {
         this.soundEnabled = enabled;
@@ -189,6 +214,7 @@ public class SoundManager {
 
     /**
      * ACTIVA O DESACTIVA LA MÚSICA DE FONS.
+     * Si es desactiva, pausa la música actual; si s'activa, la reprèn.
      */
     public void setMusicEnabled(boolean enabled) {
         this.musicEnabled = enabled;
@@ -203,6 +229,7 @@ public class SoundManager {
         }
     }
 
+    // ── GETTERS DE CONFIGURACIÓ ──────────────────────────────────────────────
     public boolean isSoundEnabled() { return soundEnabled; }
     public boolean isMusicEnabled() { return musicEnabled; }
     public double getMusicVolume() { return musicVolume; }
