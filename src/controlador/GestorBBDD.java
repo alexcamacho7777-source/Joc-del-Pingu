@@ -601,7 +601,7 @@ public class GestorBBDD {
                     rs.close();
                 }
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL GET_JUGADORS_RECORD: " + e.getMessage());
+                System.out.println("ERROR PL/SQL EN RECUPERAR EL RÈCORD: " + e.getMessage());
                 // Fallback: Si el procediment requeria el record, el busquem per SQL directe
                 return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories = (SELECT MAX(victories) FROM jugador)");
             }
@@ -630,7 +630,7 @@ public class GestorBBDD {
                     rs.close();
                 }
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL GET_JUGADORS_SOBRE_MITJA: " + e.getMessage());
+                System.out.println("ERROR PL/SQL EN JUGADORS SOBRE LA MITJANA: " + e.getMessage());
             }
         }
         return resultados;
@@ -651,7 +651,7 @@ public class GestorBBDD {
                 cs.execute();
                 result = cs.getDouble(1);
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL PERCENTATGE_MENYS_VICTORIES: " + e.getMessage());
+                System.out.println("ERROR PL/SQL EN CÀLCUL DE PERCENTIL: " + e.getMessage());
             }
         }
         return result;

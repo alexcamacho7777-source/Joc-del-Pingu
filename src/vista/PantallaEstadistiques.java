@@ -162,24 +162,23 @@ public class PantallaEstadistiques {
             containerResultatConsulta.setVisible(false);
             lblErrorConsulta.setText("INTRODUEIX UN NOM PER CONSULTAR.");
             lblErrorConsulta.setVisible(true);
-            return;
-        }
-
-        LinkedHashMap<String, String> stats = db.consultarEstadistiquesJugador(nom);
-        if (stats.containsKey("ERROR")) {
-            containerResultatConsulta.setVisible(false);
-            lblErrorConsulta.setText(stats.get("ERROR"));
-            lblErrorConsulta.setVisible(true);
         } else {
-            lblErrorConsulta.setVisible(false);
-            lblNomResultat.setText(nom.toUpperCase());
-            lblVicsResultat.setText(stats.get("VICTORIES"));
-            lblPartResultat.setText(stats.get("TOTAL_PARTIDES"));
-            
-            String rank = stats.get("POSICIO_RANKING");
-            lblRankResultat.setText(rank.equals("N/A") ? rank : "#" + rank);
-            
-            containerResultatConsulta.setVisible(true);
+            LinkedHashMap<String, String> stats = db.consultarEstadistiquesJugador(nom);
+            if (stats.containsKey("ERROR")) {
+                containerResultatConsulta.setVisible(false);
+                lblErrorConsulta.setText(stats.get("ERROR"));
+                lblErrorConsulta.setVisible(true);
+            } else {
+                lblErrorConsulta.setVisible(false);
+                lblNomResultat.setText(nom.toUpperCase());
+                lblVicsResultat.setText(stats.get("VICTORIES"));
+                lblPartResultat.setText(stats.get("TOTAL_PARTIDES"));
+                
+                String rank = stats.get("POSICIO_RANKING");
+                lblRankResultat.setText(rank.equals("N/A") ? rank : "#" + rank);
+                
+                containerResultatConsulta.setVisible(true);
+            }
         }
     }
 

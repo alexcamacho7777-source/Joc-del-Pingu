@@ -120,12 +120,10 @@ public class GestorPartida {
                 // Si la foca ha arribat a la meta (NPC), ja no es mou més.
                 int meta = partida.getTablero().getTotalCasillas() - 1;
                 if (foca.getPosicion() >= meta) {
-                    partida.anadirEvento("LA FOCA JA ÉS A LA META I NO REALITZA MÉS ACCIONS.");
+                    partida.anadirEvento("LA FOCA JA ÉS A LA META i NO REALITZA MÉS ACCIONS.");
                     partida.siguienteTurno();
-                    return;
-                }
-
-                if (foca.getTurnosBloqueada() > 0) {
+                    bloqueado = true;
+                } else if (foca.getTurnosBloqueada() > 0) {
                     foca.reducirBloqueo();
                     partida.anadirEvento("LA FOCA ESTÀ CONGELADA I NO POT MOURE'S (" + foca.getTurnosBloqueada() + " TORNS RESTANTS).");
                     partida.siguienteTurno();
@@ -283,10 +281,7 @@ public class GestorPartida {
     private void interactuarAmbFoca(Jugador p, Foca foca) {
         if (foca.isSobornada()) {
             anadirEvento("🐟 LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
-            return;
-        }
-
-        if (p instanceof Pinguino pin) {
+        } else if (p instanceof Pinguino pin) {
             Item pez = pin.getInv().getItem(Pez.class);
             if (pez != null) {
                 // El jugador té un peix, l'alimenta

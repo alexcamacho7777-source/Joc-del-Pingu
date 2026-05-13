@@ -49,6 +49,8 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.stage.Window;
 
 /**
@@ -175,35 +177,36 @@ public class PantallaJuego {
      * El log es desplaça automàticament cap a l'última entrada.
      */
     private void anadirLog(String msg) {
-        if (vboxEventos == null || msg == null) return;
-        
-        Text text = new Text(msg);
-        text.getStyleClass().add("log-entry");
-        text.setWrappingWidth(300);
-        
-        // Estilització per colors per fer-ho més visual i detallat
-        if (msg.contains("DAU") || msg.contains("TREURE")) text.setFill(Color.LIGHTBLUE);
-        else if (msg.contains("🏆") || msg.contains("GUANYA")) {
-            text.setFill(Color.GOLD);
-            text.setStyle("-fx-font-weight: bold;");
+        if (vboxEventos != null && msg != null) {
+            Text text = new Text(msg);
+            text.getStyleClass().add("log-entry");
+            text.setWrappingWidth(300);
+            
+            // Estilització per colors per fer-ho més visual i detallat
+            if (msg.contains("DAU") || msg.contains("TREURE")) text.setFill(Color.LIGHTBLUE);
+            else if (msg.contains("🏆") || msg.contains("GUANYA")) {
+                text.setFill(Color.GOLD);
+                text.setStyle("-fx-font-weight: bold;");
+            }
+            else if (msg.contains("ÓS") || msg.contains("FORAT") || msg.contains("💥")) text.setFill(Color.ORANGERED);
+            else if (msg.contains("🎒") || msg.contains("PEIX") || msg.contains("MOTO")) text.setFill(Color.LIGHTGREEN);
+            else text.setFill(Color.WHITE);
+            
+            vboxEventos.getChildren().add(text);
+            
+            // Auto-scroll cap avall usant Platform.runLater per major fiabilitat
+            Platform.runLater(() -> scrollEventos.setVvalue(1.0));
         }
-        else if (msg.contains("ÓS") || msg.contains("FORAT") || msg.contains("💥")) text.setFill(Color.ORANGERED);
-        else if (msg.contains("🎒") || msg.contains("PEIX") || msg.contains("MOTO")) text.setFill(Color.LIGHTGREEN);
-        else text.setFill(Color.WHITE);
-        
-        vboxEventos.getChildren().add(text);
-        
-        // Auto-scroll cap avall usant Platform.runLater per major fiabilitat
-        Platform.runLater(() -> scrollEventos.setVvalue(1.0));
     }
 
     private int lastLogIndex = 0;
     /** Sincronitza els logs interns del model Partida amb la interfície visual */
     private void syncModelLogs() {
-        if (gestorPartida.getPartida() == null) return;
-        java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
-        while (lastLogIndex < logs.size()) {
-            anadirLog(logs.get(lastLogIndex++));
+        if (gestorPartida.getPartida() != null) {
+            java.util.List<String> logs = gestorPartida.getPartida().getLogEventos();
+            while (lastLogIndex < logs.size()) {
+                anadirLog(logs.get(lastLogIndex++));
+            }
         }
     }
 
@@ -259,9 +262,8 @@ public class PantallaJuego {
      * Crea un efecte de "loading" abans de mostrar el taulell.
      */
     private void ejecutarPantallaCarga() {
-        if (loadingOverlay == null) return;
-        
-        javafx.animation.Timeline timeline = new javafx.animation.Timeline(
+        if (loadingOverlay != null) {
+            javafx.animation.Timeline timeline = new javafx.animation.Timeline(
             new javafx.animation.KeyFrame(Duration.ZERO, new javafx.animation.KeyValue(loadingBar.widthProperty(), 0)),
             new javafx.animation.KeyFrame(Duration.seconds(2.5), new javafx.animation.KeyValue(loadingBar.widthProperty(), 300))
         );
@@ -275,6 +277,7 @@ public class PantallaJuego {
         });
         
         timeline.play();
+        }
     }
 
     /**
@@ -512,24 +515,24 @@ public class PantallaJuego {
      * SINCRONITZA ELS TOKENS VISUALS AMB ELS JUGADORS CARREGATS.
      */
     private void syncLoadedJugadores() {
-        if (gestorPartida == null || gestorPartida.getPartida() == null) return;
-        
-        javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
-        for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
-        tokenMap.clear();
+        if (gestorPartida != null && gestorPartida.getPartida() != null) {
+            javafx.scene.Node[] pTokens = {P1, P2, P3, P4};
+            for(javafx.scene.Node n : pTokens) if(n != null) n.setVisible(false);
+            tokenMap.clear();
 
-        int pIndex = 0;
-        for (Jugador j : gestorPartida.getPartida().getJugadores()) {
-            if (j instanceof Pinguino) {
-                if (pIndex < pTokens.length) {
-                    pTokens[pIndex].setVisible(true);
-                    tokenMap.put(j, pTokens[pIndex]);
-                    aplicarColorAToken(pTokens[pIndex], j.getColor());
-                    pIndex++;
+            int pIndex = 0;
+            for (Jugador j : gestorPartida.getPartida().getJugadores()) {
+                if (j instanceof Pinguino) {
+                    if (pIndex < pTokens.length) {
+                        pTokens[pIndex].setVisible(true);
+                        tokenMap.put(j, pTokens[pIndex]);
+                        aplicarColorAToken(pTokens[pIndex], j.getColor());
+                        pIndex++;
+                    }
+                } else if (j instanceof Foca) {
+                    javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
+                    tokenMap.put(j, focaAvatar);
                 }
-            } else if (j instanceof Foca) {
-                javafx.scene.Node focaAvatar = getOrCreateFocaAvatar();
-                tokenMap.put(j, focaAvatar);
             }
         }
     }
@@ -623,7 +626,7 @@ public class PantallaJuego {
                         if (!entry.getKey().isEsIA()) afectaHuma = true;
                     }
                     if (afectaHuma) {
-                        mostrarAlerta(Alert.AlertType.WARNING, "LA FOCA T'HA ADELANTAT!", "La foca ha passat per sobre i ha robat ítems:\n\n" + sb.toString());
+                        mostrarAlerta(Alert.AlertType.WARNING, "LA FOCA T'HA ADELANTAT!", "La foca ha passat per sobre i ha robat objectes:\n\n" + sb.toString());
                     }
                 }
             }
@@ -773,10 +776,12 @@ public class PantallaJuego {
      */
     private void animarMovimiento(Jugador j, int from, int to, Runnable onFinished) {
         javafx.scene.Node token = tokenMap.get(j);
-        if (from == to || token == null) { onFinished.run(); return; }
-        if (Math.abs(to - from) > 20) { syncVisualPositions(false); onFinished.run(); return; }
-
-        int step = (to > from) ? 1 : -1;
+        if (from != to && token != null) {
+            if (Math.abs(to - from) > 20) { 
+                syncVisualPositions(false); 
+                onFinished.run(); 
+            } else {
+                int step = (to > from) ? 1 : -1;
         javafx.animation.SequentialTransition st = new javafx.animation.SequentialTransition();
         int current = from;
 
@@ -800,6 +805,10 @@ public class PantallaJuego {
         }
         st.setOnFinished(e -> onFinished.run());
         st.play();
+            }
+        } else {
+            onFinished.run();
+        }
     }
     
     /**
@@ -842,17 +851,18 @@ public class PantallaJuego {
         Jugador current = gestorPartida.getPartida().getJugadorActualObj();
         for (Jugador j : gestorPartida.getPartida().getJugadores()) {
             Node n = tokenMap.get(j);
-            if (n == null) continue;
-            if (j.equals(current)) {
-                n.getStyleClass().add("current-player");
-                javafx.animation.ScaleTransition sc = new javafx.animation.ScaleTransition(Duration.seconds(0.6), n);
-                sc.setFromX(1); sc.setToX(1.1); sc.setAutoReverse(true); sc.setCycleCount(-1);
-                sc.play();
-                n.setUserData(sc);
-            } else {
-                n.getStyleClass().remove("current-player");
-                if (n.getUserData() instanceof javafx.animation.ScaleTransition) ((javafx.animation.ScaleTransition)n.getUserData()).stop();
-                n.setScaleX(1); n.setScaleY(1);
+            if (n != null) {
+                if (j.equals(current)) {
+                    n.getStyleClass().add("current-player");
+                    javafx.animation.ScaleTransition sc = new javafx.animation.ScaleTransition(Duration.seconds(0.6), n);
+                    sc.setFromX(1); sc.setToX(1.1); sc.setAutoReverse(true); sc.setCycleCount(-1);
+                    sc.play();
+                    n.setUserData(sc);
+                } else {
+                    n.getStyleClass().remove("current-player");
+                    if (n.getUserData() instanceof javafx.animation.ScaleTransition) ((javafx.animation.ScaleTransition)n.getUserData()).stop();
+                    n.setScaleX(1); n.setScaleY(1);
+                }
             }
         }
     }
@@ -864,66 +874,63 @@ public class PantallaJuego {
     @FXML private void handleNieve()  { usarObjetoYActualizar("BolaNieve"); }
 
     private void usarObjetoYActualizar(String tipo) {
-        if(gestorPartida.getPartida().isFinalizada()) return;
-        Jugador act = gestorPartida.getPartida().getJugadorActualObj();
-        if (!(act instanceof Pinguino p) || p.isEsIA()) return;
-
-        int countAntes = p.getInv().contarItems(tipo);
-        if (countAntes > 0) {
-            if (tipo.contains("Dado")) {
-                // Equipar i consumir el dau específic IMMEDIATAMENT
-                Dado dSelect = null;
-                for (Item i : p.getInv().getLista()) {
-                    if (i instanceof Dado d) {
-                        String nomL = d.getNombre().toLowerCase();
-                        if (tipo.contains("Rapido") && (nomL.contains("rapid") || nomL.contains("ràpid") || nomL.contains("rápido"))) {
-                            dSelect = d; break;
-                        } else if (tipo.contains("Lento") && (nomL.contains("lent") || nomL.contains("lento"))) {
-                            dSelect = d; break;
+        if (!gestorPartida.getPartida().isFinalizada()) {
+            Jugador act = gestorPartida.getPartida().getJugadorActualObj();
+            if (act instanceof Pinguino p && !p.isEsIA()) {
+                int countAntes = p.getInv().contarItems(tipo);
+                if (countAntes > 0) {
+                    if (tipo.contains("Dado")) {
+                        Dado dSelect = null;
+                        boolean found = false;
+                        for (Item i : p.getInv().getLista()) {
+                            if (!found && i instanceof Dado d) {
+                                String nomL = d.getNombre().toLowerCase();
+                                if (tipo.contains("Rapido") && (nomL.contains("rapid") || nomL.contains("ràpid") || nomL.contains("rápido"))) {
+                                    dSelect = d;
+                                    found = true;
+                                } else if (tipo.contains("Lento") && (nomL.contains("lent") || nomL.contains("lento"))) {
+                                    dSelect = d;
+                                    found = true;
+                                }
+                            }
                         }
+                        if (dSelect != null) {
+                            p.setDadoEquipado(dSelect);
+                            anadirLog("🎒 " + p.getNombre().toUpperCase() + " HA PREPARAT UN: " + tipo.toUpperCase());
+                            dSelect.setCantidad(dSelect.getCantidad() - 1);
+                            if (dSelect.getCantidad() <= 0) p.getInv().quitarItem(dSelect);
+                        }
+                    } else if (tipo.equals("BolaNieve")) {
+                        Jugador objetivo = null;
+                        boolean objFound = false;
+                        for(Jugador j : gestorPartida.getPartida().getJugadores()) {
+                            if(!objFound && j != p && j.getPosicion() > 0) {
+                                objetivo = j;
+                                objFound = true;
+                            }
+                        }
+                        if (objetivo != null) {
+                            Item bola = p.getInv().getItem(BolaDeNieve.class);
+                            if (bola != null) {
+                                bola.setCantidad(bola.getCantidad() - 1);
+                                if (bola.getCantidad() <= 0) p.getInv().quitarItem(bola);
+                            }
+                            int retroceso = 1 + new java.util.Random().nextInt(3);
+                            int posVella = objetivo.getPosicion();
+                            objetivo.setPosicion(Math.max(0, posVella - retroceso));
+                            anadirLog("❄️ " + p.getNombre().toUpperCase() + " HA LLANÇAT UNA BOLA A " + objetivo.getNombre().toUpperCase() + "!");
+                            anadirLog(objetivo.getNombre().toUpperCase() + " RETROCEDEIX " + retroceso + " CASELLES.");
+                            syncVisualPositions(true);
+                        } else {
+                            anadirLog("⚠️ NO HI HA NINGÚ A PROP PER TIRAR LA BOLA!");
+                        }
+                    } else if (tipo.equals("Peces")) {
+                        anadirLog("🍣 EL PEIX S'USA AUTOMÀTICAMENT QUAN ET TROBES AMB L'ÓS O LA FOCA.");
                     }
-                }
-                
-                if (dSelect != null) {
-                    p.setDadoEquipado(dSelect);
-                    anadirLog("🎒 " + p.getNombre().toUpperCase() + " HA PREPARAT UN: " + tipo.toUpperCase());
-                    
-                    // Consumir visualment i realment el dau ara mateix
-                    dSelect.setCantidad(dSelect.getCantidad() - 1);
-                    if (dSelect.getCantidad() <= 0) p.getInv().quitarItem(dSelect);
-                }
-                
-            } else if (tipo.equals("BolaNieve")) {
-                // Ús actiu: Tirar bola a un altre jugador aleatori
-                Jugador objetivo = null;
-                for(Jugador j : gestorPartida.getPartida().getJugadores()) {
-                    if(j != p && j.getPosicion() > 0) {
-                        objetivo = j; break; 
-                    }
-                }
-                
-                if (objetivo != null) {
-                    // Consumir la bola de neu correctament
-                    Item bola = p.getInv().getItem(BolaDeNieve.class);
-                    if (bola != null) {
-                        bola.setCantidad(bola.getCantidad() - 1);
-                        if (bola.getCantidad() <= 0) p.getInv().quitarItem(bola);
-                    }
-                    
-                    int retroceso = 1 + new java.util.Random().nextInt(3);
-                    int posVella = objetivo.getPosicion();
-                    objetivo.setPosicion(Math.max(0, posVella - retroceso));
-                    anadirLog("❄️ " + p.getNombre().toUpperCase() + " HA LLANÇAT UNA BOLA A " + objetivo.getNombre().toUpperCase() + "!");
-                    anadirLog(objetivo.getNombre().toUpperCase() + " RETROCEDEIX " + retroceso + " CASELLES.");
-                    syncVisualPositions(true);
                 } else {
-                    anadirLog("⚠️ NO HI HA NINGÚ A PROP PER TIRAR LA BOLA!");
+                    anadirLog("❌ NO TENS " + tipo.toUpperCase() + " A L'INVENTARI.");
                 }
-            } else if (tipo.equals("Peces")) {
-                anadirLog("🍣 EL PEIX S'USA AUTOMÀTICAMENT QUAN ET TROBES AMB L'ÓS O LA FOCA.");
             }
-        } else {
-             anadirLog("❌ NO TENS " + tipo.toUpperCase() + " A L'INVENTARI.");
         }
         actualizarInventarioUI();
     }
@@ -968,42 +975,44 @@ public class PantallaJuego {
     }
 
     private void comprobarInteraccionesUI(Jugador p, Runnable onDone) {
+        boolean interaccioFeta = false;
         if (p.getPosicion() == 0 || gestorPartida.getPartida().isFinalizada()) {
             onDone.run();
-            return;
+            interaccioFeta = true;
         }
 
-        int meta = 49;
-        java.util.List<Jugador> copiaJugadors = new java.util.ArrayList<>(gestorPartida.getPartida().getJugadores());
-        
-        for (Jugador otro : copiaJugadors) {
-            if (otro != p && otro.getPosicion() == p.getPosicion() && p.getPosicion() > 0 && p.getPosicion() < meta) {
-                // CAS A: INTERACCIÓ AMB LA FOCA
-                if (otro instanceof model.Foca foca) {
-                    gestionarEncuentroFocaUI(p, foca, onDone);
-                    return;
-                } else if (p instanceof model.Foca foca && otro instanceof model.Pinguino pin) {
-                    gestionarEncuentroFocaUI(pin, foca, onDone);
-                    return;
-                }
-                // CAS C: GUERRA DE BOLES
-                else if (otro instanceof model.Pinguino p2 && p instanceof model.Pinguino p1) {
-                    gestionarGuerraBolesUI(p1, p2, onDone);
-                    return;
+        if (!interaccioFeta) {
+            int meta = 49;
+            java.util.List<Jugador> copiaJugadors = new java.util.ArrayList<>(gestorPartida.getPartida().getJugadores());
+            
+            for (Jugador otro : copiaJugadors) {
+                if (!interaccioFeta && otro != p && otro.getPosicion() == p.getPosicion() && p.getPosicion() > 0 && p.getPosicion() < meta) {
+                    // CAS A: INTERACCIÓ AMB LA FOCA
+                    if (otro instanceof model.Foca foca) {
+                        gestionarEncuentroFocaUI(p, foca, onDone);
+                        interaccioFeta = true;
+                    } else if (p instanceof model.Foca foca && otro instanceof model.Pinguino pin) {
+                        gestionarEncuentroFocaUI(pin, foca, onDone);
+                        interaccioFeta = true;
+                    }
+                    // CAS C: GUERRA DE BOLES
+                    else if (otro instanceof model.Pinguino p2 && p instanceof model.Pinguino p1) {
+                        gestionarGuerraBolesUI(p1, p2, onDone);
+                        interaccioFeta = true;
+                    }
                 }
             }
+            if (!interaccioFeta) {
+                onDone.run();
+            }
         }
-        onDone.run();
     }
 
     private void gestionarEncuentroFocaUI(Jugador p, model.Foca foca, Runnable onDone) {
         if (foca.isSobornada()) {
             anadirLog("🐟 LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
             onDone.run();
-            return;
-        }
-
-        if (p instanceof model.Pinguino pin) {
+        } else if (p instanceof model.Pinguino pin) {
             model.Item pez = pin.getInv().getItem(model.Pez.class);
             int numPeces = pez != null ? pez.getCantidad() : 0;
             
@@ -1013,8 +1022,8 @@ public class PantallaJuego {
                 alert.setHeaderText("LA FOCA T'ESTÀ ATACANT!");
                 alert.setContentText("Tens " + numPeces + " peixos 🐟 a la motxilla.\nVols gastar 1 peix per subornar la foca i evitar que t'enviï a l'inici?");
                 
-                ButtonType btnSi = new ButtonType("Sí, sobornar", ButtonBar.ButtonData.YES);
-                ButtonType btnNo = new ButtonType("No", ButtonBar.ButtonData.NO);
+                ButtonType btnSi = new ButtonType("Sí, sobornar", ButtonData.YES);
+                ButtonType btnNo = new ButtonType("No", ButtonData.NO);
                 alert.getButtonTypes().setAll(btnSi, btnNo);
                 
                 alert.showAndWait().ifPresent(type -> {
