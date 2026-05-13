@@ -66,35 +66,32 @@
 
 /* VICTORY STYLES */
 .win-overlay {
-    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, rgba(5, 25, 55, 0.95), rgba(0, 77, 122, 0.98));
+    -fx-background-color: radial-gradient(center 50% 50%, radius 100%, rgba(5, 25, 55, 0.98), rgba(0, 0, 0, 0.99));
 }
 
 .win-box {
-    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-    -fx-background-radius: 40;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
-    -fx-border-width: 2;
-    -fx-padding: 60;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 50, 0, 0, 20);
-}
-
-#winIcon {
-    -fx-effect: dropshadow(gaussian, #00d2ff, 40, 0.5, 0, 0);
+    -fx-background-color: linear-gradient(to bottom right, rgba(255, 255, 255, 0.1), rgba(0, 210, 255, 0.05));
+    -fx-background-radius: 50;
+    -fx-border-color: rgba(0, 210, 255, 0.4);
+    -fx-border-width: 3;
+    -fx-padding: 80;
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.3), 60, 0, 0, 0);
 }
 
 .win-title {
-    -fx-font-size: 90px;
+    -fx-font-size: 100px;
     -fx-font-weight: 900;
-    -fx-text-fill: linear-gradient(to bottom, #ffffff, #00d2ff);
-    -fx-effect: dropshadow(gaussian, #00d2ff, 40, 0.5, 0, 0);
-    -fx-letter-spacing: 8px;
+    -fx-text-fill: linear-gradient(to bottom, #ffffff, #00d2ff, #0072ff);
+    -fx-effect: dropshadow(gaussian, rgba(0, 210, 255, 0.8), 30, 0.5, 0, 0);
+    -fx-letter-spacing: 12px;
 }
 
 .win-subtitle {
-    -fx-font-size: 28px;
-    -fx-font-weight: 700;
+    -fx-font-size: 32px;
+    -fx-font-weight: 800;
     -fx-text-fill: white;
-    -fx-opacity: 0.9;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
 }
 
 /* TABLERO (BOARD) */
@@ -249,18 +246,4 @@
 .current-player {
     -fx-effect: dropshadow(gaussian, #00d2ff, 50, 0.8, 0, 0);
 }
-
-/* VICTORY OVERLAY TEXT STYLES */
-.win-title {
-    -fx-font-size: 80px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-effect: dropshadow(gaussian, #00BFFF, 15, 0.3, 0, 0);
-}
-
-.win-subtitle {
-    -fx-font-size: 30px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 10, 0, 0, 2);
-}
+

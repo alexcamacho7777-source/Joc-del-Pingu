@@ -104,7 +104,6 @@ public class PantallaJuego {
     @FXML private Rectangle loadingBar;
     @FXML private StackPane winOverlay;
     @FXML private Label winLabel;
-    @FXML private ImageView winIcon;
 
     // ── PANELLS ARREL ────────────────────────────────────────────────────────
     @FXML private StackPane boardStack;
@@ -432,9 +431,9 @@ public class PantallaJuego {
         boolean ok = gestorPartida.guardarPartida();
         if (ok) {
             anadirLog(">>> LA PARTIDA S'HA GUARDAT AL SERVIDOR.");
-            mostrarAlerta(AlertType.INFORMATION, "ÈXIT", "PROGRÉS GUARDAT CORRECTAMENT.");
+            mostrarAlerta(AlertType.INFORMATION, "ÈXIT", "PROGRÉS GUARDAT CORRECTAMENT.", null);
         } else {
-            mostrarAlerta(AlertType.ERROR, "ERROR", "NO S'HA POGUT CONNECTAR AMB LA BBDD.");
+            mostrarAlerta(AlertType.ERROR, "ERROR", "NO S'HA POGUT CONNECTAR AMB LA BBDD.", null);
         }
     }
 
@@ -641,7 +640,7 @@ public class PantallaJuego {
                         if (!entry.getKey().isEsIA()) afectaHuma = true;
                     }
                     if (afectaHuma) {
-                        mostrarAlerta(Alert.AlertType.WARNING, "LA FOCA T'HA ADELANTAT!", "La foca ha passat per sobre i ha robat objectes:\n\n" + sb.toString());
+                        mostrarAlerta(Alert.AlertType.WARNING, "LA FOCA T'HA ADELANTAT!", "La foca ha passat per sobre i ha robat objectes:\n\n" + sb.toString(), null);
                     }
                 }
             }
@@ -1056,13 +1055,12 @@ public class PantallaJuego {
                         if (pez.getCantidad() <= 0) pin.getInv().quitarItem(pez);
                         foca.activarSoborno();
                         anadirLog("🍣 " + pin.getNombre().toUpperCase() + " HA ALIMENTAT LA FOCA! QUEDA BLOQUEJADA 2 TORNS.");
-                        mostrarAlerta(Alert.AlertType.INFORMATION, "SUBORN COMPLETAT", "Has subornat la foca amb un peix. T'has salvat!");
+                        mostrarAlerta(Alert.AlertType.INFORMATION, "SUBORN COMPLETAT", "Has subornat la foca amb un peix. T'has salvat!", onDone);
                     } else {
                         pin.setPosicion(0);
                         anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
-                        mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No has subornat la foca. Tornes a la casella de sortida!");
+                        mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No has subornat la foca. Tornes a la casella de sortida!", onDone);
                     }
-                    onDone.run();
                 });
             } else if (numPeces > 0 && pin.isEsIA()) {
                 pez.setCantidad(pez.getCantidad() - 1);
@@ -1074,9 +1072,10 @@ public class PantallaJuego {
                 pin.setPosicion(0);
                 anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
                 if (!pin.isEsIA()) {
-                    mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No tens cap peix 🐟 per subornar la foca.\nEt colpeja i tornes a la casella de sortida!");
+                    mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No tens cap peix 🐟 per subornar la foca.\nEt colpeja i tornes a la casella de sortida!", onDone);
+                } else {
+                    onDone.run();
                 }
-                onDone.run();
             }
         } else {
             onDone.run();
@@ -1114,23 +1113,24 @@ public class PantallaJuego {
                 "Jugadors implicats:\n" +
                 "  - " + p1.getNombre().toUpperCase() + " (" + b1 + " boles)\n" +
                 "  - " + p2.getNombre().toUpperCase() + " (" + b2 + " boles)\n\n" +
-                "Resultat: " + winnerText);
+                "Resultat: " + winnerText, 
+                onDone); // Passem el callback perquè s'executi en tancar l'alerta
+        } else {
+            onDone.run(); // Si són IAs, continuem directament
         }
-        
-        onDone.run();
     }
 
     /**
      * MOSTRA UNA ALERTA PERSONALITZADA UTILITZANT L'OVERLAY DEL JOC.
      */
-    private void mostrarAlerta(AlertType tipus, String titol, String missatge) {
+    private void mostrarAlerta(AlertType tipus, String titol, String missatge, Runnable onDone) {
         // Utilitzem la utilitat PantallaAlerta pròpia del projecte per a una millor estètica
         controlador.SoundManager.getInstance().playSound("event");
-        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
+        PantallaAlerta.mostrar(rootPane, titol, missatge, onDone);
     }
 
     /** Versió de l'alerta sense efecte de so (per a encontres amb la foca) */
-    private void mostrarAlertaSilenciosa(AlertType tipus, String titol, String missatge) {
-        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
+    private void mostrarAlertaSilenciosa(AlertType tipus, String titol, String missatge, Runnable onDone) {
+        PantallaAlerta.mostrar(rootPane, titol, missatge, onDone);
     }
 }

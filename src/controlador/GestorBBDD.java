@@ -7,74 +7,65 @@ import java.util.LinkedHashMap;
 import java.util.ArrayList;
 
 /**
- * GESTIONA LA CONNEXIÓ I LES OPERACIONS AMB LA BASE DE DADES ORACLE.
- * Aquesta classe actua com a capa de persistència, encarregant-se de comunicar 
- * l'aplicació Java amb el servidor de base de dades. Inclou la lògica de 
- * seguretat (hashing), sincronització d'estructures (PL/SQL) i gestió de 
- * consultes complexes per a estadístiques i rànquings.
- * 
- * @author Alex Camacho (Grup 03 - Pingu)
- * @version 2.0
+ * AQUESTA CLASSE Ã‰S EL "PONT" ENTRE EL JOC I LA BASE DE DADES.
+ * SERVEIX PER ENVIAR I REBRE TOTA LA INFORMACIÃ“ DELS JUGADORS I LES PARTIDES.
+ * TOT ES FA AMB ORACLE I PL/SQL PERQUÃˆ SIGUI MOLT RÃ€PID I SEGUR.
  */
 public class GestorBBDD {
 
-    // URLS DE CONNEXIÓ PER A L'ENTORN LOCAL D'ILERNA I L'ACCÉS REMOT
+    // URLS DE CONNEXIÃ“ PER A L'ENTORN LOCAL D'ILERNA I L'ACCÃ‰S REMOT
     // Es defineixen dues rutes per garantir que el joc funcioni tant a classe com des de casa.
     private static final String URL_CENTRO = "jdbc:oracle:thin:@//192.168.3.26:1521/XEPDB2";
     private static final String URL_REMOTO = "jdbc:oracle:thin:@//oracle.ilerna.com:1521/XEPDB2";
     private static final String USER_PROJ  = "DW2526_GR03_PINGU";
     private static final String PASS_PROJ  = "AACGFAM";
 
-    // Atributs d'instància per mantenir l'estat de la sessió actual
+    // Atributs d'instÃ ncia per mantenir l'estat de la sessiÃ³ actual
     private Connection conexion;
     private java.util.List<String> logsConnexio = new java.util.ArrayList<>();
 
-    // FILTRE PER MOSTRAR NOMÉS USUARIS REALS (EXCLOU BOTS I JUGADORS NO REGISTRATS)
-    // Aquesta constant s'utilitza en consultes SQL per filtrar jugadors automàtics o temporals.
+    // FILTRE PER MOSTRAR NOMÃ‰S USUARIS REALS (EXCLOU BOTS I JUGADORS NO REGISTRATS)
+    // Aquesta constant s'utilitza en consultes SQL per filtrar jugadors automÃ tics o temporals.
     private static final String FILTRE_USUARIS = "contrasenya IS NOT NULL AND contrasenya != 'BOT_PWD' " +
             "AND nom_jugador NOT LIKE 'Jugador %' AND nom_jugador NOT LIKE 'CPU %' " +
             "AND nom_jugador NOT LIKE 'BOT %' AND nom_jugador NOT LIKE 'Foca %'";
 
     /**
-     * CONSTRUCTOR QUE ESTABLEIX LA CONNEXIÓ AUTOMÀTICAMENT.
-     * El constructor intenta primer una connexió local (més ràpida) i, si falla 
-     * per timeout, intenta la remota. Un cop connectat, assegura que les taules 
-     * i les dades mestres estiguin correctament inicialitzades.
+     * QUAN CREEM EL GESTOR, INTENTA CONNECTAR-SE A LA BASE DE DADES.
+     * PRIMER PROVA A LA CLASSE (LOCAL) I SI NO POT, PROVA DES DE CASA (REMOT).
+     * UN COP CONNECTAT, REVISA QUE TOTES LES TAULES ESTIGUIN BÃ‰.
      */
     public GestorBBDD() {
-        logsConnexio.add("INICIANT CONNEXIÓ A LA BBDD...");
+        logsConnexio.add("INICIANT CONNEXIÃ“ A LA BBDD...");
         
-        // Reduïm el timeout inicial a 2 segons per detectar ràpidament si no som a la xarxa local d'Ilerna.
+        // ReduÃ¯m el timeout inicial a 2 segons per detectar rÃ pidament si no som a la xarxa local d'Ilerna.
         this.conexion = conectarDirecte(URL_CENTRO, USER_PROJ, PASS_PROJ, 2);
         
         if (this.conexion == null) {
-            logsConnexio.add("SERVIDOR LOCAL NO TROBAT. INTENTANT CONNEXIÓ REMOTA...");
-            // El timeout remot és superior (7s) ja que la latència d'Internet pot ser major.
+            logsConnexio.add("SERVIDOR LOCAL NO TROBAT. INTENTANT CONNEXIÃ“ REMOTA...");
+            // El timeout remot Ã©s superior (7s) ja que la latÃ¨ncia d'Internet pot ser major.
             this.conexion = conectarDirecte(URL_REMOTO, USER_PROJ, PASS_PROJ, 7);
         }
         
         if (this.conexion != null) {
-            logsConnexio.add("CONNEXIÓ ESTABLERTA AMB ÈXIT.");
+            logsConnexio.add("CONNEXIÃ“ ESTABLERTA AMB ÃˆXIT.");
             assegurarEstructuraPLSQL();     // Verifica columnes com 'contrasenya'
             inicializarTablasMaestras();   // Insereix tipus de caselles si falten
         } else {
-            logsConnexio.add("CRÍTIC: NO S'HA POGUT CONNECTAR AMB CAP SERVIDOR.");
+            logsConnexio.add("CRÃTIC: NO S'HA POGUT CONNECTAR AMB CAP SERVIDOR.");
         }
     }
 
-    /** @return Llista cronològica dels intents i errors de connexió. */
+    /** @return Llista cronolÃ²gica dels intents i errors de connexiÃ³. */
     public java.util.List<String> getLogsConnexio() { return logsConnexio; }
 
     /** @return L'objecte Connection actiu o null si no n'hi ha cap. */
     public Connection getConexion() { return conexion; }
 
     /**
-     * MÈTODE INTERN PER ESTABLIR LA CONNEXIÓ JDBC AMB EL DRIVER D'ORACLE.
-     * @param url Adreça del servidor Oracle.
-     * @param user Nom d'usuari de l'esquema.
-     * @param pwd Contrasenya de l'esquema.
-     * @param timeout Temps màxim d'espera en segons.
-     * @return Connection object o null si falla.
+     * AQUÃ Ã‰S ON FEM LA CONNEXIÃ“ REAL AMB EL SERVIDOR.
+     * LI DIEM ON Ã‰S EL SERVIDOR, L'USUARI I LA CONTRASENYA.
+     * SI EL SERVIDOR NO RESPON EN POCS SEGONS, DONA UN ERROR DE TIMEOUT.
      */
     private Connection conectarDirecte(String url, String user, String pwd, int timeout) {
         Connection con = null;
@@ -88,6 +79,7 @@ public class GestorBBDD {
             // Establim el límit d'espera per evitar que l'aplicació es quedi congelada
             DriverManager.setLoginTimeout(timeout); 
             con = DriverManager.getConnection(url, user, pwd);
+            if (con != null) con.setAutoCommit(false); // Assegurem control de transaccions
         } catch (Exception e) {
             String msg = e.getMessage();
             // Capturem el timeout específic d'Oracle (ORA-12170) per donar un feedback clar
@@ -100,23 +92,32 @@ public class GestorBBDD {
         return con;
     }
 
+    /** Verifica si la connexió encara és vàlida. */
+    public boolean isConexionViva() {
+        try {
+            return conexion != null && !conexion.isClosed() && conexion.isValid(2);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /**
-     * TANCA LA CONNEXIÓ AMB LA BASE DE DADES DE FORMA SEGURA.
-     * @param con La connexió que es vol tancar.
+     * TANCA LA CONNEXIÃ“ AMB LA BASE DE DADES DE FORMA SEGURA.
+     * @param con La connexiÃ³ que es vol tancar.
      */
     public static void cerrar(Connection con) {
         if (con != null) {
             try { 
                 con.close(); 
             } catch (SQLException ignored) {
-                // Ignorem l'error si la connexió ja estava tancada
+                // Ignorem l'error si la connexiÃ³ ja estava tancada
             }
         }
     }
 
     /**
-     * @deprecated Aquest mètode utilitza SQL estàndard. S'ha de prioritzar l'ús de PL/SQL.
-     * Es manté només per compatibilitat interna amb eines de manteniment.
+     * @deprecated Aquest mÃ¨tode utilitza SQL estÃ ndard. S'ha de prioritzar l'Ãºs de PL/SQL.
+     * Es mantÃ© nomÃ©s per compatibilitat interna amb eines de manteniment.
      */
     @Deprecated
     public static int executeInsUpDel(Connection con, String sql, String etiqueta) {
@@ -132,7 +133,7 @@ public class GestorBBDD {
     }
 
     /**
-     * @deprecated Aquest mètode utilitza SQL estàndard. S'ha de prioritzar l'ús de PL/SQL i cursors.
+     * @deprecated Aquest mÃ¨tode utilitza SQL estÃ ndard. S'ha de prioritzar l'Ãºs de PL/SQL i cursors.
      */
     @Deprecated
     public static ArrayList<LinkedHashMap<String, String>> select(Connection con, String sql) {
@@ -144,7 +145,7 @@ public class GestorBBDD {
                 while (rs.next()) {
                     LinkedHashMap<String, String> fila = new LinkedHashMap<>();
                     for (int i = 1; i <= numColumnas; i++) {
-                        // Normalitzem els noms de les columnes a majúscules per evitar conflictes
+                        // Normalitzem els noms de les columnes a majÃºscules per evitar conflictes
                         fila.put(meta.getColumnLabel(i).toUpperCase(), rs.getString(i));
                     }
                     resultados.add(fila);
@@ -157,7 +158,7 @@ public class GestorBBDD {
     }
 
     /**
-     * EXECUTA UNA SENTÈNCIA SQL SENSE RETORNAR RESULTATS (ÚTIL PER A MANTENIMENT).
+     * EXECUTA UNA SENTÃˆNCIA SQL SENSE RETORNAR RESULTATS (ÃšTIL PER A MANTENIMENT).
      * @return true si s'ha executat correctament, false si hi ha hagut error (excepte clau duplicada).
      */
     private boolean ejecutar(Connection con, String sql) {
@@ -168,7 +169,7 @@ public class GestorBBDD {
                 ok = true;
             } catch (SQLException e) {
                 String msg = e.getMessage();
-                // ORA-00001 és clau duplicada; sovint l'ignorem en insercions de dades mestres
+                // ORA-00001 Ã©s clau duplicada; sovint l'ignorem en insercions de dades mestres
                 if (msg != null && !msg.contains("ORA-00001")) {
                     System.out.println("ERROR SQL: " + msg);
                 }
@@ -199,18 +200,20 @@ public class GestorBBDD {
                         "  BEGIN INSERT INTO tipus_casella VALUES (1, 'NORMAL', 'SENSE EFECTE'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  BEGIN INSERT INTO tipus_casella VALUES (2, 'OS', 'RETORNA A L''INICI'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  BEGIN INSERT INTO tipus_casella VALUES (3, 'FORAT', 'RETROCEDEIX'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
-                        "  BEGIN INSERT INTO tipus_casella VALUES (4, 'TRINEU', 'AVANÇA'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (4, 'TRINEU', 'AVANÃ‡A'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  BEGIN INSERT INTO tipus_casella VALUES (5, 'INTERROGANT', 'EVENT ALEATORI'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  BEGIN INSERT INTO tipus_casella VALUES (6, 'SUELOQUEBRADIZO', 'ES TRENCA AL PASSAR'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  \n" +
                         "  -- Taulell\n" +
                         "  BEGIN INSERT INTO taulell (id_taulell, mida_taulell) VALUES (1, 50); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  \n" +
-                        "  -- Bots\n" +
+                        "  -- Bots i Foca\n" +
                         "  FOR i IN 1..4 LOOP\n" +
                         "    BEGIN INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) \n" +
                         "    VALUES (990+i, 'BOT '||i, 0, 'BOT_PWD'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "  END LOOP;\n" +
+                        "  BEGIN INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) \n" +
+                        "  VALUES (995, 'FOCA (CPU)', 0, 'FOCA_PWD'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
                         "END;";
             try (CallableStatement cs = conexion.prepareCall(pl)) {
                 cs.execute();
@@ -224,7 +227,7 @@ public class GestorBBDD {
     /**
      * GENERA UN HASH SHA-256 PER ENCRIPTAR LES CONTRASENYES.
      * @param text Text en clar que es vol encriptar.
-     * @return El hash hexadecimal resultant de 64 caràcters.
+     * @return El hash hexadecimal resultant de 64 carÃ cters.
      */
     private String sha256(String text) {
         String res = "";
@@ -233,7 +236,7 @@ public class GestorBBDD {
             byte[] hash = md.digest(text.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
-                // Formatem cada byte a dos dígits hexadecimals
+                // Formatem cada byte a dos dÃ­gits hexadecimals
                 sb.append(String.format("%02x", b));
             }
             res = sb.toString();
@@ -245,16 +248,15 @@ public class GestorBBDD {
     }
 
     /**
-     * REGISTRA UN NOU JUGADOR (VIA PL/SQL).
-     * @param username Nom del jugador.
-     * @param password Contrasenya en clar.
-     * @return true si s'ha creat correctament.
+     * SERVEIX PER CREAR UN NOU JUGADOR A LA BASE DE DADES.
+     * ENCRIPTEM LA CONTRASENYA PERQUÃˆ NINGÃš LA POGUI VEURE.
+     * SI EL NOM JA EXISTEIX, ENS DIRÃ€ QUE NO S'HA POGUT CREAR.
      */
     public boolean registrarUsuario(String username, String password) {
         boolean ok = false;
         if (conexion != null && username != null && password != null) {
             String hash = sha256(password);
-            // Bloc PL/SQL per comprovar existència i inserir amb ID calculat
+            // Bloc PL/SQL per comprovar existÃ¨ncia i inserir amb ID calculat
             String pl = "DECLARE v_exists NUMBER; v_id NUMBER; BEGIN " +
                         "SELECT COUNT(*) INTO v_exists FROM jugador WHERE nom_jugador = ?; " +
                         "IF v_exists = 0 THEN " +
@@ -280,20 +282,20 @@ public class GestorBBDD {
 
 
     /**
-     * OBTÉ L'ID D'UN JUGADOR PEL SEU NOM (VIA PL/SQL).
+     * OBTÃ‰ L'ID D'UN JUGADOR PEL SEU NOM (VIA PL/SQL).
      * @param username Nom del jugador a cercar.
-     * @return L'ID numèric o -1 si no es troba.
+     * @return L'ID numÃ¨ric o -1 si no es troba.
      */
-    public int getIDJugador(String username) {
+    public synchronized int getIDJugador(String username) {
         int id = -1;
-        if (conexion != null && username != null) {
-            try (CallableStatement cs = conexion.prepareCall("BEGIN SELECT id_jugador INTO ? FROM jugador WHERE nom_jugador = ?; END;")) {
+        if (isConexionViva() && username != null) {
+            try (CallableStatement cs = conexion.prepareCall("BEGIN SELECT id_jugador INTO ? FROM jugador WHERE UPPER(nom_jugador) = UPPER(?); END;")) {
                 cs.registerOutParameter(1, java.sql.Types.NUMERIC);
                 cs.setString(2, username);
                 cs.execute();
                 id = cs.getInt(1);
-            } catch (SQLException e) {
-                // NO_DATA_FOUND -> retorna -1
+            } catch (Exception e) {
+                // NO_DATA_FOUND o error de connexió
             }
         }
         return id;
@@ -303,7 +305,7 @@ public class GestorBBDD {
      * VALIDA LES CREDENCIALS D'UN USUARI (VIA PL/SQL).
      * @param username Nom del jugador.
      * @param password Contrasenya en text pla.
-     * @return true si les credencials són vàlides.
+     * @return true si les credencials sÃ³n vÃ lides.
      */
     public boolean loginUsuario(String username, String password) {
         boolean valid = false;
@@ -323,13 +325,13 @@ public class GestorBBDD {
     }
 
     /**
-     * GUARDA L'ESTAT D'UNA PARTIDA (VIA PL/SQL).
-     * @param p L'objecte partida amb tot el seu estat.
-     * @return true si s'ha guardat tot correctament.
+     * AQUEST Ã‰S EL MÃˆTODE MÃ‰S IMPORTANT: GUARDA LA PARTIDA.
+     * GUARDA ON Ã‰S CADA JUGADOR, DE QUI Ã‰S EL TORN I SI S'HA ACABAT.
+     * FA SERVIR "MERGE", QUE VOL DIR: SI JA EXISTEIX ACTUALITZA, SI NO CREA.
      */
-    public boolean guardarBBDD(Partida p) {
+    public synchronized boolean guardarBBDD(Partida p) {
         boolean ok = false;
-        if (conexion != null && p != null) {
+        if (isConexionViva() && p != null) {
             try {
                 int idPartida = p.getId();
                 if (idPartida <= 0) {
@@ -384,7 +386,9 @@ public class GestorBBDD {
                 commit(conexion);
                 ok = true;
             } catch (Exception e) {
-                System.err.println("ERROR PL/SQL (GUARDAT BBDD): " + e.getMessage());
+                String msg = e.getMessage();
+                System.err.println("ERROR PL/SQL (GUARDAT BBDD): " + (msg != null ? msg : e.toString()));
+                // e.printStackTrace(); // Evitem saturar el log si ja tenim el missatge
             }
         }
         return ok;
@@ -400,7 +404,7 @@ public class GestorBBDD {
         p.setId(id);
         if (conexion != null) {
             try {
-                // 1. Carreguem dades bàsiques de la partida via Cursor PL/SQL
+                // 1. Carreguem dades bÃ siques de la partida via Cursor PL/SQL
                 try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT * FROM partida WHERE id_partida = ?; END;")) {
                     cs.registerOutParameter(1, -10); // Oracle CURSOR
                     cs.setInt(2, id);
@@ -433,7 +437,7 @@ public class GestorBBDD {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("ERROR PL/SQL (CÀRREGA BBDD): " + e.getMessage());
+                System.err.println("ERROR PL/SQL (CÃ€RREGA BBDD): " + e.getMessage());
             }
         }
         return p;
@@ -458,9 +462,8 @@ public class GestorBBDD {
                         row.put("NOM_PARTIDA", rs.getString("NOM_PARTIDA"));
                         row.put("DATA_CREACIO", rs.getString("DATA_CREACIO"));
                         row.put("TORN_ACTUAL", String.valueOf(rs.getInt("TORN_ACTUAL")));
-                        row.put("FINALITZADA", (rs.getInt("FINALITZADA") == 1 ? "SÍ" : "NO"));
+                        row.put("FINALITZADA", (rs.getInt("FINALITZADA") == 1 ? "SI" : "NO"));
                         
-                        // Obtenim els jugadors per a cada partida mitjançant un altre bloc PL/SQL
                         row.put("JUGADORS", getNomsJugadorsPartidaPLSQL(idP));
                         res.add(row);
                     }
@@ -473,7 +476,7 @@ public class GestorBBDD {
         return res;
     }
 
-    /** Mètode auxiliar PL/SQL per obtenir els noms de jugadors d'una partida. */
+    /** MÃ¨tode auxiliar PL/SQL per obtenir els noms de jugadors d'una partida. */
     private String getNomsJugadorsPartidaPLSQL(int idP) {
         StringBuilder sb = new StringBuilder();
         try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT j.nom_jugador FROM jugador j JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador WHERE jp.id_partida = ?; END;")) {
@@ -488,20 +491,21 @@ public class GestorBBDD {
                 }
                 rs.close();
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.println("ERROR PL/SQL getNomsJugadorsPartidaPLSQL: " + e.getMessage());
+        }
         return sb.toString();
     }
+               // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // APARTAT DE PL/SQL AVANÃ‡AT: FUNCIONS, PROCEDIMENTS I TRIGGERS
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // MÈTODES D'ESTADÍSTIQUES — CRIDEN FUNCIONS I PROCEDIMENTS PL/SQL
-    // ══════════════════════════════════════════════════════════════════════════
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // JOC D’EN PINGU – PL/SQL FUNCIONALITAT (ORDENAT I ENUMERAT)
-    // ══════════════════════════════════════════════════════════════════════════
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // JOC Dâ€™EN PINGU â€“ PL/SQL FUNCIONALITAT (ORDENAT I ENUMERAT)
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
     /**
-     * EXTRA. OBTÉ LES VICTÒRIES D'UN JUGADOR (VIA PL/SQL).
+     * EXTRA. OBTÃ‰ LES VICTÃ’RIES D'UN JUGADOR (VIA PL/SQL).
      */
     public int getVictoriesSQL(int idJugador) {
         int vics = 0;
@@ -519,7 +523,7 @@ public class GestorBBDD {
     }
 
     /**
-     * EXTRA. OBTÉ EL RÀNQUING GLOBAL DE VICTÒRIES (VIA PL/SQL CURSOR).
+     * EXTRA. OBTÃ‰ EL RÃ€NQUING GLOBAL DE VICTÃ’RIES (VIA PL/SQL CURSOR).
      */
     public ArrayList<LinkedHashMap<String, String>> getRankingGlobalVictoriesSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
@@ -545,13 +549,13 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 1. (S) GENERAR NÚMEROS SEQÜENCIALS PER A CAMPS CLAU.
-     * Utilitza un bloc anònim PL/SQL per obtenir el valor de la seqüència.
+     * PUNT 1: DEMANEM UN NÃšMERO NOU PER A UNA PARTIDA NOVA.
+     * FEM SERVIR UNA "SEQUENCE" D'ORACLE PERQUÃˆ ELS NÃšMEROS NO ES REPETEIXIN.
      */
     public int getNextIDPartida() {
         int id = -1;
         if (conexion != null) {
-            // Bloc anònim PL/SQL per obtenir el NEXTVAL sense fer un SELECT directe des de Java
+            // Bloc anÃ²nim PL/SQL per obtenir el NEXTVAL sense fer un SELECT directe des de Java
             try (CallableStatement cs = conexion.prepareCall("BEGIN ? := SEC_ID_PARTIDA.NEXTVAL; END;")) {
                 cs.registerOutParameter(1, java.sql.Types.NUMERIC);
                 cs.execute();
@@ -564,18 +568,18 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 2. (T) ASSIGNAR AUTOMÀTICAMENT EL Nº SEQÜENCIAL A LA CLAU PRIMÀRIA.
-     * Aquesta operació es realitza invocant el bloc PL/SQL del Punt 1 abans de la inserció.
+     * EXERCICI 2. (T) ASSIGNAR AUTOMÃ€TICAMENT EL NÂº SEQÃœENCIAL A LA CLAU PRIMÃ€RIA.
+     * Aquesta operaciÃ³ es realitza invocant el bloc PL/SQL del Punt 1 abans de la inserciÃ³.
      */
 
 
     /**
-     * EXERCICI 3. (T) INCREMENTAR AUTOMÀTICAMENT LES VICTÒRIES DEL GUANYADOR.
-     * Utilitza un bloc anònim PL/SQL per actualitzar les dades al servidor.
+     * PUNT 3: SUMEM UNA VICTÃ’RIA AL JUGADOR QUE HA GUANYAT.
+     * AIXÃ’ ES FA DIRECTAMENT AMB UN UPDATE DINS D'UN BLOC PL/SQL.
      */
     public void incrementarVictoriesGuanyador(int idJugador) {
         if (conexion != null && idJugador != -1) {
-            // Ús obligatori de PL/SQL per incrementar el comptador de victòries
+            // Ãšs obligatori de PL/SQL per incrementar el comptador de victÃ²ries
             try (CallableStatement cs = conexion.prepareCall("BEGIN UPDATE jugador SET victories = victories + 1 WHERE id_jugador = ?; END;")) {
                 cs.setInt(1, idJugador);
                 cs.execute();
@@ -586,8 +590,8 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 4. (F) OBTENIR EL MÀXIM RÈCORD DE VICTÒRIES (RECORD GLOBAL).
-     * Invoca la funció PL/SQL 'GET_MAX_VICTORIES_RECORD'.
+     * EXERCICI 4. (F) OBTENIR EL MÃ€XIM RÃˆCORD DE VICTÃ’RIES (RECORD GLOBAL).
+     * Invoca la funciÃ³ PL/SQL 'GET_MAX_VICTORIES_RECORD'.
      */
     public int getMaxVictoriesRecordSQL() {
         int result = 0;
@@ -604,8 +608,8 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 5. (P) OBTENIR ELS JUGADORS QUE TENEN EL RÈCORD ACTUAL.
-     * Invoca el procediment 'GET_JUGADORS_RECORD' mitjançant un cursor.
+     * EXERCICI 5. (P) OBTENIR ELS JUGADORS QUE TENEN EL RÃˆCORD ACTUAL.
+     * Invoca el procediment 'GET_JUGADORS_RECORD' mitjanÃ§ant un cursor.
      */
     public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
@@ -631,8 +635,8 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 6. (F) OBTENIR LA MITJANA DE VICTÒRIES GLOBAL.
-     * Invoca la funció PL/SQL 'GET_MITJA_VICTORIES'.
+     * EXERCICI 6. (F) OBTENIR LA MITJANA DE VICTÃ’RIES GLOBAL.
+     * Invoca la funciÃ³ PL/SQL 'GET_MITJA_VICTORIES'.
      */
     public double getMitjaGlobalSQL() {
         double result = 0.0;
@@ -649,7 +653,7 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 7. (P) MOSTRAR JUGADORS AMB MÉS VICTÒRIES QUE LA MITJANA.
+     * EXERCICI 7. (P) MOSTRAR JUGADORS AMB MÃ‰S VICTÃ’RIES QUE LA MITJANA.
      * Invoca el procediment PL/SQL 'GET_JUGADORS_SOBRE_MITJA'.
      */
     public ArrayList<LinkedHashMap<String, String>> getJugadorsSobreMitjaSQL() {
@@ -676,8 +680,8 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 8. (F) CALCULAR PERCENTATGE DE JUGADORS AMB MENYS VICTÒRIES (PERCENTIL).
-     * Invoca la funció PL/SQL 'PERCENTATGE_MENYS_VICTORIES'.
+     * PUNT 8: CALCULEM QUINA POSICIÃ“ TÃ‰ EL JUGADOR AL RÃ€NQUING.
+     * ENS DIU EL PERCENTATGE DE GENT QUE TÃ‰ MENYS VICTÃ’RIES QUE NOSALTRES.
      */
     public double getPercentatgeMenysVictoriesSQL(int vics) {
         double result = 0.0;
@@ -695,12 +699,12 @@ public class GestorBBDD {
     }
 
     /**
-     * 9. (T) MOSTRAR AUTOMÀTICAMENT EL PERCENTIL QUAN S'INCREMENTEN VICTÒRIES.
-     * Implementat mitjançant un 'Compound Trigger' definit íntegrament en PL/SQL.
+     * 9. (T) MOSTRAR AUTOMÃ€TICAMENT EL PERCENTIL QUAN S'INCREMENTEN VICTÃ’RIES.
+     * Implementat mitjanÃ§ant un 'Compound Trigger' definit Ã­ntegrament en PL/SQL.
      */
     private void assegurarEstructuraPLSQL() {
         if (conexion != null) {
-            // Verificació i actualització d'esquema via PL/SQL pur (EXECUTE IMMEDIATE)
+            // VerificaciÃ³ i actualitzaciÃ³ d'esquema via PL/SQL pur (EXECUTE IMMEDIATE)
             String plSchema = "DECLARE v_count NUMBER; BEGIN " +
                               "SELECT COUNT(*) INTO v_count FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'; " +
                               "IF v_count = 0 THEN EXECUTE IMMEDIATE 'ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))'; END IF; " +
@@ -709,7 +713,7 @@ public class GestorBBDD {
                 cs.execute();
             } catch (SQLException e) {}
             
-            // Definició i execució del Trigger Compost per a la gestió del rànquing en temps real
+            // DefiniciÃ³ i execuciÃ³ del Trigger Compost per a la gestiÃ³ del rÃ nquing en temps real
             String triggerFix = 
                 "CREATE OR REPLACE TRIGGER TRG_AVIS_RANKING\n" +
                 "FOR UPDATE OF victories ON JUGADOR\n" +
@@ -739,14 +743,17 @@ public class GestorBBDD {
                 cs.setString(1, triggerFix);
                 cs.execute();
             } catch (SQLException e) {
-                System.err.println("ERROR PL/SQL (TRIGGER): " + e.getMessage());
+                String msg = e.getMessage();
+                if (msg != null && !msg.contains("already exists")) {
+                    System.err.println("ERROR PL/SQL (TRIGGER): " + msg);
+                }
             }
             commit(conexion);
         }
     }
 
     /**
-     * EXERCICI 10. (P) MOSTRAR EL RÀNQUING DE JUGADORS PER TOTAL DE PARTIDES JUGADES.
+     * EXERCICI 10. (P) MOSTRAR EL RÃ€NQUING DE JUGADORS PER TOTAL DE PARTIDES JUGADES.
      * Invoca el procediment 'RANKING_PARTIDES_TOTALS'.
      */
     public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
@@ -773,7 +780,7 @@ public class GestorBBDD {
     }
 
     /**
-     * EXERCICI 11. (P) MOSTRAR LA POSICIÓ AL RÀNQUING I ESTADÍSTIQUES D'UN JUGADOR.
+     * EXERCICI 11. (P) MOSTRAR LA POSICIÃ“ AL RÃ€NQUING I ESTADÃSTIQUES D'UN JUGADOR.
      * Invoca el procediment 'CONSULTAR_ESTADISTIQUES_JUGADOR' amb control d'errors PL/SQL.
      */
     public LinkedHashMap<String, String> consultarEstadistiquesJugador(String nom) {
@@ -791,9 +798,9 @@ public class GestorBBDD {
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg != null && msg.contains("20001")) result.put("ERROR", "El jugador '" + nom + "' no existeix.");
-                else if (msg != null && msg.contains("20002")) result.put("ERROR", "El jugador '" + nom + "' no té dades.");
+                else if (msg != null && msg.contains("20002")) result.put("ERROR", "El jugador '" + nom + "' no tÃ© dades.");
                 else {
-                    // Si el procediment falla, intentem la versió de 3 paràmetres com a contingència PL/SQL
+                    // Si el procediment falla, intentem la versiÃ³ de 3 parÃ metres com a contingÃ¨ncia PL/SQL
                     return consultarEstadistiquesJugadorV3(nom);
                 }
             }
@@ -802,7 +809,7 @@ public class GestorBBDD {
     }
 
     /**
-     * Versió simplificada (V3) de consulta per a sistemes que no suporten el càlcul de rànquing.
+     * VersiÃ³ simplificada (V3) de consulta per a sistemes que no suporten el cÃ lcul de rÃ nquing.
      */
     private LinkedHashMap<String, String> consultarEstadistiquesJugadorV3(String nom) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
