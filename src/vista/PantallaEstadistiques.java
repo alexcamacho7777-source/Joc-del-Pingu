@@ -67,7 +67,7 @@ public class PantallaEstadistiques {
         db = new GestorBBDD();
         
         // 1. OBTENCIÓ DE DADES GLOBALS (MITJANA I RÈCORD)
-        double mitja = db.getMitjaVictoriesSQL();
+        double mitja = db.getMitjaGlobalSQL();
         lblMitjaGlobal.setText(String.format("%.2f", mitja));
 
         int record = db.getMaxVictoriesRecordSQL();

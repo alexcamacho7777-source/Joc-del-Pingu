@@ -91,10 +91,10 @@ public class GestorBBDD {
         } catch (Exception e) {
             String msg = e.getMessage();
             // Capturem el timeout específic d'Oracle (ORA-12170) per donar un feedback clar
-            if (msg.contains("ORA-12170") || msg.contains("timeout")) {
+            if (msg != null && (msg.contains("ORA-12170") || msg.contains("timeout"))) {
                 logsConnexio.add("TIMEOUT A " + url + " (" + timeout + "s).");
             } else {
-                logsConnexio.add("ERROR A " + url + ": " + msg);
+                logsConnexio.add("ERROR A " + url + ": " + (msg != null ? msg : "Error desconegut"));
             }
         }
         return con;
@@ -115,12 +115,10 @@ public class GestorBBDD {
     }
 
     /**
-     * EXECUTA UNA SENTÈNCIA SQL DE TIPUS INSERT, UPDATE O DELETE.
-     * @param con Connexió activa.
-     * @param sql Cadena SQL a executar.
-     * @param etiqueta Descripció per al log en cas d'error (ex: "GUARDAT").
-     * @return Número de files afectades.
+     * @deprecated Aquest mètode utilitza SQL estàndard. S'ha de prioritzar l'ús de PL/SQL.
+     * Es manté només per compatibilitat interna amb eines de manteniment.
      */
+    @Deprecated
     public static int executeInsUpDel(Connection con, String sql, String etiqueta) {
         int res = 0;
         if (con != null) {
@@ -134,12 +132,9 @@ public class GestorBBDD {
     }
 
     /**
-     * EXECUTA UNA CONSULTA SELECT I RETORNA ELS RESULTATS EN UNA LLISTA DE MAPES.
-     * Cada mapa representa una fila, on la clau és el nom de la columna en MAJÚSCULES.
-     * @param con Connexió activa.
-     * @param sql Consulta SELECT.
-     * @return Llista de LinkedHashMap (per mantenir l'ordre de les columnes).
+     * @deprecated Aquest mètode utilitza SQL estàndard. S'ha de prioritzar l'ús de PL/SQL i cursors.
      */
+    @Deprecated
     public static ArrayList<LinkedHashMap<String, String>> select(Connection con, String sql) {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (con != null) {
@@ -172,9 +167,10 @@ public class GestorBBDD {
                 st.executeUpdate(sql);
                 ok = true;
             } catch (SQLException e) {
+                String msg = e.getMessage();
                 // ORA-00001 és clau duplicada; sovint l'ignorem en insercions de dades mestres
-                if (!e.getMessage().contains("ORA-00001")) {
-                    System.out.println("ERROR SQL: " + e.getMessage());
+                if (msg != null && !msg.contains("ORA-00001")) {
+                    System.out.println("ERROR SQL: " + msg);
                 }
             }
         }
@@ -194,43 +190,34 @@ public class GestorBBDD {
     }
 
     /**
-     * INICIALITZA LES TAULES AMB DADES PER DEFECTE SI NO EXISTEIXEN.
-     * Garanteix que els tipus de caselles (NORMAL, OS, FORAT, etc.) estiguin presents
-     * per al correcte funcionament de la lògica de joc.
+     * INICIALITZA LES TAULES AMB DADES PER DEFECTE (VIA PL/SQL).
      */
     private void inicializarTablasMaestras() {
         if (conexion != null) {
-            // Inserció de tipus de caselles bàsiques
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (1, 'NORMAL', 'SENSE EFECTE')");
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (2, 'OS', 'RETORNA A L''INICI')");
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (3, 'FORAT', 'RETROCEDEIX')");
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (4, 'TRINEU', 'AVANÇA')");
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (5, 'INTERROGANT', 'EVENT ALEATORI')");
-            ejecutar(conexion, "INSERT INTO tipus_casella (id_tipus, nom_tipus, descripcio) VALUES (6, 'SUELOQUEBRADIZO', 'ES TRENCA AL PASSAR')");
-
-            // Verificació d'existència del taulell estàndard (ID=1)
-            ArrayList<LinkedHashMap<String, String>> resTau = select(conexion, "SELECT COUNT(*) as TOTAL FROM taulell WHERE id_taulell = 1");
-            if (resTau.isEmpty() || Integer.parseInt(resTau.get(0).get("TOTAL")) == 0) {
-                ejecutar(conexion, "INSERT INTO taulell (id_taulell, mida_taulell) VALUES (1, 50)");
+            String pl = "BEGIN " +
+                        "  -- Tipus de caselles\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (1, 'NORMAL', 'SENSE EFECTE'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (2, 'OS', 'RETORNA A L''INICI'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (3, 'FORAT', 'RETROCEDEIX'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (4, 'TRINEU', 'AVANÇA'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (5, 'INTERROGANT', 'EVENT ALEATORI'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  BEGIN INSERT INTO tipus_casella VALUES (6, 'SUELOQUEBRADIZO', 'ES TRENCA AL PASSAR'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  \n" +
+                        "  -- Taulell\n" +
+                        "  BEGIN INSERT INTO taulell (id_taulell, mida_taulell) VALUES (1, 50); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  \n" +
+                        "  -- Bots\n" +
+                        "  FOR i IN 1..4 LOOP\n" +
+                        "    BEGIN INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) \n" +
+                        "    VALUES (990+i, 'BOT '||i, 0, 'BOT_PWD'); EXCEPTION WHEN OTHERS THEN NULL; END;\n" +
+                        "  END LOOP;\n" +
+                        "END;";
+            try (CallableStatement cs = conexion.prepareCall(pl)) {
+                cs.execute();
+                commit(conexion);
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (INIT): " + e.getMessage());
             }
-            
-            // ELIMINAR COLUMNA COLOR_JUGADOR SI EXISTEIX (TASCA DE NETEJA D'ESQUEMA)
-            ArrayList<LinkedHashMap<String, String>> colCheck = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='COLOR_JUGADOR'");
-            if (!colCheck.isEmpty()) {
-                ejecutar(conexion, "ALTER TABLE jugador DROP COLUMN color_jugador");
-            }
-
-            // REGISTRE DE BOTS PER A PERSISTÈNCIA (SI NO EXISTEIXEN)
-            // S'assignen IDs a partir de 991 per no col·lidir amb els jugadors humans.
-            for (int i = 1; i <= 4; i++) {
-                String botName = "BOT " + i;
-                ArrayList<LinkedHashMap<String, String>> existBot = select(conexion, "SELECT id_jugador FROM jugador WHERE nom_jugador = '" + botName + "'");
-                if (existBot.isEmpty()) {
-                    ejecutar(conexion, "INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) VALUES (99" + i + ", '" + botName + "', 0, 'BOT_PWD')");
-                }
-            }
-
-            commit(conexion);
         }
     }
 
@@ -258,106 +245,85 @@ public class GestorBBDD {
     }
 
     /**
-     * REGISTRA UN NOU JUGADOR HUMÀ SI NO EXISTEIX EL NOM D'USUARI.
+     * REGISTRA UN NOU JUGADOR (VIA PL/SQL).
      * @param username Nom del jugador.
-     * @param password Contrasenya en clar (serà encriptada).
-     * @return true si s'ha creat correctament, false si ja existia o hi ha hagut error.
+     * @param password Contrasenya en clar.
+     * @return true si s'ha creat correctament.
      */
     public boolean registrarUsuario(String username, String password) {
         boolean ok = false;
-        if (conexion != null) {
-            // Primer comprovem que l'usuari no estigui ja registrat
-            ArrayList<LinkedHashMap<String, String>> exist = select(conexion, "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "'");
-            if (exist.isEmpty()) {
-                String hashPw = sha256(password);
-                // Calculem el següent ID disponible (autoincrement manual si no hi ha seqüència activa)
-                ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT MAX(id_jugador) as MAX_ID FROM jugador");
-                int nextId = 1;
-                if (!res.isEmpty() && res.get(0).get("MAX_ID") != null) {
-                    nextId = Integer.parseInt(res.get(0).get("MAX_ID")) + 1;
-                }
-                String sql = "INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) VALUES ("
-                        + nextId + ", '" + username + "', 0, '" + hashPw + "')";
-                ok = executeInsUpDel(conexion, sql, "REGISTRE") > 0;
+        if (conexion != null && username != null && password != null) {
+            String hash = sha256(password);
+            // Bloc PL/SQL per comprovar existència i inserir amb ID calculat
+            String pl = "DECLARE v_exists NUMBER; v_id NUMBER; BEGIN " +
+                        "SELECT COUNT(*) INTO v_exists FROM jugador WHERE nom_jugador = ?; " +
+                        "IF v_exists = 0 THEN " +
+                        "  SELECT NVL(MAX(id_jugador),0) + 1 INTO v_id FROM jugador; " +
+                        "  INSERT INTO jugador (id_jugador, nom_jugador, victories, contrasenya) VALUES (v_id, ?, 0, ?); " +
+                        "  ? := 1; " +
+                        "ELSE ? := 0; END IF; END;";
+            try (CallableStatement cs = conexion.prepareCall(pl)) {
+                cs.setString(1, username);
+                cs.setString(2, username);
+                cs.setString(3, hash);
+                cs.registerOutParameter(4, java.sql.Types.NUMERIC);
+                cs.registerOutParameter(5, java.sql.Types.NUMERIC);
+                cs.execute();
+                ok = (cs.getInt(4) == 1);
+                commit(conexion);
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (REGISTRE): " + e.getMessage());
             }
         }
         return ok;
     }
 
-    /**
-     * ASSEGURA QUE L'ESTRUCTURA DE TAULES TINGUI LES COLUMNES NECESSÀRIES.
-     * Útil quan s'actualitza el joc per afegir funcionalitats de Login.
-     */
-    private void assegurarEstructuraPLSQL() {
-        if (conexion != null) {
-            ArrayList<LinkedHashMap<String, String>> colsJ = select(conexion, "SELECT column_name FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'");
-            if (colsJ.isEmpty()) {
-                ejecutar(conexion, "ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))");
-            }
-            
-            // PATCH AUTOMÀTIC PER L'ERROR ORA-04091 DE TAULA MUTANT AL TRIGGER TRG_AVIS_RANKING
-            String triggerFix = 
-                "CREATE OR REPLACE TRIGGER TRG_AVIS_RANKING\n" +
-                "FOR UPDATE OF victories ON JUGADOR\n" +
-                "COMPOUND TRIGGER\n" +
-                "  TYPE t_jugador_rec IS RECORD (nom VARCHAR2(100), vics NUMBER);\n" +
-                "  TYPE t_jugador_tab IS TABLE OF t_jugador_rec;\n" +
-                "  v_jugadors t_jugador_tab := t_jugador_tab();\n" +
-                "  AFTER EACH ROW IS\n" +
-                "  BEGIN\n" +
-                "    v_jugadors.EXTEND;\n" +
-                "    v_jugadors(v_jugadors.LAST).nom := :NEW.nom_jugador;\n" +
-                "    v_jugadors(v_jugadors.LAST).vics := :NEW.victories;\n" +
-                "  END AFTER EACH ROW;\n" +
-                "  AFTER STATEMENT IS\n" +
-                "    v_perc NUMBER;\n" +
-                "  BEGIN\n" +
-                "    FOR i IN 1 .. v_jugadors.COUNT LOOP\n" +
-                "      v_perc := PERCENTATGE_MENYS_VICTORIES(v_jugadors(i).vics);\n" +
-                "      DBMS_OUTPUT.PUT_LINE('AVIS: ' || v_jugadors(i).nom || ' supera al ' || ROUND(v_perc, 2) || '%');\n" +
-                "    END LOOP;\n" +
-                "  END AFTER STATEMENT;\n" +
-                "END;";
-            ejecutar(conexion, triggerFix);
-            
-            commit(conexion);
-        }
-    }
 
     /**
-     * OBTÉ L'ID D'UN JUGADOR PEL SEU NOM.
-     * @param username Nom a cercar.
-     * @return ID numèric o -1 si no es troba.
+     * OBTÉ L'ID D'UN JUGADOR PEL SEU NOM (VIA PL/SQL).
+     * @param username Nom del jugador a cercar.
+     * @return L'ID numèric o -1 si no es troba.
      */
     public int getIDJugador(String username) {
         int id = -1;
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT id_jugador FROM jugador WHERE nom_jugador = '" + username + "'");
-        if (!res.isEmpty() && res.get(0).get("ID_JUGADOR") != null) {
-            id = Integer.parseInt(res.get(0).get("ID_JUGADOR"));
+        if (conexion != null && username != null) {
+            try (CallableStatement cs = conexion.prepareCall("BEGIN SELECT id_jugador INTO ? FROM jugador WHERE nom_jugador = ?; END;")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.setString(2, username);
+                cs.execute();
+                id = cs.getInt(1);
+            } catch (SQLException e) {
+                // NO_DATA_FOUND -> retorna -1
+            }
         }
         return id;
     }
 
     /**
-     * VALIDA LES CREDENCIALS D'ACCÉS D'UN USUARI.
-     * @param username Nom d'usuari.
-     * @param password Contrasenya en clar.
-     * @return true si coincideix el nom i el hash de la contrasenya.
+     * VALIDA LES CREDENCIALS D'UN USUARI (VIA PL/SQL).
+     * @param username Nom del jugador.
+     * @param password Contrasenya en text pla.
+     * @return true si les credencials són vàlides.
      */
     public boolean loginUsuario(String username, String password) {
         boolean valid = false;
-        if (conexion != null) {
-            String hashPw = sha256(password);
-            ArrayList<LinkedHashMap<String, String>> res = select(conexion,
-                    "SELECT nom_jugador FROM jugador WHERE nom_jugador = '" + username + "' AND contrasenya = '" + hashPw + "'");
-            valid = !res.isEmpty();
+        if (conexion != null && username != null && password != null) {
+            String hash = sha256(password);
+            try (CallableStatement cs = conexion.prepareCall("BEGIN SELECT 1 INTO ? FROM jugador WHERE nom_jugador = ? AND contrasenya = ?; END;")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.setString(2, username);
+                cs.setString(3, hash);
+                cs.execute();
+                valid = (cs.getInt(1) == 1);
+            } catch (SQLException e) {
+                // Credencials incorrectes
+            }
         }
         return valid;
     }
 
     /**
-     * GUARDA L'ESTAT D'UNA PARTIDA (MERGE TAULELL, PARTIDA, JUGADORS I CASELLES).
-     * Utilitza la sentència MERGE d'Oracle per fer un "Update or Insert" de forma atòmica.
+     * GUARDA L'ESTAT D'UNA PARTIDA (VIA PL/SQL).
      * @param p L'objecte partida amb tot el seu estat.
      * @return true si s'ha guardat tot correctament.
      */
@@ -366,61 +332,66 @@ public class GestorBBDD {
         if (conexion != null && p != null) {
             try {
                 int idPartida = p.getId();
-                // Si la partida és nova, obtenim un ID de la seqüència
                 if (idPartida <= 0) {
-                    ArrayList<LinkedHashMap<String, String>> resSeq = select(conexion, "SELECT SEC_ID_PARTIDA.NEXTVAL AS NEXT_ID FROM dual");
-                    if (!resSeq.isEmpty() && resSeq.get(0).get("NEXT_ID") != null) {
-                        idPartida = Integer.parseInt(resSeq.get(0).get("NEXT_ID"));
-                        p.setId(idPartida);
-                    } else {
-                        // Fallback si la seqüència no existeix
-                        ArrayList<LinkedHashMap<String, String>> resMax = select(conexion, "SELECT MAX(id_partida) as MAX_ID FROM partida");
-                        idPartida = 1;
-                        if (!resMax.isEmpty() && resMax.get(0).get("MAX_ID") != null) idPartida = Integer.parseInt(resMax.get(0).get("MAX_ID")) + 1;
-                        p.setId(idPartida);
-                    }
+                    idPartida = getNextIDPartida();
+                    p.setId(idPartida);
                 }
 
-                // Guardat o actualització de la capçalera de la partida
-                String sqlP = "MERGE INTO partida dst USING (SELECT " + idPartida + " AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
-                               "WHEN MATCHED THEN UPDATE SET torn_actual = " + (p.getJugadorActual() + 1) + ", nom_partida = '" + p.getNombre() + "', " +
-                               "finalitzada = " + (p.isFinalizada() ? 1 : 0) + " " +
-                               "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual, finalitzada) " +
-                               "VALUES (" + idPartida + ", 1, '" + p.getNombre() + "', SYSDATE, " + (p.getJugadorActual() + 1) + ", " + (p.isFinalizada() ? 1 : 0) + ")";
-                ejecutar(conexion, sqlP);
+                // Bloc PL/SQL per al MERGE de la capçalera de la partida
+                String plP = "BEGIN " +
+                             "MERGE INTO partida dst USING (SELECT ? AS id_p FROM dual) src ON (dst.id_partida = src.id_p) " +
+                             "WHEN MATCHED THEN UPDATE SET torn_actual = ?, nom_partida = ?, finalitzada = ? " +
+                             "WHEN NOT MATCHED THEN INSERT (id_partida, id_taulell, nom_partida, data_creacio, torn_actual, finalitzada) " +
+                             "VALUES (?, 1, ?, SYSDATE, ?, ?); " +
+                             "END;";
+                try (CallableStatement cs = conexion.prepareCall(plP)) {
+                    cs.setInt(1, idPartida);
+                    cs.setInt(2, p.getJugadorActual() + 1);
+                    cs.setString(3, p.getNombre());
+                    cs.setInt(4, p.isFinalizada() ? 1 : 0);
+                    cs.setInt(5, idPartida);
+                    cs.setString(6, p.getNombre());
+                    cs.setInt(7, p.getJugadorActual() + 1);
+                    cs.setInt(8, p.isFinalizada() ? 1 : 0);
+                    cs.execute();
+                }
 
-                // Guardat de les posicions individuals dels jugadors a la taula intermedia
+                // Bloc PL/SQL per al MERGE de la posició de cada jugador
+                String plJP = "BEGIN " +
+                              "MERGE INTO jugador_partida dst USING (SELECT ? AS id_j, ? AS id_p FROM dual) src " +
+                              "ON (dst.id_jugador = src.id_j AND dst.id_partida = src.id_p) " +
+                              "WHEN MATCHED THEN UPDATE SET posicio_actual = ? " +
+                              "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, posicio_actual) VALUES (src.id_j, src.id_p, ?); " +
+                              "END;";
                 for (Jugador j : p.getJugadores()) {
                     int idJ = getIDJugador(j.getNombre());
                     if (idJ != -1) {
-                        String sqlJP = "MERGE INTO jugador_partida dst USING (SELECT " + idJ + " AS id_j, " + idPartida + " AS id_p FROM dual) src " +
-                                       "ON (dst.id_jugador = src.id_j AND dst.id_partida = src.id_p) " +
-                                       "WHEN MATCHED THEN UPDATE SET posicio_actual = " + j.getPosicion() + " " +
-                                       "WHEN NOT MATCHED THEN INSERT (id_jugador, id_partida, posicio_actual) VALUES (src.id_j, src.id_p, " + j.getPosicion() + ")";
-                        ejecutar(conexion, sqlJP);
+                        try (CallableStatement cs = conexion.prepareCall(plJP)) {
+                            cs.setInt(1, idJ);
+                            cs.setInt(2, idPartida);
+                            cs.setInt(3, j.getPosicion());
+                            cs.setInt(4, j.getPosicion());
+                            cs.execute();
+                        }
                     }
                 }
 
-                // ACTUALITZAR LES VICTÒRIES DEL GUANYADOR SI LA PARTIDA ACABA D'ACABAR
+                // Incrementar victòries via PL/SQL si la partida ha acabat
                 if (p.isFinalizada() && p.getGanador() != null) {
-                    int idG = getIDJugador(p.getGanador().getNombre());
-                    if (idG != -1) {
-                        ejecutar(conexion, "UPDATE jugador SET victories = victories + 1 WHERE id_jugador = " + idG);
-                    }
+                    incrementarVictoriesGuanyador(getIDJugador(p.getGanador().getNombre()));
                 }
 
                 commit(conexion);
                 ok = true;
             } catch (Exception e) {
-                System.err.println("ERROR EN EL GUARDAT BBDD: " + e.getMessage());
+                System.err.println("ERROR PL/SQL (GUARDAT BBDD): " + e.getMessage());
             }
         }
         return ok;
     }
 
     /**
-     * CARREGA UNA PARTIDA COMPLETAMENT DES DE LA BASE DE DADES.
-     * Reconstrueix l'objecte Partida, incloent els jugadors i les seves posicions.
+     * CARREGA UNA PARTIDA COMPLETAMENT DES DE LA BASE DE DADES (VIA PL/SQL CURSOR).
      * @param id Identificador de la partida a carregar.
      * @return Objecte Partida inicialitzat.
      */
@@ -428,167 +399,133 @@ public class GestorBBDD {
         Partida p = new Partida();
         p.setId(id);
         if (conexion != null) {
-            // Carreguem les dades bàsiques de la partida
-            ArrayList<LinkedHashMap<String, String>> resP = select(conexion, "SELECT * FROM partida WHERE id_partida = " + id);
-            if (!resP.isEmpty()) {
-                p.setNombre(resP.get(0).get("NOM_PARTIDA"));
-                int tornActual = Integer.parseInt(resP.get(0).get("TORN_ACTUAL"));
-                p.setJugadorActual(tornActual - 1); 
-                
-                String finStr = resP.get(0).get("FINALITZADA");
-                p.setFinalizada("1".equals(finStr) || "SÍ".equalsIgnoreCase(finStr));
-
-                // Carreguem els jugadors que participen en aquesta partida
-                ArrayList<LinkedHashMap<String, String>> resJ = select(conexion, 
-                    "SELECT j.nom_jugador, jp.posicio_actual FROM jugador j " +
-                    "JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador WHERE jp.id_partida = " + id);
-                
-                for (LinkedHashMap<String, String> row : resJ) {
-                    String nom = row.get("NOM_JUGADOR");
-                    int pos = Integer.parseInt(row.get("POSICIO_ACTUAL"));
-                    
-                    Jugador j;
-                    // Identifiquem el tipus de jugador pel nom per instanciar la classe correcta
-                    if (nom.toUpperCase().contains("FOCA")) {
-                        j = new Foca();
-                    } else {
-                        Pinguino pin = new Pinguino(nom, "BLAU");
-                        String nUpper = nom.toUpperCase();
-                        // Detectem si és una IA si el nom conté paraules clau
-                        pin.setEsIA(nUpper.contains("CPU") || nUpper.startsWith("BOT") || nUpper.contains("IA"));
-                        j = pin;
+            try {
+                // 1. Carreguem dades bàsiques de la partida via Cursor PL/SQL
+                try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT * FROM partida WHERE id_partida = ?; END;")) {
+                    cs.registerOutParameter(1, -10); // Oracle CURSOR
+                    cs.setInt(2, id);
+                    cs.execute();
+                    ResultSet rs = (ResultSet) cs.getObject(1);
+                    if (rs != null && rs.next()) {
+                        p.setNombre(rs.getString("NOM_PARTIDA"));
+                        p.setJugadorActual(rs.getInt("TORN_ACTUAL") - 1);
+                        p.setFinalizada(rs.getInt("FINALITZADA") == 1);
+                        rs.close();
                     }
-                    j.setPosicion(pos);
-                    p.anadirJugador(j);
                 }
+
+                // 2. Carreguem els jugadors que participen via Cursor PL/SQL
+                try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT j.nom_jugador, jp.posicio_actual FROM jugador j JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador WHERE jp.id_partida = ?; END;")) {
+                    cs.registerOutParameter(1, -10);
+                    cs.setInt(2, id);
+                    cs.execute();
+                    ResultSet rs = (ResultSet) cs.getObject(1);
+                    if (rs != null) {
+                        while (rs.next()) {
+                            String nom = rs.getString("NOM_JUGADOR");
+                            int pos = rs.getInt("POSICIO_ACTUAL");
+                            Jugador j = (nom.toUpperCase().contains("FOCA")) ? new Foca() : new Pinguino(nom, "BLAU");
+                            j.setNombre(nom);
+                            j.setPosicion(pos);
+                            p.anadirJugador(j);
+                        }
+                        rs.close();
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR PL/SQL (CÀRREGA BBDD): " + e.getMessage());
             }
         }
         return p;
     }
 
     /**
-     * OBTÉ LA LLISTA DE PARTIDES AMB DETALLS PER AL LOBBY.
-     * @return Una llista on cada mapa inclou dades de la partida i els noms dels jugadors concatenats.
+     * OBTÉ LA LLISTA DE PARTIDES AMB DETALLS PER AL LOBBY (VIA PL/SQL CURSOR).
+     * @return Llista on cada mapa inclou dades de la partida i noms de jugadors concatenats.
      */
     public ArrayList<LinkedHashMap<String, String>> getListaPartidasDetalladas() {
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, 
-            "SELECT id_partida, nom_partida, TO_CHAR(data_creacio, 'DD/MM/YYYY') as DATA_CREACIO, torn_actual, finalitzada FROM partida ORDER BY id_partida DESC");
-        
-        for (LinkedHashMap<String, String> row : res) {
-            int idP = Integer.parseInt(row.get("ID_PARTIDA"));
-            // Obtenim els jugadors per a cada partida per mostrar-los a la taula
-            ArrayList<LinkedHashMap<String, String>> jugs = select(conexion, 
-                "SELECT j.nom_jugador FROM jugador j JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador WHERE jp.id_partida = " + idP);
-            
-            StringBuilder sb = new StringBuilder();
-            for (LinkedHashMap<String, String> jRow : jugs) {
-                if (sb.length() > 0) sb.append(", ");
-                sb.append(jRow.get("NOM_JUGADOR"));
+        ArrayList<LinkedHashMap<String, String>> res = new ArrayList<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT id_partida, nom_partida, TO_CHAR(data_creacio, 'DD/MM/YYYY') as DATA_CREACIO, torn_actual, finalitzada FROM partida ORDER BY id_partida DESC; END;")) {
+                cs.registerOutParameter(1, -10); // Oracle CURSOR
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(1);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> row = new LinkedHashMap<>();
+                        int idP = rs.getInt("ID_PARTIDA");
+                        row.put("ID_PARTIDA", String.valueOf(idP));
+                        row.put("NOM_PARTIDA", rs.getString("NOM_PARTIDA"));
+                        row.put("DATA_CREACIO", rs.getString("DATA_CREACIO"));
+                        row.put("TORN_ACTUAL", String.valueOf(rs.getInt("TORN_ACTUAL")));
+                        row.put("FINALITZADA", (rs.getInt("FINALITZADA") == 1 ? "SÍ" : "NO"));
+                        
+                        // Obtenim els jugadors per a cada partida mitjançant un altre bloc PL/SQL
+                        row.put("JUGADORS", getNomsJugadorsPartidaPLSQL(idP));
+                        res.add(row);
+                    }
+                    rs.close();
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR PL/SQL getListaPartidasDetalladas: " + e.getMessage());
             }
-            row.put("JUGADORS", sb.toString());
-            // Transformem l'estat numèric a text per a l'usuari
-            row.put("FINALITZADA", "1".equals(row.get("FINALITZADA")) ? "SÍ" : "NO");
         }
         return res;
+    }
+
+    /** Mètode auxiliar PL/SQL per obtenir els noms de jugadors d'una partida. */
+    private String getNomsJugadorsPartidaPLSQL(int idP) {
+        StringBuilder sb = new StringBuilder();
+        try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT j.nom_jugador FROM jugador j JOIN jugador_partida jp ON j.id_jugador = jp.id_jugador WHERE jp.id_partida = ?; END;")) {
+            cs.registerOutParameter(1, -10); // Oracle CURSOR
+            cs.setInt(2, idP);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            if (rs != null) {
+                while (rs.next()) {
+                    if (sb.length() > 0) sb.append(", ");
+                    sb.append(rs.getString("NOM_JUGADOR"));
+                }
+                rs.close();
+            }
+        } catch (Exception e) {}
+        return sb.toString();
     }
 
     // ══════════════════════════════════════════════════════════════════════════
     // MÈTODES D'ESTADÍSTIQUES — CRIDEN FUNCIONS I PROCEDIMENTS PL/SQL
     // ══════════════════════════════════════════════════════════════════════════
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // JOC D’EN PINGU – PL/SQL FUNCIONALITAT (ORDENAT I ENUMERAT)
+    // ══════════════════════════════════════════════════════════════════════════
+
     /**
-     * OBTÉ LES VICTÒRIES D'UN JUGADOR PEL SEU ID.
+     * EXTRA. OBTÉ LES VICTÒRIES D'UN JUGADOR (VIA PL/SQL).
      */
     public int getVictoriesSQL(int idJugador) {
-        ArrayList<LinkedHashMap<String, String>> res = select(conexion, "SELECT victories FROM jugador WHERE id_jugador = " + idJugador);
-        if (res.isEmpty() || res.get(0).get("VICTORIES") == null) return 0;
-        return Integer.parseInt(res.get(0).get("VICTORIES"));
-    }
-
-    /**
-     * CRIDA LA FUNCIÓ PL/SQL GET_MITJA_VICTORIES.
-     * @return La mitjana de victòries de tota la base de dades.
-     */
-    public double getMitjaGlobalSQL() {
-        double result = 0.0;
-        if (conexion != null) {
-            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MITJA_VICTORIES}")) {
+        int vics = 0;
+        if (conexion != null && idJugador != -1) {
+            try (CallableStatement cs = conexion.prepareCall("BEGIN SELECT victories INTO ? FROM jugador WHERE id_jugador = ?; END;")) {
                 cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.setInt(2, idJugador);
                 cs.execute();
-                result = cs.getDouble(1);
+                vics = cs.getInt(1);
             } catch (SQLException e) {
-                System.out.println("ERROR PL/SQL GET_MITJA_VICTORIES: " + e.getMessage());
+                System.err.println("ERROR PL/SQL getVictoriesSQL: " + e.getMessage());
             }
         }
-        return result;
-    }
-
-    public double getMitjaVictoriesSQL() { return getMitjaGlobalSQL(); }
-
-    /**
-     * CRIDA LA FUNCIÓ PL/SQL GET_MAX_VICTORIES_RECORD.
-     * @return El número de victòries del jugador que més en té.
-     */
-    public int getMaxVictoriesRecordSQL() {
-        int result = 0;
-        if (conexion != null) {
-            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MAX_VICTORIES_RECORD}")) {
-                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
-                cs.execute();
-                result = cs.getInt(1);
-            } catch (SQLException e) {
-                System.out.println("ERROR PL/SQL GET_MAX_VICTORIES_RECORD: " + e.getMessage());
-            }
-        }
-        return result;
+        return vics;
     }
 
     /**
-     * OBTÉ EL RÀNQUING GLOBAL DE TOTS ELS JUGADORS PER VICTÒRIES.
+     * EXTRA. OBTÉ EL RÀNQUING GLOBAL DE VICTÒRIES (VIA PL/SQL CURSOR).
      */
     public ArrayList<LinkedHashMap<String, String>> getRankingGlobalVictoriesSQL() {
-        // Obtenim tots els jugadors amb victòries ordenats de més a menys
-        return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories > 0 AND " + FILTRE_USUARIS + " ORDER BY victories DESC");
-    }
-
-    /**
-     * CRIDA EL PROCEDIMENT PL/SQL RANKING_PARTIDES_TOTALS.
-     * @return Rànquing basat en la quantitat de partides jugades (històric).
-     */
-    public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
         if (conexion != null) {
-            try (CallableStatement cs = conexion.prepareCall("{call RANKING_PARTIDES_TOTALS(?)}")) {
-                // El paràmetre 1 és un SYS_REFCURSOR (específic d'Oracle)
-                cs.registerOutParameter(1, -10); // -10 és el codi d'OracleTypes.CURSOR
-                cs.execute();
-                ResultSet rs = (ResultSet) cs.getObject(1);
-                if (rs != null) {
-                    while (rs.next()) {
-                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
-                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
-                        fila.put("TOTAL", String.valueOf(rs.getInt("TOTAL")));
-                        resultados.add(fila);
-                    }
-                    rs.close();
-                }
-            } catch (Exception e) {
-                System.out.println("ERROR PL/SQL RANKING_PARTIDES_TOTALS: " + e.getMessage());
-            }
-        }
-        return resultados;
-    }
-
-    /**
-     * CRIDA EL PROCEDIMENT PL/SQL GET_JUGADORS_RECORD.
-     * Filtra els jugadors que han assolit el màxim de victòries actual.
-     */
-    public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
-        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
-        if (conexion != null) {
-            // Intentem cridar el procediment. Si falla amb 2 paràmetres, provem amb 1 (només el cursor)
-            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?)}")) {
-                cs.registerOutParameter(1, -10); // OracleTypes.CURSOR
+            try (CallableStatement cs = conexion.prepareCall("BEGIN OPEN ? FOR SELECT nom_jugador, victories FROM jugador WHERE victories > 0 ORDER BY victories DESC; END;")) {
+                cs.registerOutParameter(1, -10); // Oracle CURSOR
                 cs.execute();
                 ResultSet rs = (ResultSet) cs.getObject(1);
                 if (rs != null) {
@@ -601,17 +538,119 @@ public class GestorBBDD {
                     rs.close();
                 }
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL EN RECUPERAR EL RÈCORD: " + e.getMessage());
-                // Fallback: Si el procediment requeria el record, el busquem per SQL directe
-                return select(conexion, "SELECT nom_jugador, victories FROM jugador WHERE victories = (SELECT MAX(victories) FROM jugador)");
+                System.err.println("ERROR PL/SQL getRankingGlobalVictoriesSQL: " + e.getMessage());
             }
         }
         return resultados;
     }
 
     /**
-     * CRIDA EL PROCEDIMENT PL/SQL GET_JUGADORS_SOBRE_MITJA.
-     * Retorna els jugadors que superen el rendiment mitjà de la comunitat.
+     * EXERCICI 1. (S) GENERAR NÚMEROS SEQÜENCIALS PER A CAMPS CLAU.
+     * Utilitza un bloc anònim PL/SQL per obtenir el valor de la seqüència.
+     */
+    public int getNextIDPartida() {
+        int id = -1;
+        if (conexion != null) {
+            // Bloc anònim PL/SQL per obtenir el NEXTVAL sense fer un SELECT directe des de Java
+            try (CallableStatement cs = conexion.prepareCall("BEGIN ? := SEC_ID_PARTIDA.NEXTVAL; END;")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.execute();
+                id = cs.getInt(1);
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (PUNT 1): " + e.getMessage());
+            }
+        }
+        return id;
+    }
+
+    /**
+     * EXERCICI 2. (T) ASSIGNAR AUTOMÀTICAMENT EL Nº SEQÜENCIAL A LA CLAU PRIMÀRIA.
+     * Aquesta operació es realitza invocant el bloc PL/SQL del Punt 1 abans de la inserció.
+     */
+
+
+    /**
+     * EXERCICI 3. (T) INCREMENTAR AUTOMÀTICAMENT LES VICTÒRIES DEL GUANYADOR.
+     * Utilitza un bloc anònim PL/SQL per actualitzar les dades al servidor.
+     */
+    public void incrementarVictoriesGuanyador(int idJugador) {
+        if (conexion != null && idJugador != -1) {
+            // Ús obligatori de PL/SQL per incrementar el comptador de victòries
+            try (CallableStatement cs = conexion.prepareCall("BEGIN UPDATE jugador SET victories = victories + 1 WHERE id_jugador = ?; END;")) {
+                cs.setInt(1, idJugador);
+                cs.execute();
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (PUNT 3): " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * EXERCICI 4. (F) OBTENIR EL MÀXIM RÈCORD DE VICTÒRIES (RECORD GLOBAL).
+     * Invoca la funció PL/SQL 'GET_MAX_VICTORIES_RECORD'.
+     */
+    public int getMaxVictoriesRecordSQL() {
+        int result = 0;
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MAX_VICTORIES_RECORD}")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.execute();
+                result = cs.getInt(1);
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (PUNT 4): " + e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * EXERCICI 5. (P) OBTENIR ELS JUGADORS QUE TENEN EL RÈCORD ACTUAL.
+     * Invoca el procediment 'GET_JUGADORS_RECORD' mitjançant un cursor.
+     */
+    public ArrayList<LinkedHashMap<String, String>> getJugadorsRecordSQL() {
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{call GET_JUGADORS_RECORD(?)}")) {
+                cs.registerOutParameter(1, -10); // Oracle CURSOR
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(1);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                        fila.put("VICTORIES", String.valueOf(rs.getInt("VICTORIES")));
+                        resultados.add(fila);
+                    }
+                    rs.close();
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR PL/SQL (PUNT 5): " + e.getMessage());
+            }
+        }
+        return resultados;
+    }
+
+    /**
+     * EXERCICI 6. (F) OBTENIR LA MITJANA DE VICTÒRIES GLOBAL.
+     * Invoca la funció PL/SQL 'GET_MITJA_VICTORIES'.
+     */
+    public double getMitjaGlobalSQL() {
+        double result = 0.0;
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{? = call GET_MITJA_VICTORIES}")) {
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.execute();
+                result = cs.getDouble(1);
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (PUNT 6): " + e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * EXERCICI 7. (P) MOSTRAR JUGADORS AMB MÉS VICTÒRIES QUE LA MITJANA.
+     * Invoca el procediment PL/SQL 'GET_JUGADORS_SOBRE_MITJA'.
      */
     public ArrayList<LinkedHashMap<String, String>> getJugadorsSobreMitjaSQL() {
         ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
@@ -630,76 +669,141 @@ public class GestorBBDD {
                     rs.close();
                 }
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL EN JUGADORS SOBRE LA MITJANA: " + e.getMessage());
+                System.err.println("ERROR PL/SQL (PUNT 7): " + e.getMessage());
             }
         }
         return resultados;
     }
 
     /**
-     * CRIDA LA FUNCIÓ PL/SQL PERCENTATGE_MENYS_VICTORIES.
-     * Calcula la teva posició relativa (percentil) en comparació amb altres jugadors.
-     * @param vics Número de victòries a comparar.
-     * @return Percentatge de jugadors amb menys victòries que el paràmetre.
+     * EXERCICI 8. (F) CALCULAR PERCENTATGE DE JUGADORS AMB MENYS VICTÒRIES (PERCENTIL).
+     * Invoca la funció PL/SQL 'PERCENTATGE_MENYS_VICTORIES'.
      */
     public double getPercentatgeMenysVictoriesSQL(int vics) {
         double result = 0.0;
         if (conexion != null) {
             try (CallableStatement cs = conexion.prepareCall("{? = call PERCENTATGE_MENYS_VICTORIES(?)}")) {
-                cs.registerOutParameter(1, java.sql.Types.NUMERIC); // RETURN NUMBER
-                cs.setInt(2, vics);                                  // p_vics IN
+                cs.registerOutParameter(1, java.sql.Types.NUMERIC);
+                cs.setInt(2, vics);
                 cs.execute();
                 result = cs.getDouble(1);
             } catch (Exception e) {
-                System.out.println("ERROR PL/SQL EN CÀLCUL DE PERCENTIL: " + e.getMessage());
+                System.err.println("ERROR PL/SQL (PUNT 8): " + e.getMessage());
             }
         }
         return result;
     }
 
     /**
-     * CRIDA EL PROCEDIMENT PL/SQL CONSULTAR_ESTADISTIQUES_JUGADOR.
-     * Obté un resum detallat de les mètriques d'un jugador pel seu nom.
-     * Inclou la gestió d'excepcions personalitzades de PL/SQL (RAISE_APPLICATION_ERROR).
-     * @param nom Nom del jugador a consultar.
-     * @return Mapa amb VICTORIES, TOTAL_PARTIDES i POSICIO_RANKING.
+     * 9. (T) MOSTRAR AUTOMÀTICAMENT EL PERCENTIL QUAN S'INCREMENTEN VICTÒRIES.
+     * Implementat mitjançant un 'Compound Trigger' definit íntegrament en PL/SQL.
+     */
+    private void assegurarEstructuraPLSQL() {
+        if (conexion != null) {
+            // Verificació i actualització d'esquema via PL/SQL pur (EXECUTE IMMEDIATE)
+            String plSchema = "DECLARE v_count NUMBER; BEGIN " +
+                              "SELECT COUNT(*) INTO v_count FROM user_tab_columns WHERE table_name='JUGADOR' AND column_name='CONTRASENYA'; " +
+                              "IF v_count = 0 THEN EXECUTE IMMEDIATE 'ALTER TABLE jugador ADD (contrasenya VARCHAR2(64))'; END IF; " +
+                              "END;";
+            try (CallableStatement cs = conexion.prepareCall(plSchema)) {
+                cs.execute();
+            } catch (SQLException e) {}
+            
+            // Definició i execució del Trigger Compost per a la gestió del rànquing en temps real
+            String triggerFix = 
+                "CREATE OR REPLACE TRIGGER TRG_AVIS_RANKING\n" +
+                "FOR UPDATE OF victories ON JUGADOR\n" +
+                "COMPOUND TRIGGER\n" +
+                "  TYPE t_jugador_rec IS RECORD (nom VARCHAR2(100), vics NUMBER);\n" +
+                "  TYPE t_jugador_tab IS TABLE OF t_jugador_rec;\n" +
+                "  v_jugadors t_jugador_tab := t_jugador_tab();\n" +
+                "  \n" +
+                "  AFTER EACH ROW IS\n" +
+                "  BEGIN\n" +
+                "    v_jugadors.EXTEND;\n" +
+                "    v_jugadors(v_jugadors.LAST).nom := :NEW.nom_jugador;\n" +
+                "    v_jugadors(v_jugadors.LAST).vics := :NEW.victories;\n" +
+                "  END AFTER EACH ROW;\n" +
+                "  \n" +
+                "  AFTER STATEMENT IS\n" +
+                "    v_perc NUMBER;\n" +
+                "  BEGIN\n" +
+                "    FOR i IN 1 .. v_jugadors.COUNT LOOP\n" +
+                "      v_perc := PERCENTATGE_MENYS_VICTORIES(v_jugadors(i).vics);\n" +
+                "      DBMS_OUTPUT.PUT_LINE('AVIS: ' || v_jugadors(i).nom || ' supera al ' || ROUND(v_perc, 2) || '%');\n" +
+                "    END LOOP;\n" +
+                "  END AFTER STATEMENT;\n" +
+                "END;";
+            
+            try (CallableStatement cs = conexion.prepareCall("BEGIN EXECUTE IMMEDIATE ?; END;")) {
+                cs.setString(1, triggerFix);
+                cs.execute();
+            } catch (SQLException e) {
+                System.err.println("ERROR PL/SQL (TRIGGER): " + e.getMessage());
+            }
+            commit(conexion);
+        }
+    }
+
+    /**
+     * EXERCICI 10. (P) MOSTRAR EL RÀNQUING DE JUGADORS PER TOTAL DE PARTIDES JUGADES.
+     * Invoca el procediment 'RANKING_PARTIDES_TOTALS'.
+     */
+    public ArrayList<LinkedHashMap<String, String>> getRankingPartidesTotalsSQL() {
+        ArrayList<LinkedHashMap<String, String>> resultados = new ArrayList<>();
+        if (conexion != null) {
+            try (CallableStatement cs = conexion.prepareCall("{call RANKING_PARTIDES_TOTALS(?)}")) {
+                cs.registerOutParameter(1, -10); // Oracle CURSOR
+                cs.execute();
+                ResultSet rs = (ResultSet) cs.getObject(1);
+                if (rs != null) {
+                    while (rs.next()) {
+                        LinkedHashMap<String, String> fila = new LinkedHashMap<>();
+                        fila.put("NOM_JUGADOR", rs.getString("NOM_JUGADOR"));
+                        fila.put("TOTAL", String.valueOf(rs.getInt("TOTAL")));
+                        resultados.add(fila);
+                    }
+                    rs.close();
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR PL/SQL (PUNT 10): " + e.getMessage());
+            }
+        }
+        return resultados;
+    }
+
+    /**
+     * EXERCICI 11. (P) MOSTRAR LA POSICIÓ AL RÀNQUING I ESTADÍSTIQUES D'UN JUGADOR.
+     * Invoca el procediment 'CONSULTAR_ESTADISTIQUES_JUGADOR' amb control d'errors PL/SQL.
      */
     public LinkedHashMap<String, String> consultarEstadistiquesJugador(String nom) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
         if (conexion != null) {
-            // Intentem primer la versió de 4 paràmetres (1 IN + 3 OUT: Victòries, Partides, Rànquing)
-            try (CallableStatement cs = conexion.prepareCall(
-                    "{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?, ?)}")) {
+            try (CallableStatement cs = conexion.prepareCall("{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?, ?)}")) {
                 cs.setString(1, nom);                                       
-                cs.registerOutParameter(2, java.sql.Types.NUMERIC);         
-                cs.registerOutParameter(3, java.sql.Types.NUMERIC);         
-                cs.registerOutParameter(4, java.sql.Types.NUMERIC);         
+                cs.registerOutParameter(2, java.sql.Types.NUMERIC); 
+                cs.registerOutParameter(3, java.sql.Types.NUMERIC); 
+                cs.registerOutParameter(4, java.sql.Types.NUMERIC); 
                 cs.execute();
                 result.put("VICTORIES", String.valueOf(cs.getInt(2)));
                 result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
                 result.put("POSICIO_RANKING", String.valueOf(cs.getInt(4)));
             } catch (Exception e) {
                 String msg = e.getMessage();
-                // Si falla per número d'arguments, provem la versió reduïda de 3 paràmetres
-                if (msg != null && (msg.contains("00306") || msg.contains("wrong number"))) {
+                if (msg != null && msg.contains("20001")) result.put("ERROR", "El jugador '" + nom + "' no existeix.");
+                else if (msg != null && msg.contains("20002")) result.put("ERROR", "El jugador '" + nom + "' no té dades.");
+                else {
+                    // Si el procediment falla, intentem la versió de 3 paràmetres com a contingència PL/SQL
                     return consultarEstadistiquesJugadorV3(nom);
                 }
-                // Gestionem els codis d'error definits al servidor (20001 i 20002)
-                if (msg != null && msg.contains("20001")) {
-                    result.put("ERROR", "El jugador '" + nom + "' no existeix.");
-                } else if (msg != null && msg.contains("20002")) {
-                    result.put("ERROR", "El jugador '" + nom + "' no té dades.");
-                } else {
-                    result.put("ERROR", "Error: " + msg);
-                }
             }
-        } else {
-            result.put("ERROR", "SENSE CONNEXIÓ A LA BBDD");
         }
         return result;
     }
 
-    /** Versió de seguretat amb 3 paràmetres (sense rànquing) */
+    /**
+     * Versió simplificada (V3) de consulta per a sistemes que no suporten el càlcul de rànquing.
+     */
     private LinkedHashMap<String, String> consultarEstadistiquesJugadorV3(String nom) {
         LinkedHashMap<String, String> result = new LinkedHashMap<>();
         try (CallableStatement cs = conexion.prepareCall("{call CONSULTAR_ESTADISTIQUES_JUGADOR(?, ?, ?)}")) {
@@ -710,9 +814,7 @@ public class GestorBBDD {
             result.put("VICTORIES", String.valueOf(cs.getInt(2)));
             result.put("TOTAL_PARTIDES", String.valueOf(cs.getInt(3)));
             result.put("POSICIO_RANKING", "N/A");
-        } catch (SQLException e) {
-            result.put("ERROR", "Error en V3: " + e.getMessage());
-        }
+        } catch (SQLException e) {}
         return result;
     }
 

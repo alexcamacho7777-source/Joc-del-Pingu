@@ -1060,7 +1060,7 @@ public class PantallaJuego {
                     } else {
                         pin.setPosicion(0);
                         anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
-                        mostrarAlerta(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No has subornat la foca. Tornes a la casella de sortida!");
+                        mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No has subornat la foca. Tornes a la casella de sortida!");
                     }
                     onDone.run();
                 });
@@ -1074,7 +1074,7 @@ public class PantallaJuego {
                 pin.setPosicion(0);
                 anadirLog("💥 LA FOCA HA GOLPEJAT A " + pin.getNombre().toUpperCase() + " I L'ENVIA A L'INICI!");
                 if (!pin.isEsIA()) {
-                    mostrarAlerta(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No tens cap peix 🐟 per subornar la foca.\nEt colpeja i tornes a la casella de sortida!");
+                    mostrarAlertaSilenciosa(Alert.AlertType.ERROR, "COLPEJAT PER LA FOCA!", "No tens cap peix 🐟 per subornar la foca.\nEt colpeja i tornes a la casella de sortida!");
                 }
                 onDone.run();
             }
@@ -1126,6 +1126,11 @@ public class PantallaJuego {
     private void mostrarAlerta(AlertType tipus, String titol, String missatge) {
         // Utilitzem la utilitat PantallaAlerta pròpia del projecte per a una millor estètica
         controlador.SoundManager.getInstance().playSound("event");
+        PantallaAlerta.mostrar(rootPane, titol, missatge, null);
+    }
+
+    /** Versió de l'alerta sense efecte de so (per a encontres amb la foca) */
+    private void mostrarAlertaSilenciosa(AlertType tipus, String titol, String missatge) {
         PantallaAlerta.mostrar(rootPane, titol, missatge, null);
     }
 }
