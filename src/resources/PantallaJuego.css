@@ -78,6 +78,10 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 50, 0, 0, 20);
 }
 
+#winIcon {
+    -fx-effect: dropshadow(gaussian, #00d2ff, 40, 0.5, 0, 0);
+}
+
 .win-title {
     -fx-font-size: 90px;
     -fx-font-weight: 900;

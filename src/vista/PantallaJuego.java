@@ -560,38 +560,53 @@ public class PantallaJuego {
         } else {
             Jugador actual = gestorPartida.getPartida().getJugadorActualObj();
             if (actual != null) {
-                boolean saltarTorn = false;
-                
-                // Comprovació de pèrdua de torn per ruleta
-                if (gestorPartida.getPartida().getJugadorPierdeTurno() != null &&
-                    gestorPartida.getPartida().getJugadorPierdeTurno().equals(actual)) {
-                    gestorPartida.getPartida().setJugadorPierdeTurno(null);
-                    anadirLog(actual.getNombre().toUpperCase() + " ESTÀ ATURAT AQUEST TORN.");
-                    gestorPartida.getPartida().siguienteTurno();
-                    finalizarTurnoComplet();
-                    saltarTorn = true;
+                // Si és una IA, afegim un temps extra d'espera perquè l'usuari vegi qui és el jugador actual
+                if (actual.isEsIA()) {
+                    dado.setDisable(true); // Bloquegem el dau visualment
+                    javafx.animation.PauseTransition preMovePause = new javafx.animation.PauseTransition(Duration.seconds(1.2));
+                    preMovePause.setOnFinished(ev -> continuarProcesSiguienteTurno(actual));
+                    preMovePause.play();
+                } else {
+                    continuarProcesSiguienteTurno(actual);
                 }
-
-                // Comprovació de bloqueig de la foca (bola de neu)
-                if (!saltarTorn && actual instanceof model.Foca f && f.getTurnosBloqueada() > 0) {
-                    f.reducirBloqueo();
-                    anadirLog("LA FOCA CONTINUA CONGELADA.");
-                    gestorPartida.getPartida().siguienteTurno();
-                    finalizarTurnoComplet();
-                    saltarTorn = true;
-                }
-
-                // Comprovació de la foca a la meta (per evitar bucles infinits)
-                if (!saltarTorn && actual instanceof model.Foca f && f.getPosicion() >= 49) {
-                    anadirLog("LA FOCA JA ÉS A LA META.");
-                    gestorPartida.getPartida().siguienteTurno();
-                    finalizarTurnoComplet();
-                    saltarTorn = true;
-                }
-                
-                if (!saltarTorn) ejecutarMovimientoJugador(actual);
             }
         }
+    }
+
+    /**
+     * CONTINUA LA LÒGICA DE TORN DESPRÉS DE L'ESPERA INICIAL.
+     */
+    private void continuarProcesSiguienteTurno(Jugador actual) {
+        boolean saltarTorn = false;
+        
+        // Comprovació de pèrdua de torn per ruleta
+        if (gestorPartida.getPartida().getJugadorPierdeTurno() != null &&
+            gestorPartida.getPartida().getJugadorPierdeTurno().equals(actual)) {
+            gestorPartida.getPartida().setJugadorPierdeTurno(null);
+            anadirLog(actual.getNombre().toUpperCase() + " ESTÀ ATURAT AQUEST TORN.");
+            gestorPartida.getPartida().siguienteTurno();
+            finalizarTurnoComplet();
+            saltarTorn = true;
+        }
+
+        // Comprovació de bloqueig de la foca (bola de neu)
+        if (!saltarTorn && actual instanceof model.Foca f && f.getTurnosBloqueada() > 0) {
+            f.reducirBloqueo();
+            anadirLog("LA FOCA CONTINUA CONGELADA.");
+            gestorPartida.getPartida().siguienteTurno();
+            finalizarTurnoComplet();
+            saltarTorn = true;
+        }
+
+        // Comprovació de la foca a la meta (per evitar bucles infinits)
+        if (!saltarTorn && actual instanceof model.Foca f && f.getPosicion() >= 49) {
+            anadirLog("LA FOCA JA ÉS A LA META.");
+            gestorPartida.getPartida().siguienteTurno();
+            finalizarTurnoComplet();
+            saltarTorn = true;
+        }
+        
+        if (!saltarTorn) ejecutarMovimientoJugador(actual);
     }
 
     /**
@@ -618,7 +633,7 @@ public class PantallaJuego {
                 java.util.Map<model.Pinguino, java.util.List<String>> robos = gestorPartida.procesarPasoDeFoca(foca, posAnterior, posNova);
                 if (!robos.isEmpty()) {
                     actualizarInventarioUI();
-                    anadirLog("⚠️ LA FOCA HA ROBAT OBJECTES AL SEU PAS!");
+                    anadirLog(" LA FOCA HA ROBAT OBJECTES AL SEU PAS!");
                     StringBuilder sb = new StringBuilder();
                     boolean afectaHuma = false;
                     for (java.util.Map.Entry<model.Pinguino, java.util.List<String>> entry : robos.entrySet()) {
@@ -742,7 +757,8 @@ public class PantallaJuego {
         dadoResultText.setText("TORN DE: " + (prox != null ? prox.getNombre().toUpperCase() : "..."));
         syncVisualPositions(true);
         if (prox != null && prox.isEsIA() && !gestorPartida.getPartida().isFinalizada()) {
-            javafx.animation.PauseTransition p = new javafx.animation.PauseTransition(Duration.millis(800));
+            // Augmentem el temps d'espera entre bots perquè l'usuari pugui seguir la partida
+            javafx.animation.PauseTransition p = new javafx.animation.PauseTransition(Duration.seconds(2.0));
             p.setOnFinished(e -> procesarSiguienteTurno());
             p.play();
         } else {
@@ -763,7 +779,7 @@ public class PantallaJuego {
             
             // Registrem el log quan la ruleta acaba
             ctrl.setOnFinishedCallback(result -> {
-                anadirLog("🎰 RULETA: " + j.getNombre().toUpperCase() + " HA REBUT: " + result.toUpperCase());
+                anadirLog(" RULETA: " + j.getNombre().toUpperCase() + " HA REBUT: " + result.toUpperCase());
             });
 
             boardStack.getChildren().add(root);
@@ -922,13 +938,13 @@ public class PantallaJuego {
                             anadirLog(objetivo.getNombre().toUpperCase() + " RETROCEDEIX " + retroceso + " CASELLES.");
                             syncVisualPositions(true);
                         } else {
-                            anadirLog("⚠️ NO HI HA NINGÚ A PROP PER TIRAR LA BOLA!");
+                            anadirLog(" NO HI HA NINGÚ A PROP PER TIRAR LA BOLA!");
                         }
                     } else if (tipo.equals("Peces")) {
-                        anadirLog("🍣 EL PEIX S'USA AUTOMÀTICAMENT QUAN ET TROBES AMB L'ÓS O LA FOCA.");
+                        anadirLog(" EL PEIX S'USA AUTOMÀTICAMENT QUAN ET TROBES AMB L'ÓS O LA FOCA.");
                     }
                 } else {
-                    anadirLog("❌ NO TENS " + tipo.toUpperCase() + " A L'INVENTARI.");
+                    anadirLog(" NO TENS " + tipo.toUpperCase() + " A L'INVENTARI.");
                 }
             }
         }
@@ -987,17 +1003,25 @@ public class PantallaJuego {
             
             for (Jugador otro : copiaJugadors) {
                 if (!interaccioFeta && otro != p && otro.getPosicion() == p.getPosicion() && p.getPosicion() > 0 && p.getPosicion() < meta) {
+                    
+                    // Embolcall per afegir una petita pausa després de qualsevol alerta d'interacció
+                    Runnable wrappedDone = () -> {
+                        javafx.animation.PauseTransition postInterPause = new javafx.animation.PauseTransition(Duration.seconds(1.0));
+                        postInterPause.setOnFinished(ev -> onDone.run());
+                        postInterPause.play();
+                    };
+
                     // CAS A: INTERACCIÓ AMB LA FOCA
                     if (otro instanceof model.Foca foca) {
-                        gestionarEncuentroFocaUI(p, foca, onDone);
+                        gestionarEncuentroFocaUI(p, foca, wrappedDone);
                         interaccioFeta = true;
                     } else if (p instanceof model.Foca foca && otro instanceof model.Pinguino pin) {
-                        gestionarEncuentroFocaUI(pin, foca, onDone);
+                        gestionarEncuentroFocaUI(pin, foca, wrappedDone);
                         interaccioFeta = true;
                     }
                     // CAS C: GUERRA DE BOLES
                     else if (otro instanceof model.Pinguino p2 && p instanceof model.Pinguino p1) {
-                        gestionarGuerraBolesUI(p1, p2, onDone);
+                        gestionarGuerraBolesUI(p1, p2, wrappedDone);
                         interaccioFeta = true;
                     }
                 }
@@ -1010,7 +1034,7 @@ public class PantallaJuego {
 
     private void gestionarEncuentroFocaUI(Jugador p, model.Foca foca, Runnable onDone) {
         if (foca.isSobornada()) {
-            anadirLog("🐟 LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
+            anadirLog("LA FOCA ESTÀ BLOQUEJADA I NO ATACA A " + p.getNombre().toUpperCase() + ".");
             onDone.run();
         } else if (p instanceof model.Pinguino pin) {
             model.Item pez = pin.getInv().getItem(model.Pez.class);
